@@ -261,10 +261,7 @@ export default function Dashboard() {
 
       <footer className="border-t border-border/30 px-6 py-6 mt-20">
         <div className="mx-auto max-w-6xl flex flex-col md:flex-row justify-between text-xs text-muted-foreground gap-4">
-          <div>
-            <p>© {new Date().getFullYear()} Paveelo</p>
-            <p>ul. Zamoyskiego 18H/2, 37-450 Stalowa Wola, Polska</p>
-          </div>
+          <p>© {new Date().getFullYear()} Paveelo</p>
           <div className="flex gap-4">
             <a href="/terms" className="hover:text-primary transition-colors">Regulamin</a>
             <a href="/privacy" className="hover:text-primary transition-colors">Polityka prywatności</a>
