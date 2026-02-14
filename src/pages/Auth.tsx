@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useSearchParams } from "react-router-dom";
 import { BookOpen, Mail, Lock, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,12 +11,19 @@ type AuthMode = "login" | "register" | "forgot" | "reset";
 
 export default function Auth() {
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) navigate("/");
+  }, [user, authLoading, navigate]);
 
   // Detect password recovery flow from email link
   useEffect(() => {
@@ -39,6 +47,7 @@ export default function Auth() {
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        navigate("/");
       } else if (mode === "register") {
         if (password.length < 8) throw new Error("Hasło musi mieć minimum 8 znaków.");
         if (password !== confirmPassword) throw new Error("Hasła nie są identyczne.");
