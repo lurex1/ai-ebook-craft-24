@@ -9,6 +9,8 @@ export interface Block {
   alt?: string;
   width?: number;
   height?: number;
+  textColor?: string;
+  bgColor?: string;
 }
 
 export function createBlock(type: BlockType): Block {
