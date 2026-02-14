@@ -14,7 +14,101 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chapters: {
+        Row: {
+          blocks: Json | null
+          created_at: string | null
+          id: string
+          project_id: string
+          sort_order: number
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          blocks?: Json | null
+          created_at?: string | null
+          id?: string
+          project_id: string
+          sort_order?: number
+          title?: string
+          updated_at?: string | null
+        }
+        Update: {
+          blocks?: Json | null
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapters_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          author_name: string | null
+          cover_url: string | null
+          created_at: string | null
+          custom_height: number | null
+          custom_width: number | null
+          description: string | null
+          footer_config: Json | null
+          header_config: Json | null
+          id: string
+          language: string | null
+          page_size: string | null
+          subtitle: string | null
+          template: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          author_name?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          custom_height?: number | null
+          custom_width?: number | null
+          description?: string | null
+          footer_config?: Json | null
+          header_config?: Json | null
+          id?: string
+          language?: string | null
+          page_size?: string | null
+          subtitle?: string | null
+          template?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          author_name?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          custom_height?: number | null
+          custom_width?: number | null
+          description?: string | null
+          footer_config?: Json | null
+          header_config?: Json | null
+          id?: string
+          language?: string | null
+          page_size?: string | null
+          subtitle?: string | null
+          template?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
