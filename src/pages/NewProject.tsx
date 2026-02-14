@@ -85,6 +85,7 @@ export default function NewProject() {
   const [sections, setSections] = useState<FlatSection[]>([]);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [generatingAll, setGeneratingAll] = useState(false);
+  const [generatingProgress, setGeneratingProgress] = useState({ current: 0, total: 0 });
   const [creating, setCreating] = useState(false);
 
   // Material helpers
@@ -234,7 +235,7 @@ export default function NewProject() {
     }
   };
 
-  // Generate ALL empty sections
+  // Generate ALL empty sections — one by one to avoid timeouts
   const generateAllContent = async () => {
     const emptySections = sections.filter((s) => s.source === "empty" && s.depth > 0);
     if (emptySections.length === 0) {
@@ -242,39 +243,45 @@ export default function NewProject() {
       return;
     }
     setGeneratingAll(true);
+    setGeneratingProgress({ current: 0, total: emptySections.length });
 
     try {
-      const toGenerate = emptySections.map((s, i) => ({
-        id: s.id,
-        path: s.path,
-        title: s.title,
-        index: sections.indexOf(s),
-      }));
+      for (let i = 0; i < emptySections.length; i++) {
+        const sec = emptySections[i];
+        const idx = sections.findIndex((s) => s.id === sec.id);
+        setGeneratingProgress({ current: i + 1, total: emptySections.length });
 
-      // Generate in batches of 5 to avoid timeouts
-      for (let batch = 0; batch < toGenerate.length; batch += 5) {
-        const batchSections = toGenerate.slice(batch, batch + 5);
+        // Mark as generating
+        setSections((prev) => prev.map((s) => s.id === sec.id ? { ...s, generating: true } : s));
+
         const { data, error } = await supabase.functions.invoke("generate-ebook", {
           body: {
-            action: "generate-all-content",
+            action: "generate-section",
             bookTitle: editedTitle || suggestion?.title,
-            materials: allContent().slice(0, 6000),
-            sections: batchSections,
+            materials: allContent().slice(0, 8000),
+            sectionPath: sec.path,
+            sectionTitle: sec.title,
+            contextBefore: idx > 0 ? sections[idx - 1].title : "",
+            contextAfter: idx < sections.length - 1 ? sections[idx + 1].title : "",
+            totalSections: sections.length,
+            currentIndex: idx,
           },
         });
+
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
 
-        if (data?.contents) {
-          setSections((prev) => prev.map((s) => data.contents[s.id] ? { ...s, content: data.contents[s.id], source: "ai" } : s));
-        }
+        setSections((prev) => prev.map((s) => s.id === sec.id ? { ...s, content: data.content || "", source: "ai", generating: false } : s));
       }
 
       toast({ title: "Wygenerowano treść dla wszystkich sekcji!" });
     } catch (err: any) {
-      toast({ title: "Błąd", description: err.message, variant: "destructive" });
+      toast({ title: "Błąd generowania", description: err.message, variant: "destructive" });
+      // Stop generating flags on error
+      setSections((prev) => prev.map((s) => ({ ...s, generating: false })));
     } finally {
       setGeneratingAll(false);
+      setGeneratingProgress({ current: 0, total: 0 });
     }
   };
 
@@ -582,25 +589,38 @@ export default function NewProject() {
             </div>
 
             {/* Stats & bulk actions */}
-            <div className="bg-card rounded-xl border border-border/50 p-4 flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <span className="text-sm text-foreground">{contentStats.filled}/{contentStats.total} sekcji z treścią</span>
+            <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <span className="text-sm text-foreground">{contentStats.filled}/{contentStats.total} sekcji z treścią</span>
+                </div>
+                {contentStats.aiGenerated > 0 && (
+                  <span className="text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5">{contentStats.aiGenerated} od AI</span>
+                )}
+                {contentStats.userWritten > 0 && (
+                  <span className="text-xs bg-green-500/10 text-green-500 rounded-full px-2 py-0.5">{contentStats.userWritten} własnych</span>
+                )}
+                <Button
+                  size="sm"
+                  onClick={generateAllContent}
+                  disabled={generatingAll}
+                  className="ml-auto gap-2 bg-gradient-gold text-primary-foreground"
+                >
+                  {generatingAll ? (<><Loader2 className="h-4 w-4 animate-spin" /> Generuję {generatingProgress.current}/{generatingProgress.total}...</>) : (<><Wand2 className="h-4 w-4" /> Generuj wszystko z AI</>)}
+                </Button>
               </div>
-              {contentStats.aiGenerated > 0 && (
-                <span className="text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5">{contentStats.aiGenerated} od AI</span>
+              {generatingAll && (
+                <div className="space-y-1">
+                  <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full transition-all duration-500"
+                      style={{ width: `${generatingProgress.total > 0 ? (generatingProgress.current / generatingProgress.total) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Generuję sekcję {generatingProgress.current} z {generatingProgress.total}... To może potrwać kilka minut.</p>
+                </div>
               )}
-              {contentStats.userWritten > 0 && (
-                <span className="text-xs bg-green-500/10 text-green-500 rounded-full px-2 py-0.5">{contentStats.userWritten} własnych</span>
-              )}
-              <Button
-                size="sm"
-                onClick={generateAllContent}
-                disabled={generatingAll}
-                className="ml-auto gap-2 bg-gradient-gold text-primary-foreground"
-              >
-                {generatingAll ? (<><Loader2 className="h-4 w-4 animate-spin" /> Generuję...</>) : (<><Wand2 className="h-4 w-4" /> Generuj wszystko z AI</>)}
-              </Button>
             </div>
 
             {/* Sections list */}
@@ -670,8 +690,9 @@ export default function NewProject() {
               </Button>
               <Button
                 onClick={createProject}
-                disabled={creating}
+                disabled={creating || generatingAll || contentStats.filled === 0}
                 className="gap-2 bg-gradient-gold text-primary-foreground ml-auto"
+                title={contentStats.filled === 0 ? "Wygeneruj najpierw treść sekcji" : ""}
               >
                 {creating ? (<><Loader2 className="h-4 w-4 animate-spin" /> Tworzę...</>) : (<><Check className="h-4 w-4" /> Utwórz e-book ({contentStats.filled}/{contentStats.total} sekcji)</>)}
               </Button>
