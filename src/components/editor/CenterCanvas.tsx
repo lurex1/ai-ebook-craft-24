@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Heading1, Type, ImageIcon, MinusSquare, Scissors, ChevronUp, ChevronDown, Trash2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Block, BlockType, ChapterData } from "@/lib/blocks";
@@ -33,15 +33,14 @@ const BLOCK_TOOLS: { type: BlockType; icon: React.ElementType; label: string }[]
   { type: "chapter-break", icon: Scissors, label: "Podział strony" },
 ];
 
-// mm to px conversion at 96dpi
 const MM_TO_PX = 96 / 25.4;
-const CANVAS_SCALE = 0.75; // scale down pages to fit nicely
+const CANVAS_SCALE = 0.75;
 
 export function CenterCanvas({
   chapter, template, selectedBlockId, onSelectBlock,
   onAddBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, pageSize,
   onGenerateContent, isGenerating, onGenerateImage,
-  footerConfig, headerConfig, projectTitle, authorName,
+  footerConfig,
 }: Props) {
   const size = PAGE_SIZES[pageSize] || PAGE_SIZES.A4;
   const pageWidthPx = size.width * MM_TO_PX * CANVAS_SCALE;
@@ -49,8 +48,6 @@ export function CenterCanvas({
   const marginPx = template.spacing.margin * CANVAS_SCALE;
 
   const showPageNumbers = footerConfig?.showPageNumbers ?? true;
-  const showTitle = headerConfig?.showTitle ?? true;
-  const showAuthor = headerConfig?.showAuthor ?? true;
 
   // Split blocks into pages based on chapter-break markers
   const pages = useMemo(() => {
@@ -104,7 +101,7 @@ export function CenterCanvas({
         style={{ background: "hsl(220 15% 90%)" }}
         onClick={() => onSelectBlock(null)}
       >
-        {/* Generate content CTA if needed */}
+        {/* Generate content CTA */}
         {needsContent && onGenerateContent && (
           <div
             className="flex flex-col items-center gap-3 py-6 px-8 rounded-xl border-2 border-dashed"
@@ -128,10 +125,10 @@ export function CenterCanvas({
         {pages.map((pageBlocks, pageIndex) => (
           <div
             key={pageIndex}
-            className="relative flex-shrink-0"
+            className="relative flex-shrink-0 overflow-hidden"
             style={{
               width: pageWidthPx,
-              minHeight: pageHeightPx,
+              height: pageHeightPx,
               backgroundColor: template.colors.bg,
               boxShadow: "0 2px 20px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08)",
               borderRadius: 2,
@@ -143,24 +140,14 @@ export function CenterCanvas({
               if (e.target === e.currentTarget) onSelectBlock(null);
             }}
           >
-            {/* Header */}
-            {(showTitle || showAuthor) && (
-              <div
-                className="flex justify-between items-center text-[10px] opacity-50"
-                style={{
-                  padding: `${marginPx * 0.5}px ${marginPx}px`,
-                  paddingBottom: 0,
-                  fontFamily: template.bodyFont,
-                  color: template.colors.text,
-                }}
-              >
-                {showTitle && <span>{projectTitle || ""}</span>}
-                {showAuthor && <span>{authorName || ""}</span>}
-              </div>
-            )}
-
-            {/* Content area */}
-            <div style={{ padding: `${marginPx * 0.6}px ${marginPx}px ${marginPx}px` }}>
+            {/* Content area with scroll for overflow */}
+            <div
+              className="overflow-y-auto"
+              style={{
+                padding: `${marginPx}px`,
+                height: pageHeightPx - (showPageNumbers ? 28 : 0),
+              }}
+            >
               {pageBlocks.length === 0 ? (
                 <div
                   className="flex items-center justify-center h-32 text-sm"
@@ -174,12 +161,12 @@ export function CenterCanvas({
                     key={block.id}
                     className={`relative group cursor-pointer transition-all duration-150 rounded-sm ${
                       selectedBlockId === block.id
-                        ? "ring-2 ring-blue-400/50 ring-offset-2 bg-blue-50/30"
-                        : "hover:bg-black/[0.02]"
+                        ? "ring-2 ring-blue-400/50 ring-offset-1"
+                        : "hover:ring-1 hover:ring-blue-200/40"
                     }`}
                     style={{
                       marginBottom: template.spacing.paragraphGap,
-                      padding: "4px 6px",
+                      padding: "2px 4px",
                     }}
                     onClick={(e) => { e.stopPropagation(); onSelectBlock(block.id); }}
                   >
@@ -190,28 +177,26 @@ export function CenterCanvas({
                       isSelected={selectedBlockId === block.id}
                       onGenerateImage={onGenerateImage}
                     />
-                    {/* Block controls - subtle side buttons */}
+                    {/* Block controls */}
                     {selectedBlockId === block.id && (
-                      <div className="absolute -right-9 top-1/2 -translate-y-1/2 flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                        style={{ opacity: selectedBlockId === block.id ? 1 : undefined }}
-                      >
+                      <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
                         <button
                           onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, -1); }}
-                          className="p-1 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
+                          className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
                           disabled={idx === 0}
                         >
                           <ChevronUp className="h-3 w-3" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, 1); }}
-                          className="p-1 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
+                          className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
                           disabled={idx === pageBlocks.length - 1}
                         >
                           <ChevronDown className="h-3 w-3" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); onDeleteBlock(block.id); }}
-                          className="p-1 rounded bg-white border border-gray-200 text-gray-400 hover:text-red-500 shadow-sm"
+                          className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-red-500 shadow-sm"
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>
@@ -227,7 +212,7 @@ export function CenterCanvas({
               <div
                 className="absolute bottom-0 left-0 right-0 text-center text-[10px] opacity-40"
                 style={{
-                  padding: `${marginPx * 0.4}px`,
+                  padding: `6px`,
                   fontFamily: template.bodyFont,
                   color: template.colors.text,
                 }}
@@ -238,7 +223,6 @@ export function CenterCanvas({
           </div>
         ))}
 
-        {/* Spacer at bottom for scroll */}
         <div className="h-8 shrink-0" />
       </div>
     </div>

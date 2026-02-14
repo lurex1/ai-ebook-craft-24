@@ -436,9 +436,6 @@ export default function Editor() {
           isGenerating={aiGenerating}
           onGenerateImage={generateIllustration}
           footerConfig={project.footer_config}
-          headerConfig={project.header_config}
-          projectTitle={project.title}
-          authorName={project.author_name}
         />
         <RightPanel
           project={project}
