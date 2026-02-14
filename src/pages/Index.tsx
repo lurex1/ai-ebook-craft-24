@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Plus, LogOut, Trash2, Copy, Calendar, Edit3, Loader2 } from "lucide-react";
+import heroImage from "@/assets/hero-ebook.jpg";
 
 export default function Dashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -102,6 +103,26 @@ export default function Dashboard() {
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-10">
+        <div className="relative rounded-2xl overflow-hidden mb-10">
+          <img src={heroImage} alt="Scripto - twórz e-booki z AI" className="w-full h-48 sm:h-64 object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent flex items-center">
+            <div className="px-8 sm:px-12">
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-2">
+                Twórz <span className="text-gradient-gold">profesjonalne</span> e-booki
+              </h2>
+              <p className="text-muted-foreground text-sm sm:text-base max-w-md mb-4">
+                Wgraj materiały, wybierz strukturę i pozwól AI wygenerować treść. Edytuj, formatuj i eksportuj w kilka minut.
+              </p>
+              <Button
+                onClick={() => navigate("/new")}
+                className="bg-gradient-gold text-primary-foreground hover:opacity-90 gap-2"
+              >
+                <Plus className="h-4 w-4" /> Utwórz nowy e-book
+              </Button>
+            </div>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="font-display text-2xl font-bold text-foreground">Twoje projekty</h2>

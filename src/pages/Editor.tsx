@@ -11,7 +11,7 @@ import { CenterCanvas } from "@/components/editor/CenterCanvas";
 import { RightPanel } from "@/components/editor/RightPanel";
 import {
   BookOpen, ArrowLeft, Save, Loader2, Check,
-  Import, Download, ImageIcon, Sparkles, Wand2,
+  Import, Download, ImageIcon, Sparkles, Wand2, Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImportDialog } from "@/components/editor/ImportDialog";
@@ -371,6 +371,9 @@ export default function Editor() {
           </span>
         </div>
         <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/new")} className="text-muted-foreground gap-1 text-xs">
+            <Plus className="h-3.5 w-3.5" /> Nowy
+          </Button>
           <Button
             variant="ghost"
             size="sm"
