@@ -128,6 +128,38 @@ export function RightPanel({ project, onUpdateProject, selectedBlock, onUpdateBl
                 <span className="text-xs text-muted-foreground">{selectedBlock.height || 40}px</span>
               </div>
             )}
+            {(selectedBlock.type === "heading" || selectedBlock.type === "text") && (
+              <div className="space-y-3 mt-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Kolor tekstu</Label>
+                  <Input
+                    type="color"
+                    value={selectedBlock.textColor || "#1a1a1a"}
+                    onChange={(e) => onUpdateBlock({ textColor: e.target.value })}
+                    className="h-8 w-full mt-1 cursor-pointer"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Kolor tła bloku</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Input
+                      type="color"
+                      value={selectedBlock.bgColor || "#ffffff"}
+                      onChange={(e) => onUpdateBlock({ bgColor: e.target.value })}
+                      className="h-8 flex-1 cursor-pointer"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => onUpdateBlock({ bgColor: "transparent" })}
+                    >
+                      Brak
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="border-b border-border/30 mt-4" />
           </section>
         )}
