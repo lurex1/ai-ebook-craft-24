@@ -1,4 +1,4 @@
-import { Heading1, Type, ImageIcon, MinusSquare, Scissors, ChevronUp, ChevronDown, Trash2 } from "lucide-react";
+import { Heading1, Type, ImageIcon, MinusSquare, Scissors, ChevronUp, ChevronDown, Trash2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Block, BlockType, ChapterData } from "@/lib/blocks";
 import type { Template } from "@/lib/templates";
@@ -15,6 +15,8 @@ interface Props {
   onDeleteBlock: (id: string) => void;
   onMoveBlock: (id: string, dir: -1 | 1) => void;
   pageSize: string;
+  onGenerateContent?: () => void;
+  isGenerating?: boolean;
 }
 
 const BLOCK_TOOLS: { type: BlockType; icon: React.ElementType; label: string }[] = [
@@ -28,6 +30,7 @@ const BLOCK_TOOLS: { type: BlockType; icon: React.ElementType; label: string }[]
 export function CenterCanvas({
   chapter, template, selectedBlockId, onSelectBlock,
   onAddBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, pageSize,
+  onGenerateContent, isGenerating,
 }: Props) {
   const size = PAGE_SIZES[pageSize] || PAGE_SIZES.A4;
   const aspect = size.height / size.width;
@@ -84,6 +87,26 @@ export function CenterCanvas({
             <div className="flex items-center justify-center h-40 text-center" style={{ color: template.colors.accent }}>
               <p className="text-sm">Kliknij przycisk powyżej, aby dodać blok treści</p>
             </div>
+          ) : chapter.blocks.some((b) => b.type === "heading") && !chapter.blocks.some((b) => b.type === "text" && b.content && b.content.trim().length > 50) && onGenerateContent ? (
+            <>
+              {chapter.blocks.map((block, idx) => (
+                <div key={block.id} style={{ marginBottom: template.spacing.paragraphGap }}>
+                  <BlockRenderer block={block} template={template} onUpdate={(updates) => onUpdateBlock(block.id, updates)} isSelected={false} />
+                </div>
+              ))}
+              <div className="flex flex-col items-center gap-3 py-8 border-2 border-dashed rounded-xl mt-4" style={{ borderColor: template.colors.accent }}>
+                <Wand2 className="h-8 w-8" style={{ color: template.colors.accent }} />
+                <p className="text-sm font-medium" style={{ color: template.colors.heading }}>Ten rozdział ma tylko nagłówki — brak treści</p>
+                <p className="text-xs" style={{ color: template.colors.text }}>Kliknij poniżej, aby AI wygenerowało pełną treść dla każdej sekcji</p>
+                <Button
+                  onClick={onGenerateContent}
+                  disabled={isGenerating}
+                  className="gap-2 bg-gradient-gold text-primary-foreground mt-2"
+                >
+                  <Wand2 className="h-4 w-4" /> Generuj treść AI dla tego rozdziału
+                </Button>
+              </div>
+            </>
           ) : (
             chapter.blocks.map((block, idx) => (
               <div
