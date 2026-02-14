@@ -207,7 +207,7 @@ export default function Auth() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          © {new Date().getFullYear()} Paveelo · Paweł Eberle
+          © {new Date().getFullYear()} Paveelo
         </p>
       </div>
     </div>
