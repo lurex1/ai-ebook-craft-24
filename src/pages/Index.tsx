@@ -4,29 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BookOpen, Plus, LogOut, Trash2, Copy, Calendar, Edit3, Loader2 } from "lucide-react";
-import type { ProjectData } from "@/lib/blocks";
-import { PAGE_SIZES } from "@/lib/templates";
 
 export default function Dashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [projects, setProjects] = useState<ProjectData[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    subtitle: "",
-    author_name: "",
-    description: "",
-    language: "pl",
-    page_size: "A4",
-  });
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -41,44 +26,18 @@ export default function Dashboard() {
       .from("projects")
       .select("*")
       .order("updated_at", { ascending: false });
-    setProjects((data as any as ProjectData[]) || []);
+    setProjects(data || []);
     setLoading(false);
-  };
-
-  const createProject = async () => {
-    if (!user) return;
-    const { data: project, error } = await supabase
-      .from("projects")
-      .insert({ ...form, user_id: user.id } as any)
-      .select()
-      .single();
-    if (error) {
-      toast({ title: "Błąd", description: error.message, variant: "destructive" });
-      return;
-    }
-    // Create first chapter
-    await supabase.from("chapters").insert({
-      project_id: (project as any).id,
-      title: "Rozdział 1",
-      sort_order: 0,
-      blocks: [
-        { id: crypto.randomUUID(), type: "heading", content: form.title || "Tytuł", level: 1 },
-        { id: crypto.randomUUID(), type: "text", content: "Zacznij pisać tutaj..." },
-      ],
-    } as any);
-    setCreateOpen(false);
-    setForm({ title: "", subtitle: "", author_name: "", description: "", language: "pl", page_size: "A4" });
-    navigate(`/editor/${(project as any).id}`);
   };
 
   const deleteProject = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm("Czy na pewno chcesz usunąć ten projekt?")) return;
     await supabase.from("projects").delete().eq("id", id);
-    setProjects(projects.filter((p) => p.id !== id));
+    setProjects(projects.filter((p: any) => p.id !== id));
   };
 
-  const duplicateProject = async (project: ProjectData, e: React.MouseEvent) => {
+  const duplicateProject = async (project: any, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) return;
     const { data: newProject } = await supabase
@@ -148,71 +107,12 @@ export default function Dashboard() {
             <h2 className="font-display text-2xl font-bold text-foreground">Twoje projekty</h2>
             <p className="text-muted-foreground text-sm">{projects.length} e-booków</p>
           </div>
-          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-gold text-primary-foreground hover:opacity-90 gap-2">
-                <Plus className="h-4 w-4" /> Nowy projekt
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-card border-border">
-              <DialogHeader>
-                <DialogTitle className="font-display text-foreground">Nowy e-book</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 mt-4">
-                <Input
-                  placeholder="Tytuł e-booka"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="bg-secondary border-border"
-                />
-                <Input
-                  placeholder="Podtytuł (opcjonalnie)"
-                  value={form.subtitle}
-                  onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
-                  className="bg-secondary border-border"
-                />
-                <Input
-                  placeholder="Autor"
-                  value={form.author_name}
-                  onChange={(e) => setForm({ ...form, author_name: e.target.value })}
-                  className="bg-secondary border-border"
-                />
-                <Textarea
-                  placeholder="Opis (opcjonalnie)"
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="bg-secondary border-border"
-                  rows={3}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <Select value={form.language} onValueChange={(v) => setForm({ ...form, language: v })}>
-                    <SelectTrigger className="bg-secondary border-border">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pl">Polski</SelectItem>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="de">Deutsch</SelectItem>
-                      <SelectItem value="es">Español</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={form.page_size} onValueChange={(v) => setForm({ ...form, page_size: v })}>
-                    <SelectTrigger className="bg-secondary border-border">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(PAGE_SIZES).map(([key, val]) => (
-                        <SelectItem key={key} value={key}>{val.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button onClick={createProject} className="w-full bg-gradient-gold text-primary-foreground hover:opacity-90">
-                  Utwórz e-book
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button
+            onClick={() => navigate("/new")}
+            className="bg-gradient-gold text-primary-foreground hover:opacity-90 gap-2"
+          >
+            <Plus className="h-4 w-4" /> Nowy projekt
+          </Button>
         </div>
 
         {projects.length === 0 ? (
@@ -222,13 +122,16 @@ export default function Dashboard() {
             </div>
             <h3 className="font-display text-xl font-semibold text-foreground mb-2">Brak projektów</h3>
             <p className="text-muted-foreground mb-6">Utwórz swój pierwszy e-book</p>
-            <Button onClick={() => setCreateOpen(true)} className="bg-gradient-gold text-primary-foreground hover:opacity-90 gap-2">
+            <Button
+              onClick={() => navigate("/new")}
+              className="bg-gradient-gold text-primary-foreground hover:opacity-90 gap-2"
+            >
               <Plus className="h-4 w-4" /> Nowy projekt
             </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {projects.map((p) => (
+            {projects.map((p: any) => (
               <div
                 key={p.id}
                 onClick={() => navigate(`/editor/${p.id}`)}
