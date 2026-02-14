@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { TEMPLATES, PAGE_SIZES } from "@/lib/templates";
+import { TEMPLATES, PAGE_SIZES, FONT_OPTIONS } from "@/lib/templates";
 import type { Block, ProjectData } from "@/lib/blocks";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -41,6 +41,7 @@ export function RightPanel({ project, onUpdateProject, selectedBlock, onUpdateBl
     }
   };
 
+  const currentTemplate = TEMPLATES[project.template || "modern"] || TEMPLATES.modern;
   const headerConfig = project.header_config || {};
   const footerConfig = project.footer_config || {};
 
@@ -96,14 +97,6 @@ export function RightPanel({ project, onUpdateProject, selectedBlock, onUpdateBl
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Alt text</Label>
-                  <Input
-                    value={selectedBlock.alt || ""}
-                    onChange={(e) => onUpdateBlock({ alt: e.target.value })}
-                    className="bg-secondary border-border h-8 text-xs mt-1"
-                  />
-                </div>
-                <div>
                   <Label className="text-xs text-muted-foreground">Szerokość (%)</Label>
                   <Slider
                     value={[selectedBlock.width || 100]}
@@ -131,10 +124,10 @@ export function RightPanel({ project, onUpdateProject, selectedBlock, onUpdateBl
             {(selectedBlock.type === "heading" || selectedBlock.type === "text") && (
               <div className="space-y-3 mt-3">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Kolor tekstu</Label>
+                  <Label className="text-xs text-muted-foreground">Kolor tekstu (cały blok)</Label>
                   <Input
                     type="color"
-                    value={selectedBlock.textColor || "#1a1a1a"}
+                    value={selectedBlock.textColor || currentTemplate.colors.text}
                     onChange={(e) => onUpdateBlock({ textColor: e.target.value })}
                     className="h-8 w-full mt-1 cursor-pointer"
                   />
@@ -158,6 +151,7 @@ export function RightPanel({ project, onUpdateProject, selectedBlock, onUpdateBl
                     </Button>
                   </div>
                 </div>
+                <p className="text-[10px] text-muted-foreground">💡 Zaznacz tekst aby kolorować pojedyncze wyrazy</p>
               </div>
             )}
             <div className="border-b border-border/30 mt-4" />
@@ -187,6 +181,58 @@ export function RightPanel({ project, onUpdateProject, selectedBlock, onUpdateBl
                 <p className="text-[10px] text-muted-foreground">{t.description}</p>
               </button>
             ))}
+          </div>
+        </section>
+
+        {/* Fonts */}
+        <section>
+          <h4 className="text-xs font-medium text-primary uppercase tracking-wider mb-3">Czcionki</h4>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs text-muted-foreground">Nagłówki</Label>
+              <Select
+                value={currentTemplate.headingFont}
+                onValueChange={(v) => {
+                  // Update template fonts by creating custom override
+                  const tmpl = { ...currentTemplate, headingFont: v };
+                  TEMPLATES[currentTemplate.id] = tmpl;
+                  onUpdateProject({ template: currentTemplate.id });
+                }}
+              >
+                <SelectTrigger className="bg-secondary border-border h-8 text-xs mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {FONT_OPTIONS.map((f) => (
+                    <SelectItem key={f.value} value={f.value}>
+                      <span style={{ fontFamily: f.value }}>{f.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Treść</Label>
+              <Select
+                value={currentTemplate.bodyFont}
+                onValueChange={(v) => {
+                  const tmpl = { ...currentTemplate, bodyFont: v };
+                  TEMPLATES[currentTemplate.id] = tmpl;
+                  onUpdateProject({ template: currentTemplate.id });
+                }}
+              >
+                <SelectTrigger className="bg-secondary border-border h-8 text-xs mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {FONT_OPTIONS.map((f) => (
+                    <SelectItem key={f.value} value={f.value}>
+                      <span style={{ fontFamily: f.value }}>{f.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </section>
 
@@ -224,27 +270,6 @@ export function RightPanel({ project, onUpdateProject, selectedBlock, onUpdateBl
           </div>
         </section>
 
-        {/* Header */}
-        <section>
-          <h4 className="text-xs font-medium text-primary uppercase tracking-wider mb-3">Nagłówek</h4>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs text-muted-foreground">Pokaż tytuł</Label>
-              <Switch
-                checked={headerConfig.showTitle ?? true}
-                onCheckedChange={(v) => onUpdateProject({ header_config: { ...headerConfig, showTitle: v } })}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label className="text-xs text-muted-foreground">Pokaż autora</Label>
-              <Switch
-                checked={headerConfig.showAuthor ?? true}
-                onCheckedChange={(v) => onUpdateProject({ header_config: { ...headerConfig, showAuthor: v } })}
-              />
-            </div>
-          </div>
-        </section>
-
         {/* Footer */}
         <section>
           <h4 className="text-xs font-medium text-primary uppercase tracking-wider mb-3">Stopka</h4>
@@ -256,28 +281,6 @@ export function RightPanel({ project, onUpdateProject, selectedBlock, onUpdateBl
                 onCheckedChange={(v) => onUpdateProject({ footer_config: { ...footerConfig, showPageNumbers: v } })}
               />
             </div>
-            <Input
-              value={footerConfig.copyrightText || "© Paveelo"}
-              onChange={(e) => onUpdateProject({ footer_config: { ...footerConfig, copyrightText: e.target.value } })}
-              placeholder="Tekst copyright"
-              className="bg-secondary border-border h-8 text-xs"
-            />
-          </div>
-        </section>
-
-        {/* AI future features */}
-        <section>
-          <h4 className="text-xs font-medium text-primary uppercase tracking-wider mb-3">AI (wkrótce)</h4>
-          <div className="space-y-1.5">
-            {["Przepisz treść", "Podsumuj rozdział", "Rozwiń treść", "Przetłumacz e-book"].map((f) => (
-              <button
-                key={f}
-                className="w-full text-left px-3 py-2 rounded text-xs text-muted-foreground bg-secondary/50 cursor-not-allowed opacity-50"
-                disabled
-              >
-                {f}
-              </button>
-            ))}
           </div>
         </section>
       </div>

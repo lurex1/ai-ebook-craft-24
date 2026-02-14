@@ -3,11 +3,8 @@ import { Palette, Paintbrush, Sparkles } from "lucide-react";
 
 interface Props {
   containerRef: React.RefObject<HTMLElement>;
-  onChangeTextColor: (color: string) => void;
-  onChangeBgColor: (color: string) => void;
+  onApplyInlineStyle: (style: "color" | "backgroundColor", value: string) => void;
   onGenerateImage: (selectedText: string) => void;
-  currentTextColor?: string;
-  currentBgColor?: string;
 }
 
 const TEXT_COLORS = [
@@ -20,10 +17,7 @@ const BG_COLORS = [
   "#bbdefb", "#d1c4e9", "#f0f4c3", "#ffccbc", "#b2dfdb",
 ];
 
-export function TextSelectionToolbar({
-  containerRef, onChangeTextColor, onChangeBgColor, onGenerateImage,
-  currentTextColor, currentBgColor,
-}: Props) {
+export function TextSelectionToolbar({ containerRef, onApplyInlineStyle, onGenerateImage }: Props) {
   const [showTextColors, setShowTextColors] = useState(false);
   const [showBgColors, setShowBgColors] = useState(false);
   const [selectedText, setSelectedText] = useState("");
@@ -35,7 +29,6 @@ export function TextSelectionToolbar({
     const handleSelection = () => {
       const sel = window.getSelection();
       if (!sel || sel.isCollapsed || !containerRef.current) {
-        // delay hide to allow button clicks
         setTimeout(() => {
           const sel2 = window.getSelection();
           if (!sel2 || sel2.isCollapsed) setVisible(false);
@@ -44,9 +37,7 @@ export function TextSelectionToolbar({
       }
 
       const range = sel.getRangeAt(0);
-      if (!containerRef.current.contains(range.commonAncestorContainer)) {
-        return;
-      }
+      if (!containerRef.current.contains(range.commonAncestorContainer)) return;
 
       const rect = range.getBoundingClientRect();
       const containerRect = containerRef.current.getBoundingClientRect();
@@ -78,21 +69,21 @@ export function TextSelectionToolbar({
       }}
       onMouseDown={(e) => e.preventDefault()}
     >
-      {/* Text color */}
+      {/* Text color - applies to selected word */}
       <div className="relative">
         <button
           onClick={() => { setShowTextColors(!showTextColors); setShowBgColors(false); }}
           className="p-1.5 rounded hover:bg-gray-100 transition-colors"
-          title="Kolor tekstu"
+          title="Kolor tekstu (zaznaczenie)"
         >
-          <Palette className="h-3.5 w-3.5" style={{ color: currentTextColor || "#1a1a1a" }} />
+          <Palette className="h-3.5 w-3.5" style={{ color: "#1a1a1a" }} />
         </button>
         {showTextColors && (
           <div className="absolute top-full left-0 mt-1 p-2 bg-white rounded-lg shadow-lg border border-gray-200 grid grid-cols-5 gap-1 min-w-[140px]">
             {TEXT_COLORS.map((c) => (
               <button
                 key={c}
-                onClick={() => { onChangeTextColor(c); setShowTextColors(false); }}
+                onClick={() => { onApplyInlineStyle("color", c); setShowTextColors(false); }}
                 className="h-6 w-6 rounded-full border border-gray-200 hover:scale-110 transition-transform"
                 style={{ backgroundColor: c }}
               />
@@ -101,21 +92,21 @@ export function TextSelectionToolbar({
         )}
       </div>
 
-      {/* Background color */}
+      {/* Background color - applies to selected word */}
       <div className="relative">
         <button
           onClick={() => { setShowBgColors(!showBgColors); setShowTextColors(false); }}
           className="p-1.5 rounded hover:bg-gray-100 transition-colors"
-          title="Kolor tła"
+          title="Podświetlenie (zaznaczenie)"
         >
-          <Paintbrush className="h-3.5 w-3.5" style={{ color: currentBgColor && currentBgColor !== "transparent" ? currentBgColor : "#999" }} />
+          <Paintbrush className="h-3.5 w-3.5" style={{ color: "#999" }} />
         </button>
         {showBgColors && (
           <div className="absolute top-full left-0 mt-1 p-2 bg-white rounded-lg shadow-lg border border-gray-200 grid grid-cols-5 gap-1 min-w-[140px]">
             {BG_COLORS.map((c) => (
               <button
                 key={c}
-                onClick={() => { onChangeBgColor(c); setShowBgColors(false); }}
+                onClick={() => { onApplyInlineStyle("backgroundColor", c); setShowBgColors(false); }}
                 className="h-6 w-6 rounded-full border border-gray-200 hover:scale-110 transition-transform"
                 style={{ backgroundColor: c === "transparent" ? "white" : c }}
               >

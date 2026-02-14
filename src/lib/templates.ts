@@ -19,6 +19,19 @@ export interface Template {
   };
 }
 
+export const FONT_OPTIONS = [
+  { value: "'Playfair Display', serif", label: "Playfair Display" },
+  { value: "'Source Sans 3', sans-serif", label: "Source Sans 3" },
+  { value: "'Georgia', serif", label: "Georgia" },
+  { value: "'Arial', sans-serif", label: "Arial" },
+  { value: "'Helvetica Neue', Arial, sans-serif", label: "Helvetica Neue" },
+  { value: "'Times New Roman', serif", label: "Times New Roman" },
+  { value: "'Lora', serif", label: "Lora" },
+  { value: "'Merriweather', serif", label: "Merriweather" },
+  { value: "'Roboto', sans-serif", label: "Roboto" },
+  { value: "'Open Sans', sans-serif", label: "Open Sans" },
+];
+
 export const TEMPLATES: Record<string, Template> = {
   modern: {
     id: "modern",

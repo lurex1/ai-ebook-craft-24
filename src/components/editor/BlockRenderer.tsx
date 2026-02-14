@@ -1,4 +1,4 @@
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useCallback } from "react";
 import { marked } from "marked";
 import type { Block } from "@/lib/blocks";
 import type { Template } from "@/lib/templates";
@@ -25,17 +25,32 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
   const editRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleBlur = () => {
+  const handleInput = useCallback(() => {
     if (editRef.current && (block.type === "heading" || block.type === "text")) {
-      onUpdate({ content: editRef.current.innerText });
+      onUpdate({ content: editRef.current.innerHTML });
     }
-  };
+  }, [block.type, onUpdate]);
 
   const renderedHtml = useMemo(() => {
     if (block.type === "text" && block.content) {
+      // If content already has HTML tags (from contentEditable), use as-is
+      if (block.content.includes("<") && block.content.includes(">")) {
+        return block.content;
+      }
       return renderMarkdown(block.content);
     }
     return "";
+  }, [block.type, block.content]);
+
+  const headingHtml = useMemo(() => {
+    if (block.type === "heading" && block.content) {
+      if (block.content.includes("<") && block.content.includes(">")) {
+        return block.content;
+      }
+      // Strip markdown # prefixes for display
+      return block.content.replace(/^#{1,3}\s+/, "");
+    }
+    return block.content || "";
   }, [block.type, block.content]);
 
   if (block.type === "heading") {
@@ -46,7 +61,8 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
           ref={editRef}
           contentEditable={isSelected}
           suppressContentEditableWarning
-          onBlur={handleBlur}
+          onInput={handleInput}
+          dangerouslySetInnerHTML={{ __html: headingHtml }}
           style={{
             fontFamily: template.headingFont,
             fontSize: sizes[block.level || 2],
@@ -60,17 +76,12 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
             borderRadius: block.bgColor ? 4 : undefined,
             padding: block.bgColor && block.bgColor !== "transparent" ? "4px 8px" : undefined,
           }}
-        >
-          {block.content}
-        </div>
+        />
         {isSelected && onGenerateImage && (
           <TextSelectionToolbar
             containerRef={containerRef as React.RefObject<HTMLElement>}
-            onChangeTextColor={(c) => onUpdate({ textColor: c })}
-            onChangeBgColor={(c) => onUpdate({ bgColor: c })}
+            onApplyInlineStyle={(style, value) => applyInlineStyle(style, value)}
             onGenerateImage={(text) => onGenerateImage(text)}
-            currentTextColor={block.textColor}
-            currentBgColor={block.bgColor}
           />
         )}
       </div>
@@ -78,56 +89,34 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
   }
 
   if (block.type === "text") {
-    if (isSelected) {
-      return (
-        <div ref={containerRef} className="relative">
-          <div
-            ref={editRef}
-            contentEditable
-            suppressContentEditableWarning
-            onBlur={handleBlur}
-            style={{
-              fontFamily: template.bodyFont,
-              fontSize: "1em",
-              color: block.textColor || template.colors.text,
-              backgroundColor: block.bgColor && block.bgColor !== "transparent" ? block.bgColor : undefined,
-              outline: "none",
-              cursor: "text",
-              whiteSpace: "pre-wrap",
-              borderRadius: block.bgColor ? 4 : undefined,
-              padding: block.bgColor && block.bgColor !== "transparent" ? "8px 12px" : undefined,
-            }}
-          >
-            {block.content}
-          </div>
-          {onGenerateImage && (
-            <TextSelectionToolbar
-              containerRef={containerRef as React.RefObject<HTMLElement>}
-              onChangeTextColor={(c) => onUpdate({ textColor: c })}
-              onChangeBgColor={(c) => onUpdate({ bgColor: c })}
-              onGenerateImage={(text) => onGenerateImage(text)}
-              currentTextColor={block.textColor}
-              currentBgColor={block.bgColor}
-            />
-          )}
-        </div>
-      );
-    }
-
     return (
-      <div
-        className="prose-ebook"
-        style={{
-          fontFamily: template.bodyFont,
-          fontSize: "1em",
-          color: block.textColor || template.colors.text,
-          backgroundColor: block.bgColor && block.bgColor !== "transparent" ? block.bgColor : undefined,
-          cursor: "pointer",
-          borderRadius: block.bgColor ? 4 : undefined,
-          padding: block.bgColor && block.bgColor !== "transparent" ? "8px 12px" : undefined,
-        }}
-        dangerouslySetInnerHTML={{ __html: renderedHtml }}
-      />
+      <div ref={containerRef} className="relative">
+        <div
+          ref={editRef}
+          contentEditable={isSelected}
+          suppressContentEditableWarning
+          onInput={handleInput}
+          className="prose-ebook"
+          dangerouslySetInnerHTML={{ __html: renderedHtml }}
+          style={{
+            fontFamily: template.bodyFont,
+            fontSize: "1em",
+            color: block.textColor || template.colors.text,
+            backgroundColor: block.bgColor && block.bgColor !== "transparent" ? block.bgColor : undefined,
+            outline: "none",
+            cursor: isSelected ? "text" : "pointer",
+            borderRadius: block.bgColor ? 4 : undefined,
+            padding: block.bgColor && block.bgColor !== "transparent" ? "8px 12px" : undefined,
+          }}
+        />
+        {isSelected && onGenerateImage && (
+          <TextSelectionToolbar
+            containerRef={containerRef as React.RefObject<HTMLElement>}
+            onApplyInlineStyle={(style, value) => applyInlineStyle(style, value)}
+            onGenerateImage={(text) => onGenerateImage(text)}
+          />
+        )}
+      </div>
     );
   }
 
@@ -180,4 +169,26 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
   }
 
   return null;
+}
+
+/** Apply inline CSS style to current selection (word-level coloring) */
+function applyInlineStyle(style: "color" | "backgroundColor", value: string) {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) return;
+
+  const range = sel.getRangeAt(0);
+  const span = document.createElement("span");
+  span.style[style] = value;
+
+  try {
+    range.surroundContents(span);
+    sel.removeAllRanges();
+  } catch {
+    // If selection crosses element boundaries, use execCommand fallback
+    if (style === "color") {
+      document.execCommand("foreColor", false, value);
+    } else {
+      document.execCommand("hiliteColor", false, value === "transparent" ? "transparent" : value);
+    }
+  }
 }
