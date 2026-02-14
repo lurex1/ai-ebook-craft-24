@@ -203,6 +203,41 @@ export default function Editor() {
     toast({ title: "Zaimportowano treść" });
   };
 
+  // Generate AI illustration for a block
+  const generateIllustration = async (contextText: string) => {
+    if (!project || !currentChapter) return;
+    // Gather context from nearby text blocks
+    const allText = currentChapter.blocks
+      .filter((b) => b.type === "text" && b.content)
+      .map((b) => b.content!)
+      .join(" ")
+      .slice(0, 1000);
+    const finalContext = contextText || allText;
+
+    toast({ title: "Generuję ilustrację AI..." });
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-ebook", {
+        body: {
+          action: "generate-illustration",
+          contextText: finalContext,
+          bookTitle: project.title,
+        },
+      });
+      if (error || !data?.imageUrl) throw new Error(data?.error || "Błąd generowania");
+
+      // Add image block
+      const imgBlock = createBlock("image");
+      imgBlock.url = data.imageUrl;
+      imgBlock.alt = "Ilustracja AI";
+      imgBlock.width = 80;
+      const newBlocks = [...currentChapter.blocks, imgBlock];
+      updateBlocks(newBlocks);
+      toast({ title: "Dodano ilustrację!" });
+    } catch (err: any) {
+      toast({ title: "Błąd", description: err.message, variant: "destructive" });
+    }
+  };
+
   // Check if chapter has only headings (no real text content)
   const chapterNeedsContent = (ch: ChapterData) => {
     if (ch.blocks.length === 0) return false;
@@ -224,15 +259,13 @@ export default function Editor() {
       if (block.type === "heading") {
         newBlocks.push(block);
 
-        // Check if next block is already meaningful text
         const nextBlock = ch.blocks[i + 1];
         if (nextBlock && nextBlock.type === "text" && nextBlock.content && nextBlock.content.trim().length > 50) {
-          continue; // Already has content, skip
+          continue;
         }
 
-        // Skip the empty text block that follows
         if (nextBlock && nextBlock.type === "text" && (!nextBlock.content || nextBlock.content.trim().length <= 50)) {
-          i++; // Skip the empty/placeholder text block
+          i++;
         }
 
         try {
@@ -256,21 +289,17 @@ export default function Editor() {
           // Skip failed generations
         }
       } else {
-        // Keep non-heading blocks that aren't empty text
         if (block.type === "text" && (!block.content || block.content.trim().length <= 50)) {
-          // Skip empty/placeholder text blocks (will be replaced by AI)
           continue;
         }
         newBlocks.push(block);
       }
     }
 
-    // Update chapter with new blocks
     setChapters((prev) => prev.map((c) => c.id === ch.id ? { ...c, blocks: newBlocks } : c));
     await supabase.from("chapters").update({ blocks: newBlocks as any }).eq("id", ch.id);
   };
 
-  // Generate content for current chapter
   const generateCurrentChapterContent = async () => {
     if (!currentChapter) return;
     setAiGenerating(true);
@@ -286,7 +315,6 @@ export default function Editor() {
     }
   };
 
-  // Generate content for ALL chapters
   const generateAllChaptersContent = async () => {
     const chaptersToFill = chapters.filter(chapterNeedsContent);
     if (chaptersToFill.length === 0) {
@@ -406,6 +434,7 @@ export default function Editor() {
           pageSize={project.page_size}
           onGenerateContent={generateCurrentChapterContent}
           isGenerating={aiGenerating}
+          onGenerateImage={generateIllustration}
         />
         <RightPanel
           project={project}
