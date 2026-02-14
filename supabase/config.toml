@@ -1,0 +1,4 @@
+project_id = "bydunkpfiqmstehodfwi"
+
+[functions.generate-ebook]
+verify_jwt = false
