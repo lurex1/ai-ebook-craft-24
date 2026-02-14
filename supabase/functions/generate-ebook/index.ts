@@ -40,6 +40,65 @@ serve(async (req) => {
   try {
     const { action, ...params } = await req.json();
 
+    // ====== ANALYZE MATERIALS ======
+    if (action === "analyze") {
+      const { materials } = params;
+      const analyzeTool = {
+        type: "function",
+        function: {
+          name: "analyze_materials",
+          description: "Analyze materials and suggest ebook structure",
+          parameters: {
+            type: "object",
+            properties: {
+              title: { type: "string", description: "Suggested ebook title" },
+              subtitle: { type: "string", description: "Suggested subtitle" },
+              author_name: { type: "string", description: "Suggested author name if found in materials, empty string otherwise" },
+              description: { type: "string", description: "Short ebook description, 1-2 sentences" },
+              chapters: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    points: { type: "array", items: { type: "string" } },
+                  },
+                  required: ["title", "points"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ["title", "subtitle", "author_name", "description", "chapters"],
+            additionalProperties: false,
+          },
+        },
+      };
+
+      const data = await callAI(
+        [
+          {
+            role: "system",
+            content: `Jesteś ekspertem od tworzenia e-booków. Analizujesz podane materiały (tekst, treść z URL, wytyczne użytkownika) i proponujesz:
+1. Profesjonalny tytuł e-booka
+2. Podtytuł
+3. Krótki opis (1-2 zdania)
+4. Strukturę rozdziałów (5-10 rozdziałów) z punktami w każdym (3-5 punktów)
+
+Jeśli materiały zawierają wskazówki autora, zasugeruj imię. Jeśli nie — zostaw puste.
+Struktura powinna prowadzić czytelnika od podstaw do zaawansowanych zagadnień.
+Wszystko po polsku.`,
+          },
+          { role: "user", content: `Materiały do analizy:\n\n${materials}` },
+        ],
+        [analyzeTool],
+        { type: "function", function: { name: "analyze_materials" } }
+      );
+
+      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+      if (!toolCall) throw new Error("AI nie przeanalizowało materiałów");
+      return json(JSON.parse(toolCall.function.arguments));
+    }
+
     // ====== STRUCTURE ======
     if (action === "structure") {
       const { materials, chaptersCount, pointsPerChapter } = params;
