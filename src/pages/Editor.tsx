@@ -11,12 +11,13 @@ import { CenterCanvas } from "@/components/editor/CenterCanvas";
 import { RightPanel } from "@/components/editor/RightPanel";
 import {
   BookOpen, ArrowLeft, Save, Loader2, Check,
-  Import, Download, ImageIcon, Sparkles,
+  Import, Download, ImageIcon, Sparkles, Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImportDialog } from "@/components/editor/ImportDialog";
 import { ExportDialog } from "@/components/editor/ExportDialog";
 import { CoverGenerator } from "@/components/editor/CoverGenerator";
+import { Progress } from "@/components/ui/progress";
 
 export default function Editor() {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +34,8 @@ export default function Editor() {
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [coverOpen, setCoverOpen] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiProgress, setAiProgress] = useState({ current: 0, total: 0 });
 
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
@@ -200,6 +203,113 @@ export default function Editor() {
     toast({ title: "Zaimportowano treść" });
   };
 
+  // Check if chapter has only headings (no real text content)
+  const chapterNeedsContent = (ch: ChapterData) => {
+    if (ch.blocks.length === 0) return false;
+    const hasHeadings = ch.blocks.some((b) => b.type === "heading");
+    const hasRealText = ch.blocks.some((b) => b.type === "text" && b.content && b.content.trim().length > 50);
+    return hasHeadings && !hasRealText;
+  };
+
+  // Generate AI content for a single chapter
+  const generateChapterContent = async (ch: ChapterData) => {
+    if (!project) return;
+    const headings = ch.blocks.filter((b) => b.type === "heading");
+    if (headings.length === 0) return;
+
+    const newBlocks: Block[] = [];
+    for (let i = 0; i < ch.blocks.length; i++) {
+      const block = ch.blocks[i];
+
+      if (block.type === "heading") {
+        newBlocks.push(block);
+
+        // Check if next block is already meaningful text
+        const nextBlock = ch.blocks[i + 1];
+        if (nextBlock && nextBlock.type === "text" && nextBlock.content && nextBlock.content.trim().length > 50) {
+          continue; // Already has content, skip
+        }
+
+        // Skip the empty text block that follows
+        if (nextBlock && nextBlock.type === "text" && (!nextBlock.content || nextBlock.content.trim().length <= 50)) {
+          i++; // Skip the empty/placeholder text block
+        }
+
+        try {
+          const { data, error } = await supabase.functions.invoke("generate-ebook", {
+            body: {
+              action: "generate-section",
+              bookTitle: project.title,
+              materials: "",
+              sectionPath: `Rozdział: ${ch.title}`,
+              sectionTitle: block.content || "",
+              contextBefore: i > 0 ? ch.blocks[Math.max(0, i - 1)]?.content || "" : "",
+              contextAfter: i < ch.blocks.length - 1 ? ch.blocks[i + 1]?.content || "" : "",
+              totalSections: headings.length,
+              currentIndex: headings.indexOf(block),
+            },
+          });
+          if (!error && data?.content) {
+            newBlocks.push({ id: crypto.randomUUID(), type: "text", content: data.content });
+          }
+        } catch {
+          // Skip failed generations
+        }
+      } else {
+        // Keep non-heading blocks that aren't empty text
+        if (block.type === "text" && (!block.content || block.content.trim().length <= 50)) {
+          // Skip empty/placeholder text blocks (will be replaced by AI)
+          continue;
+        }
+        newBlocks.push(block);
+      }
+    }
+
+    // Update chapter with new blocks
+    setChapters((prev) => prev.map((c) => c.id === ch.id ? { ...c, blocks: newBlocks } : c));
+    await supabase.from("chapters").update({ blocks: newBlocks as any }).eq("id", ch.id);
+  };
+
+  // Generate content for current chapter
+  const generateCurrentChapterContent = async () => {
+    if (!currentChapter) return;
+    setAiGenerating(true);
+    setAiProgress({ current: 0, total: 1 });
+    try {
+      await generateChapterContent(currentChapter);
+      toast({ title: "Wygenerowano treść rozdziału!" });
+    } catch (err: any) {
+      toast({ title: "Błąd", description: err.message, variant: "destructive" });
+    } finally {
+      setAiGenerating(false);
+      setAiProgress({ current: 0, total: 0 });
+    }
+  };
+
+  // Generate content for ALL chapters
+  const generateAllChaptersContent = async () => {
+    const chaptersToFill = chapters.filter(chapterNeedsContent);
+    if (chaptersToFill.length === 0) {
+      toast({ title: "Wszystkie rozdziały mają już treść" });
+      return;
+    }
+    setAiGenerating(true);
+    setAiProgress({ current: 0, total: chaptersToFill.length });
+
+    try {
+      for (let i = 0; i < chaptersToFill.length; i++) {
+        setAiProgress({ current: i + 1, total: chaptersToFill.length });
+        await generateChapterContent(chaptersToFill[i]);
+      }
+      toast({ title: "Wygenerowano treść dla wszystkich rozdziałów!" });
+    } catch (err: any) {
+      toast({ title: "Błąd", description: err.message, variant: "destructive" });
+    } finally {
+      setAiGenerating(false);
+      setAiProgress({ current: 0, total: 0 });
+    }
+  };
+
   if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-gradient-dark flex items-center justify-center">
@@ -233,6 +343,19 @@ export default function Editor() {
           </span>
         </div>
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={generateAllChaptersContent}
+            disabled={aiGenerating}
+            className="text-primary gap-1 text-xs bg-primary/10 hover:bg-primary/20"
+          >
+            {aiGenerating ? (
+              <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Generuję {aiProgress.current}/{aiProgress.total}...</>
+            ) : (
+              <><Wand2 className="h-3.5 w-3.5" /> Generuj treści AI</>
+            )}
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => setImportOpen(true)} className="text-muted-foreground gap-1 text-xs">
             <Import className="h-3.5 w-3.5" /> Import
           </Button>
@@ -244,6 +367,21 @@ export default function Editor() {
           </Button>
         </div>
       </header>
+
+      {/* AI Progress bar */}
+      {aiGenerating && (
+        <div className="px-4 py-2 bg-card border-b border-border/50">
+          <div className="flex items-center gap-3 max-w-md">
+            <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+            <div className="flex-1">
+              <Progress value={aiProgress.total > 0 ? (aiProgress.current / aiProgress.total) * 100 : 0} className="h-2" />
+            </div>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              Rozdział {aiProgress.current}/{aiProgress.total}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* 3-panel layout */}
       <div className="flex-1 flex overflow-hidden">
@@ -266,6 +404,8 @@ export default function Editor() {
           onDeleteBlock={deleteBlock}
           onMoveBlock={moveBlock}
           pageSize={project.page_size}
+          onGenerateContent={generateCurrentChapterContent}
+          isGenerating={aiGenerating}
         />
         <RightPanel
           project={project}
