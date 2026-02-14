@@ -272,6 +272,48 @@ ${nextTitle ? `Następna sekcja: "${nextTitle}"` : ""}`,
       return json({ coverUrl: urlData.publicUrl });
     }
 
+    // ====== GENERATE ILLUSTRATION ======
+    if (action === "generate-illustration") {
+      const { contextText, bookTitle } = params;
+      const prompt = `Create a simple, elegant illustration for an ebook chapter. The illustration should relate to this content: "${contextText.slice(0, 500)}". Book: "${bookTitle}". Style: pastel colors, minimalist, clean lines, soft gradients, no text on the image, simple shapes. The image should look professional and complement ebook content. Square format.`;
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image",
+          messages: [{ role: "user", content: prompt }],
+          modalities: ["image", "text"],
+        }),
+      });
+
+      if (!response.ok) {
+        const t = await response.text();
+        throw new Error("Illustration generation failed: " + t);
+      }
+
+      const aiData = await response.json();
+      const imageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      if (!imageUrl) throw new Error("Brak obrazu w odpowiedzi AI");
+
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+
+      const base64Data = imageUrl.replace(/^data:image\/\w+;base64,/, "");
+      const bytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+      const fileName = `illustration-${crypto.randomUUID()}.png`;
+
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from("ebook-covers")
+        .upload(fileName, bytes, { contentType: "image/png" });
+      if (uploadError) throw new Error("Upload error: " + uploadError.message);
+
+      const { data: urlData } = supabaseAdmin.storage.from("ebook-covers").getPublicUrl(fileName);
+      return json({ imageUrl: urlData.publicUrl });
+    }
+
     throw new Error("Nieznana akcja: " + action);
   } catch (e) {
     console.error("Error:", e);

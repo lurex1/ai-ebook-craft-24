@@ -17,6 +17,7 @@ interface Props {
   pageSize: string;
   onGenerateContent?: () => void;
   isGenerating?: boolean;
+  onGenerateImage?: (contextText: string) => void;
 }
 
 const BLOCK_TOOLS: { type: BlockType; icon: React.ElementType; label: string }[] = [
@@ -30,7 +31,7 @@ const BLOCK_TOOLS: { type: BlockType; icon: React.ElementType; label: string }[]
 export function CenterCanvas({
   chapter, template, selectedBlockId, onSelectBlock,
   onAddBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, pageSize,
-  onGenerateContent, isGenerating,
+  onGenerateContent, isGenerating, onGenerateImage,
 }: Props) {
   const size = PAGE_SIZES[pageSize] || PAGE_SIZES.A4;
   const aspect = size.height / size.width;
@@ -91,7 +92,7 @@ export function CenterCanvas({
             <>
               {chapter.blocks.map((block, idx) => (
                 <div key={block.id} style={{ marginBottom: template.spacing.paragraphGap }}>
-                  <BlockRenderer block={block} template={template} onUpdate={(updates) => onUpdateBlock(block.id, updates)} isSelected={false} />
+                  <BlockRenderer block={block} template={template} onUpdate={(updates) => onUpdateBlock(block.id, updates)} isSelected={false} onGenerateImage={onGenerateImage} />
                 </div>
               ))}
               <div className="flex flex-col items-center gap-3 py-8 border-2 border-dashed rounded-xl mt-4" style={{ borderColor: template.colors.accent }}>
@@ -125,6 +126,7 @@ export function CenterCanvas({
                   template={template}
                   onUpdate={(updates) => onUpdateBlock(block.id, updates)}
                   isSelected={selectedBlockId === block.id}
+                  onGenerateImage={onGenerateImage}
                 />
                 {/* Block controls */}
                 {selectedBlockId === block.id && (

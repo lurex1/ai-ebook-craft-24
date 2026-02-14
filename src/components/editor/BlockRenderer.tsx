@@ -1,4 +1,5 @@
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
+import { marked } from "marked";
 import type { Block } from "@/lib/blocks";
 import type { Template } from "@/lib/templates";
 
@@ -7,9 +8,25 @@ interface Props {
   template: Template;
   onUpdate: (updates: Partial<Block>) => void;
   isSelected: boolean;
+  onGenerateImage?: (contextText: string) => void;
 }
 
-export function BlockRenderer({ block, template, onUpdate, isSelected }: Props) {
+// Configure marked for clean output
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
+
+function renderMarkdown(text: string): string {
+  // Strip top-level headings that AI sometimes adds (### Title)
+  const cleaned = text.replace(/^#{1,3}\s+.*$/gm, (match) => {
+    // Keep the text but remove the markdown heading markers
+    return `<strong>${match.replace(/^#{1,3}\s+/, "")}</strong>`;
+  });
+  return marked.parse(cleaned) as string;
+}
+
+export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerateImage }: Props) {
   const editRef = useRef<HTMLDivElement>(null);
 
   const handleBlur = () => {
@@ -18,8 +35,14 @@ export function BlockRenderer({ block, template, onUpdate, isSelected }: Props) 
     }
   };
 
+  const renderedHtml = useMemo(() => {
+    if (block.type === "text" && block.content) {
+      return renderMarkdown(block.content);
+    }
+    return "";
+  }, [block.type, block.content]);
+
   if (block.type === "heading") {
-    const Tag = block.level === 1 ? "h1" : block.level === 2 ? "h2" : "h3";
     const sizes: Record<number, string> = { 1: "2.2em", 2: "1.6em", 3: "1.3em" };
     return (
       <div
@@ -44,23 +67,38 @@ export function BlockRenderer({ block, template, onUpdate, isSelected }: Props) 
   }
 
   if (block.type === "text") {
+    if (isSelected) {
+      return (
+        <div
+          ref={editRef}
+          contentEditable
+          suppressContentEditableWarning
+          onBlur={handleBlur}
+          style={{
+            fontFamily: template.bodyFont,
+            fontSize: "1em",
+            color: template.colors.text,
+            outline: "none",
+            cursor: "text",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {block.content}
+        </div>
+      );
+    }
+
     return (
       <div
-        ref={editRef}
-        contentEditable={isSelected}
-        suppressContentEditableWarning
-        onBlur={handleBlur}
+        className="prose-ebook"
         style={{
           fontFamily: template.bodyFont,
           fontSize: "1em",
           color: template.colors.text,
-          outline: "none",
-          cursor: isSelected ? "text" : "pointer",
-          whiteSpace: "pre-wrap",
+          cursor: "pointer",
         }}
-      >
-        {block.content}
-      </div>
+        dangerouslySetInnerHTML={{ __html: renderedHtml }}
+      />
     );
   }
 
@@ -68,10 +106,19 @@ export function BlockRenderer({ block, template, onUpdate, isSelected }: Props) 
     if (!block.url) {
       return (
         <div
-          className="border-2 border-dashed rounded-lg flex items-center justify-center py-10"
+          className="border-2 border-dashed rounded-lg flex flex-col items-center justify-center py-8 gap-3"
           style={{ borderColor: template.colors.accent, color: template.colors.accent }}
         >
           <span className="text-sm">Wybierz obraz w panelu ustawień →</span>
+          {onGenerateImage && (
+            <button
+              onClick={() => onGenerateImage("")}
+              className="text-xs px-3 py-1.5 rounded-md transition-colors"
+              style={{ backgroundColor: template.colors.accent, color: template.colors.bg }}
+            >
+              ✨ Generuj grafikę AI
+            </button>
+          )}
         </div>
       );
     }
