@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import NewProject from "./pages/NewProject";
 import Editor from "./pages/Editor";
 import Legal from "./pages/Legal";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/new" element={<NewProject />} />
           <Route path="/editor/:id" element={<Editor />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="/terms" element={<Legal />} />
           <Route path="/privacy" element={<Legal />} />
           <Route path="/cookies" element={<Legal />} />

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Plus, LogOut, Trash2, Copy, Calendar, Edit3, Loader2 } from "lucide-react";
+import { BookOpen, Plus, LogOut, Trash2, Copy, Calendar, Edit3, Loader2, Crown } from "lucide-react";
 import heroImage from "@/assets/hero-ebook.jpg";
 
 export default function Dashboard() {
@@ -94,6 +94,9 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/pricing")} className="text-muted-foreground gap-2">
+              <Crown className="h-4 w-4" /> Cennik
+            </Button>
             <span className="text-sm text-muted-foreground hidden sm:inline">{user?.email}</span>
             <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground gap-2">
               <LogOut className="h-4 w-4" /> Wyloguj
