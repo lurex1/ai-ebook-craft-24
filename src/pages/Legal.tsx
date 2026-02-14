@@ -6,73 +6,152 @@ const LEGAL_CONTENT: Record<string, { title: string; content: string }> = {
     title: "Regulamin",
     content: `
 ## 1. Postanowienia ogólne
-Niniejszy regulamin określa zasady korzystania z aplikacji Scripto, należącej do firmy Paveelo, prowadzonej przez Pawła Eberle w ramach działalności nierejestrowanej zgodnie z prawem polskim.
+1.1. Niniejszy regulamin (dalej: „Regulamin") określa zasady korzystania z aplikacji internetowej Scripto (dalej: „Aplikacja"), dostępnej pod adresem internetowym Aplikacji.
+
+1.2. Właścicielem Aplikacji jest Paveelo — działalność nierejestrowana w rozumieniu art. 5 ust. 1 ustawy z dnia 6 marca 2018 r. — Prawo przedsiębiorców (Dz.U. 2018 poz. 646 ze zm.), z siedzibą: ul. Zamoyskiego 18H/2, 37-450 Stalowa Wola, Polska (dalej: „Usługodawca").
+
+1.3. Kontakt z Usługodawcą: drogą elektroniczną poprzez formularz kontaktowy w Aplikacji.
 
 ## 2. Definicje
-- **Aplikacja** — serwis internetowy Scripto dostępny pod adresem aplikacji
-- **Użytkownik** — osoba korzystająca z Aplikacji
-- **Usługodawca** — Paweł Eberle, ul. Zamoyskiego 18H/2, 37-450 Stalowa Wola
+- **Aplikacja** — serwis internetowy Scripto umożliwiający tworzenie, edycję i eksport e-booków
+- **Użytkownik** — osoba fizyczna, która utworzyła konto w Aplikacji
+- **Konto** — indywidualne konto Użytkownika w Aplikacji, chronione hasłem
+- **Treść** — wszelkie materiały, teksty i e-booki tworzone przez Użytkownika w Aplikacji
+- **Usługa** — usługi świadczone drogą elektroniczną przez Usługodawcę
 
-## 3. Warunki korzystania
-Korzystanie z Aplikacji jest możliwe po utworzeniu konta. Użytkownik zobowiązuje się do podania prawdziwych danych. Zabronione jest korzystanie z Aplikacji w sposób niezgodny z prawem.
+## 3. Rodzaj i zakres usług
+3.1. Usługodawca świadczy usługi drogą elektroniczną polegające na: udostępnieniu narzędzi do tworzenia e-booków, generowaniu treści z wykorzystaniem sztucznej inteligencji, eksporcie e-booków do formatów PDF i TXT.
 
-## 4. Prawa autorskie
-Treści wygenerowane przez Użytkownika przy pomocy AI stanowią własność Użytkownika. Aplikacja Scripto oraz jej kod źródłowy stanowią własność Usługodawcy.
+3.2. Korzystanie z Aplikacji wymaga: połączenia z internetem, nowoczesnej przeglądarki internetowej, aktywnego adresu e-mail.
 
-## 5. Odpowiedzialność
-Usługodawca nie ponosi odpowiedzialności za treści generowane przez AI ani za szkody wynikające z korzystania z Aplikacji. Usługodawca dokłada starań, aby Aplikacja działała prawidłowo.
+## 4. Rejestracja i konto
+4.1. Rejestracja wymaga podania adresu e-mail oraz hasła (min. 8 znaków).
 
-## 6. Reklamacje
-Reklamacje należy zgłaszać drogą elektroniczną. Usługodawca rozpatrzy reklamację w ciągu 14 dni roboczych.
+4.2. Użytkownik zobowiązuje się do podania prawdziwych danych i zachowania poufności hasła.
 
-## 7. Postanowienia końcowe
-Regulamin wchodzi w życie z dniem publikacji. Usługodawca zastrzega sobie prawo do zmian regulaminu z 14-dniowym wyprzedzeniem.
+4.3. Użytkownik może w każdej chwili usunąć swoje konto, co skutkuje trwałym usunięciem wszystkich danych.
+
+## 5. Prawa autorskie i własność intelektualna
+5.1. Treści wygenerowane przez Użytkownika przy pomocy Aplikacji (w tym z użyciem AI) stanowią własność Użytkownika.
+
+5.2. Aplikacja Scripto, jej interfejs, kod źródłowy oraz znaki towarowe stanowią własność Usługodawcy.
+
+5.3. Użytkownik ponosi pełną odpowiedzialność za treści tworzone w Aplikacji.
+
+## 6. Odpowiedzialność
+6.1. Usługodawca nie ponosi odpowiedzialności za: treści generowane przez AI, sposób wykorzystania treści przez Użytkownika, szkody wynikające z przerw technicznych.
+
+6.2. Usługodawca dokłada starań, aby Aplikacja działała prawidłowo i bez przerw.
+
+## 7. Reklamacje
+7.1. Reklamacje należy składać drogą elektroniczną.
+
+7.2. Reklamacja powinna zawierać: dane Użytkownika, opis problemu, oczekiwany sposób rozwiązania.
+
+7.3. Usługodawca rozpatrzy reklamację w terminie 14 dni kalendarzowych.
+
+## 8. Odstąpienie od umowy
+8.1. Zgodnie z art. 27 ustawy o prawach konsumenta, Użytkownik będący konsumentem ma prawo odstąpienia od umowy w terminie 14 dni bez podania przyczyny.
+
+8.2. Prawo odstąpienia nie przysługuje po pełnym wykonaniu usługi, jeśli Użytkownik wyraził na to zgodę.
+
+## 9. Postanowienia końcowe
+9.1. Regulamin wchodzi w życie z dniem publikacji.
+
+9.2. Usługodawca zastrzega sobie prawo do zmian Regulaminu z 14-dniowym wyprzedzeniem. Użytkownicy zostaną powiadomieni o zmianach.
+
+9.3. W sprawach nieuregulowanych zastosowanie mają przepisy prawa polskiego.
+
+9.4. Spory rozstrzygane będą przez sąd właściwy dla siedziby Usługodawcy.
     `,
   },
   privacy: {
     title: "Polityka prywatności",
     content: `
-## 1. Administrator danych
-Administratorem danych osobowych jest Paweł Eberle, prowadzący firmę nierejestrowaną Paveelo, ul. Zamoyskiego 18H/2, 37-450 Stalowa Wola, Polska.
+## 1. Administrator danych osobowych
+Administratorem danych osobowych jest Paveelo — działalność nierejestrowana, ul. Zamoyskiego 18H/2, 37-450 Stalowa Wola, Polska (dalej: „Administrator").
 
-## 2. Zakres zbieranych danych
-Zbieramy: adres e-mail, hasło (zaszyfrowane), dane projektów e-booków tworzone przez Użytkownika.
+## 2. Podstawa prawna przetwarzania
+Dane przetwarzane są na podstawie:
+- art. 6 ust. 1 lit. a RODO — zgoda Użytkownika
+- art. 6 ust. 1 lit. b RODO — wykonanie umowy (świadczenie usług Aplikacji)
+- art. 6 ust. 1 lit. f RODO — prawnie uzasadniony interes Administratora (bezpieczeństwo, analityka)
 
-## 3. Cel przetwarzania
-Dane przetwarzamy w celu: świadczenia usług Aplikacji, komunikacji z Użytkownikiem, poprawy jakości usług.
+## 3. Zakres zbieranych danych
+Administrator zbiera następujące dane:
+- adres e-mail (do rejestracji i logowania)
+- hasło (przechowywane w formie zaszyfrowanej — Administrator nie ma dostępu do haseł)
+- dane projektów e-booków (tytuły, treści, ustawienia)
+- dane techniczne (adres IP, typ przeglądarki — zbierane automatycznie)
 
-## 4. Podstawa prawna
-Przetwarzanie odbywa się na podstawie: zgody Użytkownika (art. 6 ust. 1 lit. a RODO), wykonania umowy (art. 6 ust. 1 lit. b RODO).
+## 4. Cel przetwarzania danych
+Dane przetwarzane są w celu:
+- świadczenia usług Aplikacji i obsługi konta Użytkownika
+- zapewnienia bezpieczeństwa i ochrony przed nadużyciami
+- komunikacji z Użytkownikiem (reklamacje, powiadomienia)
+- poprawy jakości usług
 
-## 5. Prawa użytkownika
-Użytkownik ma prawo do: wglądu w swoje dane, ich poprawiania, usunięcia, przenoszenia, ograniczenia przetwarzania, wniesienia sprzeciwu.
+## 5. Prawa Użytkownika (art. 15-22 RODO)
+Użytkownik ma prawo do:
+- dostępu do swoich danych osobowych
+- sprostowania (poprawiania) danych
+- usunięcia danych („prawo do bycia zapomnianym")
+- ograniczenia przetwarzania
+- przenoszenia danych
+- wniesienia sprzeciwu wobec przetwarzania
+- cofnięcia zgody w dowolnym momencie
+- wniesienia skargi do organu nadzorczego (Prezes UODO, ul. Stawki 2, 00-193 Warszawa)
 
-## 6. Okres przechowywania
-Dane przechowywane są przez okres korzystania z Aplikacji oraz 30 dni po usunięciu konta.
+## 6. Okres przechowywania danych
+Dane przechowywane są przez okres korzystania z Aplikacji. Po usunięciu konta dane usuwane są w ciągu 30 dni, z wyjątkiem danych wymaganych przepisami prawa.
 
 ## 7. Udostępnianie danych
-Dane nie są udostępniane osobom trzecim z wyjątkiem sytuacji wymaganych prawem.
+Dane nie są sprzedawane ani udostępniane podmiotom trzecim w celach marketingowych. Dane mogą być udostępnione wyłącznie:
+- dostawcom infrastruktury technicznej (hosting, baza danych) — na podstawie umów powierzenia
+- organom państwowym — na podstawie obowiązujących przepisów prawa
+
+## 8. Transfer danych poza EOG
+Dane mogą być przetwarzane na serwerach zlokalizowanych poza Europejskim Obszarem Gospodarczym, z zachowaniem odpowiednich zabezpieczeń (standardowe klauzule umowne).
+
+## 9. Bezpieczeństwo danych
+Administrator stosuje odpowiednie środki techniczne i organizacyjne w celu ochrony danych, w tym: szyfrowanie SSL/TLS, szyfrowanie haseł, kontrolę dostępu, regularne kopie bezpieczeństwa.
+
+## 10. Zmiany polityki
+Administrator zastrzega sobie prawo do zmian niniejszej Polityki. O zmianach Użytkownicy zostaną powiadomieni poprzez Aplikację.
     `,
   },
   cookies: {
     title: "Polityka cookies",
     content: `
-## 1. Czym są cookies
-Cookies to niewielkie pliki tekstowe zapisywane na urządzeniu Użytkownika podczas korzystania z Aplikacji.
+## 1. Czym są pliki cookies
+Pliki cookies (ciasteczka) to niewielkie pliki tekstowe zapisywane na urządzeniu Użytkownika przez przeglądarkę internetową podczas korzystania z Aplikacji.
 
-## 2. Rodzaje cookies
-- **Niezbędne** — wymagane do prawidłowego działania Aplikacji (sesja logowania)
-- **Funkcjonalne** — zapamiętują preferencje Użytkownika
-- **Analityczne** — pomagają zrozumieć sposób korzystania z Aplikacji
+## 2. Podstawa prawna
+Stosowanie plików cookies odbywa się zgodnie z art. 173 ustawy z dnia 16 lipca 2004 r. — Prawo telekomunikacyjne oraz przepisami RODO.
 
-## 3. Zarządzanie cookies
-Użytkownik może zarządzać cookies poprzez ustawienia przeglądarki. Wyłączenie cookies niezbędnych może uniemożliwić korzystanie z Aplikacji.
+## 3. Rodzaje stosowanych cookies
+- **Niezbędne (sesyjne)** — wymagane do prawidłowego działania Aplikacji, w tym utrzymania sesji logowania. Nie wymagają zgody Użytkownika.
+- **Funkcjonalne** — zapamiętują preferencje Użytkownika (np. wybrany szablon, tryb ciemny/jasny).
+- **Analityczne** — pomagają zrozumieć sposób korzystania z Aplikacji w celu jej ulepszania. Stosowane wyłącznie za zgodą Użytkownika.
 
-## 4. Cookies podmiotów trzecich
-Aplikacja może korzystać z cookies dostawców usług analitycznych w celu poprawy jakości usług.
+## 4. Okres przechowywania
+- Cookies sesyjne — usuwane po zamknięciu przeglądarki
+- Cookies trwałe — przechowywane do 365 dni
 
-## 5. Kontakt
-W sprawach cookies prosimy o kontakt z administratorem: Paweł Eberle, ul. Zamoyskiego 18H/2, 37-450 Stalowa Wola.
+## 5. Zarządzanie cookies
+Użytkownik może zarządzać plikami cookies poprzez ustawienia swojej przeglądarki internetowej:
+- Chrome: Ustawienia → Prywatność i bezpieczeństwo → Pliki cookie
+- Firefox: Ustawienia → Prywatność i bezpieczeństwo
+- Safari: Preferencje → Prywatność
+- Edge: Ustawienia → Prywatność
+
+Wyłączenie cookies niezbędnych może uniemożliwić prawidłowe korzystanie z Aplikacji.
+
+## 6. Cookies podmiotów trzecich
+Aplikacja może wykorzystywać usługi podmiotów trzecich, które stosują własne pliki cookies (np. dostawcy infrastruktury). Polityki cookies tych podmiotów dostępne są na ich stronach internetowych.
+
+## 7. Kontakt
+W sprawach dotyczących plików cookies prosimy o kontakt drogą elektroniczną z Administratorem: Paveelo, ul. Zamoyskiego 18H/2, 37-450 Stalowa Wola, Polska.
     `,
   },
 };
@@ -110,7 +189,7 @@ export default function Legal() {
       </main>
       <footer className="border-t border-border/30 px-6 py-6 mt-10">
         <div className="mx-auto max-w-3xl text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} Paveelo · Paweł Eberle · ul. Zamoyskiego 18H/2, 37-450 Stalowa Wola</p>
+          <p>© {new Date().getFullYear()} Paveelo · ul. Zamoyskiego 18H/2, 37-450 Stalowa Wola</p>
         </div>
       </footer>
     </div>
