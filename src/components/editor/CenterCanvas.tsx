@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
 import { Heading1, Type, ImageIcon, MinusSquare, Scissors, ChevronUp, ChevronDown, Trash2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Block, BlockType, ChapterData } from "@/lib/blocks";
@@ -36,6 +36,35 @@ const BLOCK_TOOLS: { type: BlockType; icon: React.ElementType; label: string }[]
 const MM_TO_PX = 96 / 25.4;
 const CANVAS_SCALE = 0.75;
 
+// Estimate block height in scaled px
+function estimateBlockHeight(block: Block, template: Template, contentWidth: number): number {
+  const scale = CANVAS_SCALE;
+  if (block.type === "spacer") return (block.height || 40) * scale;
+  if (block.type === "chapter-break") return 0; // handled as page break
+  if (block.type === "image") {
+    const imgWidth = ((block.width || 100) / 100) * contentWidth;
+    return imgWidth * 0.6 + 8; // rough aspect ratio
+  }
+  if (block.type === "heading") {
+    const sizes: Record<number, number> = { 1: 36, 2: 26, 3: 21 };
+    const fontSize = sizes[block.level || 2] || 26;
+    const text = block.content || "";
+    const charsPerLine = Math.floor(contentWidth / (fontSize * 0.55 * scale));
+    const lines = Math.max(1, Math.ceil(text.length / Math.max(charsPerLine, 1)));
+    return lines * fontSize * 1.3 * scale + template.spacing.paragraphGap;
+  }
+  if (block.type === "text") {
+    const text = block.content || "";
+    // Strip HTML tags for length estimation
+    const plainText = text.replace(/<[^>]*>/g, "");
+    const fontSize = 16;
+    const charsPerLine = Math.floor(contentWidth / (fontSize * 0.5 * scale));
+    const lines = Math.max(1, Math.ceil(plainText.length / Math.max(charsPerLine, 1)));
+    return lines * fontSize * template.spacing.lineHeight * scale + template.spacing.paragraphGap;
+  }
+  return 40;
+}
+
 export function CenterCanvas({
   chapter, template, selectedBlockId, onSelectBlock,
   onAddBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, pageSize,
@@ -46,22 +75,38 @@ export function CenterCanvas({
   const pageWidthPx = size.width * MM_TO_PX * CANVAS_SCALE;
   const pageHeightPx = size.height * MM_TO_PX * CANVAS_SCALE;
   const marginPx = template.spacing.margin * CANVAS_SCALE;
+  const contentWidth = pageWidthPx - marginPx * 2;
+  const footerHeight = 28;
 
   const showPageNumbers = footerConfig?.showPageNumbers ?? true;
+  const usableHeight = pageHeightPx - marginPx * 2 - (showPageNumbers ? footerHeight : 0);
 
-  // Split blocks into pages based on chapter-break markers
+  // Split blocks into pages using height estimation + chapter-break markers
   const pages = useMemo(() => {
     if (!chapter) return [];
     const result: Block[][] = [[]];
+    let currentHeight = 0;
+
     for (const block of chapter.blocks) {
       if (block.type === "chapter-break") {
         result.push([]);
-      } else {
-        result[result.length - 1].push(block);
+        currentHeight = 0;
+        continue;
       }
+
+      const blockH = estimateBlockHeight(block, template, contentWidth);
+
+      if (currentHeight + blockH > usableHeight && result[result.length - 1].length > 0) {
+        result.push([]);
+        currentHeight = 0;
+      }
+
+      result[result.length - 1].push(block);
+      currentHeight += blockH;
     }
+
     return result;
-  }, [chapter?.blocks]);
+  }, [chapter?.blocks, template, contentWidth, usableHeight]);
 
   const needsContent = chapter && chapter.blocks.some((b) => b.type === "heading") && !chapter.blocks.some((b) => b.type === "text" && b.content && b.content.trim().length > 50);
 
@@ -125,7 +170,7 @@ export function CenterCanvas({
         {pages.map((pageBlocks, pageIndex) => (
           <div
             key={pageIndex}
-            className="relative flex-shrink-0 overflow-hidden"
+            className="relative flex-shrink-0"
             style={{
               width: pageWidthPx,
               height: pageHeightPx,
@@ -140,12 +185,12 @@ export function CenterCanvas({
               if (e.target === e.currentTarget) onSelectBlock(null);
             }}
           >
-            {/* Content area with scroll for overflow */}
+            {/* Content area - no internal scroll, content is split across pages */}
             <div
-              className="overflow-y-auto"
+              className="overflow-hidden"
               style={{
                 padding: `${marginPx}px`,
-                height: pageHeightPx - (showPageNumbers ? 28 : 0),
+                height: pageHeightPx - (showPageNumbers ? footerHeight : 0),
               }}
             >
               {pageBlocks.length === 0 ? (
@@ -183,14 +228,14 @@ export function CenterCanvas({
                         <button
                           onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, -1); }}
                           className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
-                          disabled={idx === 0}
+                          disabled={idx === 0 && pageIndex === 0}
                         >
                           <ChevronUp className="h-3 w-3" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, 1); }}
                           className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
-                          disabled={idx === pageBlocks.length - 1}
+                          disabled={idx === pageBlocks.length - 1 && pageIndex === pages.length - 1}
                         >
                           <ChevronDown className="h-3 w-3" />
                         </button>

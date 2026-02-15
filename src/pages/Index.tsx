@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Plus, LogOut, Trash2, Copy, Calendar, Edit3, Loader2, Crown } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-ebook.jpg";
 
 export default function Dashboard() {
@@ -190,9 +191,9 @@ export default function Dashboard() {
         <div className="mx-auto max-w-6xl flex flex-col md:flex-row justify-between text-xs text-muted-foreground gap-4">
           <p>© {new Date().getFullYear()} Paveelo</p>
           <div className="flex gap-4">
-            <a href="/terms" className="hover:text-primary transition-colors">Regulamin</a>
-            <a href="/privacy" className="hover:text-primary transition-colors">Polityka prywatności</a>
-            <a href="/cookies" className="hover:text-primary transition-colors">Cookies</a>
+            <Link to="/terms" className="hover:text-primary transition-colors">Regulamin</Link>
+            <Link to="/privacy" className="hover:text-primary transition-colors">Polityka prywatności</Link>
+            <Link to="/cookies" className="hover:text-primary transition-colors">Cookies</Link>
           </div>
         </div>
       </footer>
