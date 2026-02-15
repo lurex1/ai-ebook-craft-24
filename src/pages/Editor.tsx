@@ -225,13 +225,17 @@ export default function Editor() {
       });
       if (error || !data?.imageUrl) throw new Error(data?.error || "Błąd generowania");
 
-      // Add image block
+      // Add image block after the selected block (or at the end if nothing selected)
       const imgBlock = createBlock("image");
       imgBlock.url = data.imageUrl;
       imgBlock.alt = "Ilustracja AI";
       imgBlock.width = 80;
-      const newBlocks = [...currentChapter.blocks, imgBlock];
-      updateBlocks(newBlocks);
+      const blocks = [...currentChapter.blocks];
+      const insertIndex = selectedBlockId
+        ? blocks.findIndex((b) => b.id === selectedBlockId) + 1
+        : blocks.length;
+      blocks.splice(insertIndex, 0, imgBlock);
+      updateBlocks(blocks);
       toast({ title: "Dodano ilustrację!" });
     } catch (err: any) {
       toast({ title: "Błąd", description: err.message, variant: "destructive" });
