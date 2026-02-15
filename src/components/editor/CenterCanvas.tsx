@@ -1,5 +1,5 @@
-import { useMemo, useRef, useEffect, useState } from "react";
-import { Heading1, Type, ImageIcon, MinusSquare, Scissors, ChevronUp, ChevronDown, Trash2, Wand2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Heading1, Type, ImageIcon, MinusSquare, Scissors, ChevronUp, ChevronDown, Trash2, Wand2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Block, BlockType, ChapterData } from "@/lib/blocks";
 import type { Template } from "@/lib/templates";
@@ -11,7 +11,7 @@ interface Props {
   template: Template;
   selectedBlockId: string | null;
   onSelectBlock: (id: string | null) => void;
-  onAddBlock: (type: BlockType) => void;
+  onAddBlock: (type: BlockType, afterBlockId?: string) => void;
   onUpdateBlock: (id: string, updates: Partial<Block>) => void;
   onDeleteBlock: (id: string) => void;
   onMoveBlock: (id: string, dir: -1 | 1) => void;
@@ -36,14 +36,13 @@ const BLOCK_TOOLS: { type: BlockType; icon: React.ElementType; label: string }[]
 const MM_TO_PX = 96 / 25.4;
 const CANVAS_SCALE = 0.75;
 
-// Estimate block height in scaled px
 function estimateBlockHeight(block: Block, template: Template, contentWidth: number): number {
   const scale = CANVAS_SCALE;
   if (block.type === "spacer") return (block.height || 40) * scale;
-  if (block.type === "chapter-break") return 0; // handled as page break
+  if (block.type === "chapter-break") return 0;
   if (block.type === "image") {
     const imgWidth = ((block.width || 100) / 100) * contentWidth;
-    return imgWidth * 0.6 + 8; // rough aspect ratio
+    return imgWidth * 0.6 + 8;
   }
   if (block.type === "heading") {
     const sizes: Record<number, number> = { 1: 36, 2: 26, 3: 21 };
@@ -55,7 +54,6 @@ function estimateBlockHeight(block: Block, template: Template, contentWidth: num
   }
   if (block.type === "text") {
     const text = block.content || "";
-    // Strip HTML tags for length estimation
     const plainText = text.replace(/<[^>]*>/g, "");
     const fontSize = 16;
     const charsPerLine = Math.floor(contentWidth / (fontSize * 0.5 * scale));
@@ -63,6 +61,44 @@ function estimateBlockHeight(block: Block, template: Template, contentWidth: num
     return lines * fontSize * template.spacing.lineHeight * scale + template.spacing.paragraphGap;
   }
   return 40;
+}
+
+// Inline insert menu that appears between blocks
+function InsertMenu({ onInsert, visible }: { onInsert: (type: BlockType) => void; visible: boolean }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className={`flex items-center justify-center transition-all ${visible || open ? "h-6 opacity-100" : "h-0 opacity-0"}`}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      {open ? (
+        <div className="flex items-center gap-0.5 bg-card border border-border/60 rounded-md px-1 py-0.5 shadow-sm z-10">
+          {BLOCK_TOOLS.map((tool) => {
+            const Icon = tool.icon;
+            return (
+              <button
+                key={tool.type}
+                onClick={(e) => { e.stopPropagation(); onInsert(tool.type); setOpen(false); }}
+                className="p-1 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                title={tool.label}
+              >
+                <Icon className="h-3 w-3" />
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <button
+          onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+          className="h-5 w-5 rounded-full border border-border/40 bg-card text-muted-foreground hover:text-primary hover:border-primary/40 flex items-center justify-center shadow-sm transition-colors"
+        >
+          <Plus className="h-3 w-3" />
+        </button>
+      )}
+    </div>
+  );
 }
 
 export function CenterCanvas({
@@ -81,7 +117,6 @@ export function CenterCanvas({
   const showPageNumbers = footerConfig?.showPageNumbers ?? true;
   const usableHeight = pageHeightPx - marginPx * 2 - (showPageNumbers ? footerHeight : 0);
 
-  // Split blocks into pages using height estimation + chapter-break markers
   const pages = useMemo(() => {
     if (!chapter) return [];
     const result: Block[][] = [[]];
@@ -120,9 +155,9 @@ export function CenterCanvas({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Block toolbar */}
+      {/* Top toolbar - inserts after selected block */}
       <div className="h-10 border-b border-border/30 bg-card/50 px-3 flex items-center gap-1 shrink-0">
-        <span className="text-xs text-muted-foreground mr-2">Dodaj:</span>
+        <span className="text-xs text-muted-foreground mr-2">Wstaw{selectedBlockId ? " po bloku" : ""}:</span>
         {BLOCK_TOOLS.map((tool) => {
           const Icon = tool.icon;
           return (
@@ -146,7 +181,6 @@ export function CenterCanvas({
         style={{ background: "hsl(220 15% 90%)" }}
         onClick={() => onSelectBlock(null)}
       >
-        {/* Generate content CTA */}
         {needsContent && onGenerateContent && (
           <div
             className="flex flex-col items-center gap-3 py-6 px-8 rounded-xl border-2 border-dashed"
@@ -185,7 +219,6 @@ export function CenterCanvas({
               if (e.target === e.currentTarget) onSelectBlock(null);
             }}
           >
-            {/* Content area - no internal scroll, content is split across pages */}
             <div
               className="overflow-hidden"
               style={{
@@ -198,61 +231,65 @@ export function CenterCanvas({
                   className="flex items-center justify-center h-32 text-sm"
                   style={{ color: template.colors.accent, opacity: 0.6 }}
                 >
-                  Pusta strona — dodaj bloki powyżej
+                  Pusta strona — użyj paska powyżej lub kliknij + między blokami
                 </div>
               ) : (
                 pageBlocks.map((block, idx) => (
-                  <div
-                    key={block.id}
-                    className={`relative group cursor-pointer transition-all duration-150 rounded-sm ${
-                      selectedBlockId === block.id
-                        ? "ring-2 ring-blue-400/50 ring-offset-1"
-                        : "hover:ring-1 hover:ring-blue-200/40"
-                    }`}
-                    style={{
-                      marginBottom: template.spacing.paragraphGap,
-                      padding: "2px 4px",
-                    }}
-                    onClick={(e) => { e.stopPropagation(); onSelectBlock(block.id); }}
-                  >
-                    <BlockRenderer
-                      block={block}
-                      template={template}
-                      onUpdate={(updates) => onUpdateBlock(block.id, updates)}
-                      isSelected={selectedBlockId === block.id}
-                      onGenerateImage={onGenerateImage}
-                    />
-                    {/* Block controls */}
-                    {selectedBlockId === block.id && (
-                      <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, -1); }}
-                          className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
-                          disabled={idx === 0 && pageIndex === 0}
-                        >
-                          <ChevronUp className="h-3 w-3" />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, 1); }}
-                          className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
-                          disabled={idx === pageBlocks.length - 1 && pageIndex === pages.length - 1}
-                        >
-                          <ChevronDown className="h-3 w-3" />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onDeleteBlock(block.id); }}
-                          className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-red-500 shadow-sm"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      </div>
-                    )}
+                  <div key={block.id}>
+                    <div
+                      className={`relative group cursor-pointer transition-all duration-150 rounded-sm ${
+                        selectedBlockId === block.id
+                          ? "ring-2 ring-blue-400/50 ring-offset-1"
+                          : "hover:ring-1 hover:ring-blue-200/40"
+                      }`}
+                      style={{
+                        marginBottom: 0,
+                        padding: "2px 4px",
+                      }}
+                      onClick={(e) => { e.stopPropagation(); onSelectBlock(block.id); }}
+                    >
+                      <BlockRenderer
+                        block={block}
+                        template={template}
+                        onUpdate={(updates) => onUpdateBlock(block.id, updates)}
+                        isSelected={selectedBlockId === block.id}
+                        onGenerateImage={onGenerateImage}
+                      />
+                      {selectedBlockId === block.id && (
+                        <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, -1); }}
+                            className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
+                          >
+                            <ChevronUp className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, 1); }}
+                            className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
+                          >
+                            <ChevronDown className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onDeleteBlock(block.id); }}
+                            className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-red-500 shadow-sm"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {/* Insert button between blocks */}
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <InsertMenu
+                        onInsert={(type) => onAddBlock(type, block.id)}
+                        visible={selectedBlockId === block.id}
+                      />
+                    </div>
                   </div>
                 ))
               )}
             </div>
 
-            {/* Footer with page number */}
             {showPageNumbers && (
               <div
                 className="absolute bottom-0 left-0 right-0 text-center text-[10px] opacity-40"

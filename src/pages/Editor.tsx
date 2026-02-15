@@ -100,14 +100,21 @@ export default function Editor() {
   );
 
   const addBlock = useCallback(
-    (type: Block["type"]) => {
+    (type: Block["type"], afterBlockId?: string) => {
       if (!currentChapter) return;
       const block = createBlock(type);
-      const newBlocks = [...currentChapter.blocks, block];
-      updateBlocks(newBlocks);
+      const blocks = [...currentChapter.blocks];
+      const targetId = afterBlockId || selectedBlockId;
+      if (targetId) {
+        const idx = blocks.findIndex((b) => b.id === targetId);
+        blocks.splice(idx + 1, 0, block);
+      } else {
+        blocks.push(block);
+      }
+      updateBlocks(blocks);
       setSelectedBlockId(block.id);
     },
-    [currentChapter, updateBlocks]
+    [currentChapter, updateBlocks, selectedBlockId]
   );
 
   const updateBlock = useCallback(
