@@ -66,7 +66,7 @@ export function normalizeBlocks(blocks: Block[]): Block[] {
   for (const block of blocks) {
     if (block.type === "text" && block.content) {
       const plainText = block.content.replace(/<[^>]*>/g, "");
-      if (plainText.length > 600) {
+      if (plainText.length > 400) {
         const subBlocks = splitContentIntoBlocks(block.content);
         result.push(...subBlocks);
       } else {
@@ -115,7 +115,7 @@ export function splitContentIntoBlocks(content: string): Block[] {
       const rest = trimmed.replace(/^<h3>.+?<\/h3>\s*/, "").trim();
       if (rest) {
         // Split further if the text is very long
-        const chunks = splitLongText(rest, 800);
+        const chunks = splitLongText(rest, 500);
         for (const chunk of chunks) {
           blocks.push({
             id: crypto.randomUUID(),
@@ -126,7 +126,7 @@ export function splitContentIntoBlocks(content: string): Block[] {
       }
     } else {
       // No h3, just a text block - split if too long
-      const chunks = splitLongText(trimmed, 800);
+      const chunks = splitLongText(trimmed, 500);
       for (const chunk of chunks) {
         blocks.push({
           id: crypto.randomUUID(),

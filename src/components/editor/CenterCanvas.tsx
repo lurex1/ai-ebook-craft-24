@@ -181,7 +181,7 @@ export function CenterCanvas({
     setDropTargetId(null);
   }, []);
 
-  // Pagination: move whole block to next page if it doesn't fit
+  // Pagination: split blocks across pages if they don't fit
   const pages = useMemo(() => {
     if (!chapter) return [];
     const result: Block[][] = [[]];
@@ -196,14 +196,64 @@ export function CenterCanvas({
 
       const blockH = estimateBlockHeight(block, template, contentWidth);
 
-      // If block doesn't fit and page has content, move ENTIRE block to next page
-      if (currentHeight + blockH > usableHeight && result[result.length - 1].length > 0) {
+      // If block fits on current page, add it
+      if (currentHeight + blockH <= usableHeight) {
+        result[result.length - 1].push(block);
+        currentHeight += blockH;
+        continue;
+      }
+
+      // Block doesn't fit — if page has content, try next page first
+      if (result[result.length - 1].length > 0) {
         result.push([]);
         currentHeight = 0;
       }
 
-      result[result.length - 1].push(block);
-      currentHeight += blockH;
+      // If the block fits on a fresh page, just add it
+      if (blockH <= usableHeight) {
+        result[result.length - 1].push(block);
+        currentHeight = blockH;
+        continue;
+      }
+
+      // Block is taller than a full page — split text blocks by paragraphs
+      if (block.type === "text" && block.content) {
+        const segments = block.content.split(/(?<=<\/p>|<\/ul>|<\/ol>|<\/blockquote>|<\/table>|<\/li>)\s*/);
+        let accumContent = "";
+        
+        for (const seg of segments) {
+          const testContent = accumContent ? accumContent + "\n" + seg : seg;
+          const testBlock: Block = { ...block, id: crypto.randomUUID(), content: testContent };
+          const testH = estimateBlockHeight(testBlock, template, contentWidth);
+
+          if (testH > usableHeight && accumContent) {
+            // Push what we have so far
+            const partBlock: Block = { ...block, id: crypto.randomUUID(), content: accumContent };
+            result[result.length - 1].push(partBlock);
+            result.push([]);
+            currentHeight = 0;
+            accumContent = seg;
+          } else {
+            accumContent = testContent;
+          }
+        }
+
+        // Push remaining content
+        if (accumContent.trim()) {
+          const remainBlock: Block = { ...block, id: crypto.randomUUID(), content: accumContent };
+          const remainH = estimateBlockHeight(remainBlock, template, contentWidth);
+          if (currentHeight + remainH > usableHeight && result[result.length - 1].length > 0) {
+            result.push([]);
+            currentHeight = 0;
+          }
+          result[result.length - 1].push(remainBlock);
+          currentHeight += estimateBlockHeight(remainBlock, template, contentWidth);
+        }
+      } else {
+        // Non-text block that's too tall — just place it (images, etc.)
+        result[result.length - 1].push(block);
+        currentHeight = blockH;
+      }
     }
 
     return result;
