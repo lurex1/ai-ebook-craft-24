@@ -106,10 +106,20 @@ export function ExportDialog({ open, onOpenChange, project, chapters, template, 
 
   const exportPDF = () => {
     setExporting(true);
-    const html = generateHTML(project, chapters, template, watermarkText);
-    const win = window.open("", "_blank");
-    if (win) { win.document.write(html); win.document.close(); }
-    setExporting(false);
+    try {
+      const html = generateHTML(project, chapters, template, watermarkText);
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${project.title}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
   };
 
   const exportTXT = () => {
