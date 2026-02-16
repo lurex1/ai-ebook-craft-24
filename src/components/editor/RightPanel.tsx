@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -83,6 +84,29 @@ export function RightPanel({ project, onUpdateProject, selectedBlock, onUpdateBl
         {selectedBlock && (
           <section>
             <h4 className="text-xs font-medium text-primary uppercase tracking-wider mb-3">Blok</h4>
+            {/* Alignment — for all visual blocks */}
+            {(selectedBlock.type === "heading" || selectedBlock.type === "text" || selectedBlock.type === "image") && (
+              <div className="mb-3">
+                <Label className="text-xs text-muted-foreground">Wyrównanie</Label>
+                <div className="flex gap-1 mt-1">
+                  {([
+                    { value: "left", icon: AlignLeft },
+                    { value: "center", icon: AlignCenter },
+                    { value: "right", icon: AlignRight },
+                  ] as const).map(({ value, icon: Icon }) => (
+                    <Button
+                      key={value}
+                      variant="outline"
+                      size="sm"
+                      className={`flex-1 h-7 px-0 ${(selectedBlock.align || "left") === value ? "bg-primary/10 border-primary/40 text-primary" : "border-border text-muted-foreground"}`}
+                      onClick={() => onUpdateBlock({ align: value })}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
             {selectedBlock.type === "heading" && (
               <div className="space-y-3">
                 <Label className="text-xs text-muted-foreground">Poziom nagłówka</Label>
