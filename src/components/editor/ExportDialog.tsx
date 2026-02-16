@@ -11,9 +11,10 @@ interface Props {
   project: ProjectData;
   chapters: ChapterData[];
   template: Template;
+  watermarkText?: string;
 }
 
-function generateHTML(project: ProjectData, chapters: ChapterData[], template: Template): string {
+function generateHTML(project: ProjectData, chapters: ChapterData[], template: Template, watermarkText?: string): string {
   const headerConfig = project.header_config || {};
   const footerConfig = project.footer_config || {};
 
@@ -63,7 +64,7 @@ body{font-family:${template.bodyFont};color:${template.colors.text};background:$
 .toc{page-break-after:always;padding:40px 0}
 .toc h2{font-family:${template.headingFont};font-size:1.8em;color:${template.colors.primary};margin-bottom:20px}
 .toc ul{list-style:none}
-@media print{body{font-size:11pt}.cover h1{font-size:2.5em}}
+@media print{body{font-size:11pt}.cover h1{font-size:2.5em}.watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:3em;color:rgba(0,0,0,0.04);pointer-events:none;white-space:nowrap;z-index:9999}}
 </style></head><body>
 ${project.cover_url ? `<div class="cover"><img src="${project.cover_url}" style="max-width:80%;max-height:80vh;border-radius:8px" /></div>` : `
 <div class="cover">
@@ -80,6 +81,7 @@ ${project.cover_url ? `<div class="cover"><img src="${project.cover_url}" style=
 <p style="margin-bottom:8px">${footerConfig.copyrightText || "© Paveelo"}</p>
 <p style="margin-top:16px;font-size:0.9em">Niniejszy e-book jest chroniony prawem autorskim. Rozpowszechnianie bez zgody wydawcy jest zabronione.</p>
 </div>
+${watermarkText ? `<div class="watermark" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:3em;color:rgba(0,0,0,0.04);pointer-events:none;white-space:nowrap">${watermarkText}</div>` : ""}
 </body></html>`;
 }
 
@@ -99,12 +101,12 @@ function generateTXT(project: ProjectData, chapters: ChapterData[]): string {
   return txt;
 }
 
-export function ExportDialog({ open, onOpenChange, project, chapters, template }: Props) {
+export function ExportDialog({ open, onOpenChange, project, chapters, template, watermarkText }: Props) {
   const [exporting, setExporting] = useState(false);
 
   const exportPDF = () => {
     setExporting(true);
-    const html = generateHTML(project, chapters, template);
+    const html = generateHTML(project, chapters, template, watermarkText);
     const win = window.open("", "_blank");
     if (win) { win.document.write(html); win.document.close(); }
     setExporting(false);
