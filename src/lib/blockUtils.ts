@@ -58,6 +58,23 @@ export function cleanMarkdownToHtml(text: string): string {
 }
 
 /**
+ * Take an existing array of blocks and split any oversized text blocks
+ * into smaller, manageable pieces. This ensures proper pagination.
+ */
+export function normalizeBlocks(blocks: Block[]): Block[] {
+  const result: Block[] = [];
+  for (const block of blocks) {
+    if (block.type === "text" && block.content && block.content.length > 1200) {
+      const subBlocks = splitContentIntoBlocks(block.content);
+      result.push(...subBlocks);
+    } else {
+      result.push(block);
+    }
+  }
+  return result;
+}
+
+/**
  * Split a large HTML content string into multiple smaller text blocks.
  * Each block should be a coherent section (a few paragraphs).
  */
