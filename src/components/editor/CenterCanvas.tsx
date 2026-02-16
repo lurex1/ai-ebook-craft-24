@@ -285,8 +285,9 @@ export function CenterCanvas({
             <div
               style={{
                 padding: `${marginPx}px`,
-                height: pageHeightPx - (showPageNumbers ? footerHeight : 0),
-                overflow: "hidden",
+                minHeight: pageHeightPx - (showPageNumbers ? footerHeight : 0),
+                maxHeight: pageHeightPx - (showPageNumbers ? footerHeight : 0),
+                overflow: "visible",
               }}
             >
               {pageBlocks.length === 0 ? (
