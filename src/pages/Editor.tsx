@@ -60,8 +60,9 @@ export default function Editor() {
     const parsedChapters = ((chs as any[]) || []).map((c) => {
       const rawBlocks = Array.isArray(c.blocks) ? c.blocks : [];
       const normalized = normalizeBlocks(rawBlocks);
-      // Save normalized blocks back if they changed
-      if (normalized.length !== rawBlocks.length) {
+      // Save normalized blocks back if they changed (compare JSON to detect content splits)
+      const changed = JSON.stringify(normalized) !== JSON.stringify(rawBlocks);
+      if (changed) {
         supabase.from("chapters").update({ blocks: normalized as any }).eq("id", c.id);
       }
       return { ...c, blocks: normalized };

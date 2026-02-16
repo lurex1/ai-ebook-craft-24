@@ -318,7 +318,12 @@ export function CenterCanvas({
                           ? "opacity-40"
                           : "hover:ring-1 hover:ring-blue-200/40"
                       }`}
-                      style={{ marginBottom: 0, padding: "2px 4px" }}
+                      style={{
+                        marginBottom: 0,
+                        padding: "2px 4px",
+                        width: block.width && block.type !== "image" ? `${block.width}%` : undefined,
+                        minHeight: block.height && (block.type === "text" || block.type === "heading") ? block.height : undefined,
+                      }}
                       onClick={(e) => { e.stopPropagation(); onSelectBlock(block.id); }}
                     >
                       {/* Drag handle */}
@@ -336,27 +341,103 @@ export function CenterCanvas({
                         isSelected={selectedBlockId === block.id}
                         onGenerateImage={onGenerateImage}
                       />
+
                       {selectedBlockId === block.id && (
-                        <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, -1); }}
-                            className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
-                          >
-                            <ChevronUp className="h-3 w-3" />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, 1); }}
-                            className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
-                          >
-                            <ChevronDown className="h-3 w-3" />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); onDeleteBlock(block.id); }}
-                            className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-red-500 shadow-sm"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </div>
+                        <>
+                          {/* Action buttons */}
+                          <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, -1); }}
+                              className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
+                            >
+                              <ChevronUp className="h-3 w-3" />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, 1); }}
+                              className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
+                            >
+                              <ChevronDown className="h-3 w-3" />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onDeleteBlock(block.id); }}
+                              className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-red-500 shadow-sm"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+
+                          {/* Resize handle - right edge */}
+                          <div
+                            className="absolute top-0 -right-1 w-2 h-full cursor-ew-resize hover:bg-blue-400/30 transition-colors z-10"
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              const startX = e.clientX;
+                              const startWidth = block.width || 100;
+                              const onMove = (ev: MouseEvent) => {
+                                const delta = ev.clientX - startX;
+                                const pxPerPercent = contentWidth / 100;
+                                const newWidth = Math.max(20, Math.min(100, startWidth + delta / pxPerPercent));
+                                onUpdateBlock(block.id, { width: Math.round(newWidth) });
+                              };
+                              const onUp = () => {
+                                document.removeEventListener("mousemove", onMove);
+                                document.removeEventListener("mouseup", onUp);
+                              };
+                              document.addEventListener("mousemove", onMove);
+                              document.addEventListener("mouseup", onUp);
+                            }}
+                          />
+
+                          {/* Resize handle - bottom edge */}
+                          <div
+                            className="absolute -bottom-1 left-0 w-full h-2 cursor-ns-resize hover:bg-blue-400/30 transition-colors z-10"
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              const startY = e.clientY;
+                              const startHeight = block.height || (e.currentTarget.parentElement?.offsetHeight || 40);
+                              const onMove = (ev: MouseEvent) => {
+                                const delta = ev.clientY - startY;
+                                const newHeight = Math.max(20, startHeight + delta);
+                                onUpdateBlock(block.id, { height: Math.round(newHeight) });
+                              };
+                              const onUp = () => {
+                                document.removeEventListener("mousemove", onMove);
+                                document.removeEventListener("mouseup", onUp);
+                              };
+                              document.addEventListener("mousemove", onMove);
+                              document.addEventListener("mouseup", onUp);
+                            }}
+                          />
+
+                          {/* Resize handle - corner */}
+                          <div
+                            className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-blue-400 border border-white rounded-sm cursor-nwse-resize z-20 shadow-sm"
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              const startX = e.clientX;
+                              const startY = e.clientY;
+                              const startWidth = block.width || 100;
+                              const startHeight = block.height || (e.currentTarget.parentElement?.offsetHeight || 40);
+                              const onMove = (ev: MouseEvent) => {
+                                const deltaX = ev.clientX - startX;
+                                const deltaY = ev.clientY - startY;
+                                const pxPerPercent = contentWidth / 100;
+                                const newWidth = Math.max(20, Math.min(100, startWidth + deltaX / pxPerPercent));
+                                const newHeight = Math.max(20, startHeight + deltaY);
+                                onUpdateBlock(block.id, { width: Math.round(newWidth), height: Math.round(newHeight) });
+                              };
+                              const onUp = () => {
+                                document.removeEventListener("mousemove", onMove);
+                                document.removeEventListener("mouseup", onUp);
+                              };
+                              document.addEventListener("mousemove", onMove);
+                              document.addEventListener("mouseup", onUp);
+                            }}
+                          />
+                        </>
                       )}
                     </div>
                     {/* Insert menu between blocks */}

@@ -64,9 +64,14 @@ export function cleanMarkdownToHtml(text: string): string {
 export function normalizeBlocks(blocks: Block[]): Block[] {
   const result: Block[] = [];
   for (const block of blocks) {
-    if (block.type === "text" && block.content && block.content.length > 1200) {
-      const subBlocks = splitContentIntoBlocks(block.content);
-      result.push(...subBlocks);
+    if (block.type === "text" && block.content) {
+      const plainText = block.content.replace(/<[^>]*>/g, "");
+      if (plainText.length > 600) {
+        const subBlocks = splitContentIntoBlocks(block.content);
+        result.push(...subBlocks);
+      } else {
+        result.push(block);
+      }
     } else {
       result.push(block);
     }
@@ -109,8 +114,8 @@ export function splitContentIntoBlocks(content: string): Block[] {
       // Rest of the section becomes a text block
       const rest = trimmed.replace(/^<h3>.+?<\/h3>\s*/, "").trim();
       if (rest) {
-        // Split further if the text is very long (>1500 chars)
-        const chunks = splitLongText(rest, 1500);
+        // Split further if the text is very long
+        const chunks = splitLongText(rest, 800);
         for (const chunk of chunks) {
           blocks.push({
             id: crypto.randomUUID(),
@@ -121,7 +126,7 @@ export function splitContentIntoBlocks(content: string): Block[] {
       }
     } else {
       // No h3, just a text block - split if too long
-      const chunks = splitLongText(trimmed, 1500);
+      const chunks = splitLongText(trimmed, 800);
       for (const chunk of chunks) {
         blocks.push({
           id: crypto.randomUUID(),
