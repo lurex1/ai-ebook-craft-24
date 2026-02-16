@@ -39,6 +39,7 @@ export default function Editor() {
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiProgress, setAiProgress] = useState({ current: 0, total: 0 });
   const [flipbookOpen, setFlipbookOpen] = useState(false);
+  const [scrollToBlockId, setScrollToBlockId] = useState<string | null>(null);
 
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
@@ -459,6 +460,11 @@ export default function Editor() {
           chapters={chapters}
           selectedChapterId={selectedChapterId}
           onSelect={setSelectedChapterId}
+          onScrollToBlock={(chapterId, blockId) => {
+            setSelectedChapterId(chapterId);
+            setSelectedBlockId(blockId);
+            setScrollToBlockId(blockId);
+          }}
           onAdd={addChapter}
           onDelete={deleteChapter}
           onRename={renameChapter}
@@ -481,6 +487,8 @@ export default function Editor() {
           footerConfig={project.footer_config}
           watermarkText={user?.email || user?.id}
           pricePerPage={0.5}
+          scrollToBlockId={scrollToBlockId}
+          onScrollComplete={() => setScrollToBlockId(null)}
         />
         <RightPanel
           project={project}

@@ -69,10 +69,5 @@ export function useCredits() {
   return { ...state, checkSubscription, startCheckout, openPortal };
 }
 
-// Credit costs
-export const CREDIT_COSTS = {
-  PAGE_GENERATION: 10,
-  IMAGE_GENERATION: 20,
-  PDF_EXPORT: 50,
-  AI_REWRITE: 5,
-} as const;
+// Simple access check — Pro = full access
+export const isPro = (plan: string) => plan === "pro";

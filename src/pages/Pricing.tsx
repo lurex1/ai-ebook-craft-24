@@ -2,30 +2,33 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Check, Crown, Zap, ArrowLeft, Loader2 } from "lucide-react";
+import { BookOpen, Check, Crown, ArrowLeft, Loader2 } from "lucide-react";
 
 const FREE_FEATURES = [
-  "5 stron e-booka",
-  "1 wygenerowany obraz",
-  "50 kredytów miesięcznie",
-  "Eksport do PDF",
+  "Tworzenie projektu e-booka",
+  "Edytor z podglądem na żywo",
   "Podstawowe szablony",
 ];
 
+const FREE_LIMITATIONS = [
+  "Brak generowania AI",
+  "Brak eksportu do PDF/EPUB",
+  "Brak ilustracji AI",
+];
+
 const PRO_FEATURES = [
-  "Nielimitowane strony",
-  "Nielimitowane obrazy",
-  "1000 kredytów miesięcznie",
-  "Eksport do PDF i EPUB",
-  "Wszystkie szablony",
-  "Priorytetowe generowanie AI",
+  "Nielimitowane generowanie AI",
+  "Nielimitowane ilustracje AI",
+  "Eksport do PDF i EPUB — bez limitu",
+  "Wszystkie szablony premium",
+  "Priorytetowe generowanie",
   "Wsparcie premium",
 ];
 
 export default function Pricing() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { plan, subscribed, startCheckout, openPortal, loading, remainingCredits, totalCredits } = useCredits();
+  const { plan, subscribed, startCheckout, openPortal, loading } = useCredits();
 
   if (loading) {
     return (
@@ -59,15 +62,8 @@ export default function Pricing() {
             Wybierz swój <span className="text-gradient-gold">plan</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-lg mx-auto">
-            Zacznij za darmo. Ulepsz, gdy potrzebujesz więcej mocy.
+            Zacznij za darmo. Ulepsz do Pro, aby odblokować AI i eksport.
           </p>
-          {user && (
-            <div className="mt-4 inline-flex items-center gap-2 bg-card border border-border/50 rounded-lg px-4 py-2 text-sm">
-              <Zap className="h-4 w-4 text-primary" />
-              <span className="text-muted-foreground">Pozostało kredytów:</span>
-              <span className="font-bold text-foreground">{remainingCredits} / {totalCredits}</span>
-            </div>
-          )}
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
@@ -83,10 +79,17 @@ export default function Pricing() {
               <span className="font-display text-4xl font-bold text-foreground">$0</span>
               <span className="text-muted-foreground text-sm">/miesiąc</span>
             </div>
-            <ul className="space-y-3 mb-8">
+            <ul className="space-y-3 mb-3">
               {FREE_FEATURES.map((f) => (
                 <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <ul className="space-y-3 mb-8">
+              {FREE_LIMITATIONS.map((f) => (
+                <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground/60 line-through">
                   {f}
                 </li>
               ))}
@@ -142,39 +145,14 @@ export default function Pricing() {
           </div>
         </div>
 
-        {/* Credits table */}
-        <div className="mt-16 max-w-3xl mx-auto">
-          <h2 className="font-display text-2xl font-bold text-foreground text-center mb-6">
-            System <span className="text-gradient-gold">kredytów</span>
+        {/* Pro benefits summary */}
+        <div className="mt-16 max-w-3xl mx-auto text-center">
+          <h2 className="font-display text-2xl font-bold text-foreground mb-3">
+            Pro = <span className="text-gradient-gold">pełen dostęp</span>
           </h2>
-          <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/50">
-                  <th className="text-left px-6 py-3 text-muted-foreground font-medium">Akcja</th>
-                  <th className="text-right px-6 py-3 text-muted-foreground font-medium">Koszt</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-border/30">
-                  <td className="px-6 py-3 text-foreground">Generowanie strony AI</td>
-                  <td className="px-6 py-3 text-foreground text-right">10 kredytów</td>
-                </tr>
-                <tr className="border-b border-border/30">
-                  <td className="px-6 py-3 text-foreground">Generowanie obrazu</td>
-                  <td className="px-6 py-3 text-foreground text-right">20 kredytów</td>
-                </tr>
-                <tr className="border-b border-border/30">
-                  <td className="px-6 py-3 text-foreground">Eksport do PDF</td>
-                  <td className="px-6 py-3 text-foreground text-right">50 kredytów</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-3 text-foreground">Korekta AI (przepisanie)</td>
-                  <td className="px-6 py-3 text-foreground text-right">5 kredytów</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <p className="text-muted-foreground max-w-lg mx-auto">
+            Jedna subskrypcja odblokowuje wszystkie funkcje: generowanie treści AI, ilustracje, eksport do PDF/EPUB — bez żadnych dodatkowych opłat ani limitów.
+          </p>
         </div>
       </main>
     </div>

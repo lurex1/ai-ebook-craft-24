@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useCallback } from "react";
+import { useMemo, useState, useRef, useCallback, useEffect } from "react";
 import { Heading1, Type, ImageIcon, MinusSquare, Scissors, ChevronUp, ChevronDown, Trash2, Wand2, Plus, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Block, BlockType, ChapterData } from "@/lib/blocks";
@@ -26,6 +26,8 @@ interface Props {
   authorName?: string;
   watermarkText?: string;
   pricePerPage?: number;
+  scrollToBlockId?: string | null;
+  onScrollComplete?: () => void;
 }
 
 const BLOCK_TOOLS: { type: BlockType; icon: React.ElementType; label: string }[] = [
@@ -116,6 +118,7 @@ export function CenterCanvas({
   onAddBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, onReorderBlocks,
   pageSize, onGenerateContent, isGenerating, onGenerateImage,
   footerConfig, watermarkText, pricePerPage,
+  scrollToBlockId, onScrollComplete,
 }: Props) {
   const size = PAGE_SIZES[pageSize] || PAGE_SIZES.A4;
   const pageWidthPx = size.width * MM_TO_PX * CANVAS_SCALE;
@@ -126,6 +129,18 @@ export function CenterCanvas({
 
   const showPageNumbers = footerConfig?.showPageNumbers ?? true;
   const usableHeight = pageHeightPx - marginPx * 2 - (showPageNumbers ? footerHeight : 0);
+
+  // Scroll to block
+  const canvasScrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (scrollToBlockId && canvasScrollRef.current) {
+      const el = canvasScrollRef.current.querySelector(`[data-block-id="${scrollToBlockId}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      onScrollComplete?.();
+    }
+  }, [scrollToBlockId, onScrollComplete]);
 
   // Drag and drop state
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
@@ -243,6 +258,7 @@ export function CenterCanvas({
 
       {/* Canvas scroll area */}
       <div
+        ref={canvasScrollRef}
         className="flex-1 overflow-y-auto py-8 flex flex-col items-center gap-8"
         style={{ background: "hsl(220 15% 90%)" }}
         onClick={() => onSelectBlock(null)}
@@ -302,7 +318,7 @@ export function CenterCanvas({
                 </div>
               ) : (
                 pageBlocks.map((block) => (
-                  <div key={block.id}>
+                   <div key={block.id} data-block-id={block.id}>
                     <div
                       draggable
                       onDragStart={(e) => handleDragStart(e, block.id)}
