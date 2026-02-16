@@ -267,6 +267,8 @@ ${nextTitle ? `Następna sekcja: "${nextTitle}"` : ""}`,
 
       if (!response.ok) {
         const t = await response.text();
+        if (response.status === 402) throw new Error("Brak środków na generowanie okładki. Spróbuj ponownie później lub doładuj konto.");
+        if (response.status === 429) throw new Error("Zbyt wiele zapytań. Spróbuj za chwilę.");
         throw new Error("Cover generation failed: " + t);
       }
 
@@ -309,6 +311,8 @@ ${nextTitle ? `Następna sekcja: "${nextTitle}"` : ""}`,
 
       if (!response.ok) {
         const t = await response.text();
+        if (response.status === 402) throw new Error("Brak środków na generowanie ilustracji. Spróbuj ponownie później lub doładuj konto.");
+        if (response.status === 429) throw new Error("Zbyt wiele zapytań. Spróbuj za chwilę.");
         throw new Error("Illustration generation failed: " + t);
       }
 
