@@ -40,10 +40,9 @@ serve(async (req) => {
   try {
     const { action, ...params } = await req.json();
 
-    // ====== ANALYZE — returns structure proposal with configurable depth ======
+    // ====== ANALYZE — returns structure proposal ======
     if (action === "analyze") {
       const { materials, structure } = params;
-      // structure: { chapters: number, hasSubchapters: bool, hasPoints: bool, hasSubpoints: bool }
       const st = structure || { chapters: 6, hasSubchapters: false, hasPoints: true, hasSubpoints: false };
 
       let structureDesc = `${st.chapters} rozdziałów`;
@@ -51,12 +50,9 @@ serve(async (req) => {
       if (st.hasPoints) structureDesc += ", z punktami w każdym";
       if (st.hasSubpoints) structureDesc += " i podpunktami";
 
-      // Build nested schema based on structure config
       const pointSchema: any = {
         type: "object",
-        properties: {
-          title: { type: "string" },
-        },
+        properties: { title: { type: "string" } },
         required: ["title"],
         additionalProperties: false,
       };
@@ -70,9 +66,7 @@ serve(async (req) => {
 
       const chapterItemSchema: any = {
         type: "object",
-        properties: {
-          title: { type: "string" },
-        },
+        properties: { title: { type: "string" } },
         required: ["title"],
         additionalProperties: false,
       };
@@ -103,9 +97,9 @@ serve(async (req) => {
           parameters: {
             type: "object",
             properties: {
-              title: { type: "string", description: "Tytuł e-booka w formie pytania 'Jak...' jeśli to poradnik, np. 'Jak naprawić samochód bez narzędzi'" },
+              title: { type: "string", description: "Tytuł e-booka" },
               subtitle: { type: "string", description: "Podtytuł uzupełniający" },
-              author_name: { type: "string", description: "Sugerowane imię autora jeśli znalezione w materiałach, pusty string jeśli nie" },
+              author_name: { type: "string", description: "Sugerowane imię autora" },
               description: { type: "string", description: "Krótki opis 1-2 zdania" },
               chapters: { type: "array", items: chapterItemSchema },
             },
@@ -122,11 +116,11 @@ serve(async (req) => {
             content: `Jesteś ekspertem od tworzenia profesjonalnych e-booków. Analizujesz materiały i tworzysz optymalną strukturę.
 
 ZASADY:
-1. Tytuł e-booka powinien być w formie pytania "Jak..." jeśli temat jest poradnikowy (np. "Jak naprawić samochód bez narzędzi", "Jak zostać mistrzem gotowania").
-2. Struktura: ${structureDesc}. Prowadź czytelnika od podstaw/wprowadzenia przez rozwinięcie do zaawansowanych zagadnień i rozwiązania problemu.
-3. Jeśli materiały są niewystarczające — SAM zaproponuj brakujące elementy, rozdziały i punkty które usprawniłyby e-booka.
-4. Każdy element struktury powinien mieć merytoryczny tytuł (nie "Rozdział 1" ale konkretny temat).
-5. Struktura powinna logicznie prowadzić: wstęp/podstawy → rozwinięcie → zaawansowane → podsumowanie/wnioski.
+1. Tytuł e-booka powinien być w formie pytania "Jak..." jeśli temat jest poradnikowy.
+2. Struktura: ${structureDesc}. Prowadź czytelnika od podstaw do zaawansowanych zagadnień.
+3. Jeśli materiały są niewystarczające — SAM zaproponuj brakujące elementy.
+4. Każdy element struktury powinien mieć merytoryczny tytuł.
+5. Struktura powinna logicznie prowadzić: wstęp → rozwinięcie → zaawansowane → podsumowanie.
 6. Wszystko po polsku.`,
           },
           { role: "user", content: `Materiały do analizy:\n\n${materials}\n\nStwórz strukturę e-booka z ${structureDesc}.` },
@@ -140,15 +134,15 @@ ZASADY:
       return json(JSON.parse(toolCall.function.arguments));
     }
 
-    // ====== GENERATE SECTION CONTENT ======
+    // ====== GENERATE SECTION CONTENT — returns structured blocks ======
     if (action === "generate-section") {
       const { bookTitle, materials, sectionPath, sectionTitle, contextBefore, contextAfter, totalSections, currentIndex } = params;
 
-      const positionDesc = currentIndex <= 1 
+      const positionDesc = currentIndex <= 1
         ? "To jest początek e-booka — zacznij od podstaw, wprowadź czytelnika w temat."
         : currentIndex >= totalSections - 2
         ? "To jest końcowa część e-booka — podsumuj, daj zaawansowane wskazówki i wnioski."
-        : "To jest środkowa część e-booka — rozwijaj temat, podawaj praktyczne informacje i przykłady.";
+        : "To jest środkowa część e-booka — rozwijaj temat z przykładami.";
 
       const data = await callAI([
         {
@@ -158,11 +152,34 @@ ZASADY:
 ZASADY PISANIA:
 1. Pisz 400-800 słów po polsku.
 2. ${positionDesc}
-3. Pisz profesjonalnie ale przystępnie, z akapitami, przykładami, praktycznymi wskazówkami.
-4. Nie powtarzaj tytułu sekcji w treści.
-5. Jeśli materiały użytkownika dotyczą tego tematu — bazuj na nich. Jeśli nie — sam napisz merytorycznie.
-6. Prowadź logicznie od wyjaśnienia zagadnienia do praktycznych wniosków.
-7. Używaj formatowania markdown: **pogrubienia**, listy, cytaty jeśli pasują.
+3. Pisz profesjonalnie ale przystępnie.
+4. NIE powtarzaj tytułu sekcji w treści.
+5. Jeśli materiały dotyczą tematu — bazuj na nich. Jeśli nie — sam napisz merytorycznie.
+
+KLUCZOWE ZASADY FORMATOWANIA:
+- Pisz czystym HTML, NIE Markdown! Nie używaj symboli *, #, _ itp.
+- Używaj tagów HTML: <p> dla akapitów, <strong> dla pogrubień, <em> dla kursywy
+- Używaj <ul><li> dla list punktowanych, <ol><li> dla numerowanych
+- Używaj <blockquote> dla cytatów lub ważnych uwag
+- Każdy akapit powinien mieć 2-4 zdania — nie pisz jednego ciągłego bloku tekstu
+- Rozdzielaj treść na logiczne sekcje oddzielone akapitami
+- Co 2-3 akapity wstaw podtytuł używając tagu: <h3>Podtytuł</h3>
+- Dodaj listy wypunktowane gdzie to pasuje (korzyści, kroki, cechy)
+- Na końcu sekcji dodaj <blockquote> z kluczowym wnioskiem lub poradą
+
+DODATKOWE ELEMENTY (wstaw jeśli pasują do tematu):
+- Jeśli temat dotyczy danych liczbowych, dodaj prostą tabelę HTML: <table><tr><th>...</th></tr><tr><td>...</td></tr></table>
+- Zasugeruj miejsce na ilustrację wstawiając: <!-- IMAGE: opis grafiki która pasowałaby tutaj -->
+
+WZÓR STRUKTURY:
+<p>Akapit wprowadzający temat...</p>
+<h3>Pierwszy podtemat</h3>
+<p>Rozwinięcie...</p>
+<ul><li>Punkt 1</li><li>Punkt 2</li></ul>
+<p>Kolejny akapit...</p>
+<h3>Drugi podtemat</h3>
+<p>Dalsze rozwinięcie...</p>
+<blockquote>Kluczowy wniosek lub porada</blockquote>
 
 ${contextBefore ? `Kontekst przed tą sekcją: "${contextBefore}"` : ""}
 ${contextAfter ? `Kontekst po tej sekcji: "${contextAfter}"` : ""}`,
@@ -180,7 +197,6 @@ ${materials ? `\nMateriały źródłowe:\n${materials.slice(0, 8000)}` : "\nBrak
     // ====== GENERATE ALL CONTENT (batch) ======
     if (action === "generate-all-content") {
       const { bookTitle, materials, sections } = params;
-      // sections: Array<{ id: string, path: string, title: string, index: number }>
       const results: Record<string, string> = {};
       const total = sections.length;
 
@@ -199,7 +215,11 @@ ${materials ? `\nMateriały źródłowe:\n${materials.slice(0, 8000)}` : "\nBrak
           {
             role: "system",
             content: `Autor e-booka "${bookTitle}". Sekcja ${i + 1}/${total}. ${positionDesc}
-Pisz 400-800 słów po polsku, profesjonalnie z akapitami i przykładami. Markdown OK.
+Pisz 400-800 słów po polsku, profesjonalnie z akapitami.
+
+KLUCZOWE: Pisz czystym HTML (tagi <p>, <strong>, <em>, <ul>, <ol>, <li>, <h3>, <blockquote>, <table>).
+NIE używaj Markdown (*, #, _, ~~). Dziel treść na krótkie akapity (2-4 zdania każdy).
+Co 2-3 akapity wstaw <h3>podtytuł</h3>. Dodawaj listy i cytaty.
 ${prevTitle ? `Poprzednia sekcja: "${prevTitle}"` : ""}
 ${nextTitle ? `Następna sekcja: "${nextTitle}"` : ""}`,
           },

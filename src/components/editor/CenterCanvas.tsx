@@ -47,10 +47,10 @@ function estimateBlockHeight(block: Block, template: Template, contentWidth: num
   if (block.type === "heading") {
     const sizes: Record<number, number> = { 1: 36, 2: 26, 3: 21 };
     const fontSize = sizes[block.level || 2] || 26;
-    const text = block.content || "";
+    const text = (block.content || "").replace(/<[^>]*>/g, "");
     const charsPerLine = Math.floor(contentWidth / (fontSize * 0.55 * scale));
     const lines = Math.max(1, Math.ceil(text.length / Math.max(charsPerLine, 1)));
-    return lines * fontSize * 1.3 * scale + template.spacing.paragraphGap;
+    return lines * fontSize * 1.3 * scale + template.spacing.paragraphGap + 4;
   }
   if (block.type === "text") {
     const text = block.content || "";
@@ -58,7 +58,11 @@ function estimateBlockHeight(block: Block, template: Template, contentWidth: num
     const fontSize = 16;
     const charsPerLine = Math.floor(contentWidth / (fontSize * 0.5 * scale));
     const lines = Math.max(1, Math.ceil(plainText.length / Math.max(charsPerLine, 1)));
-    return lines * fontSize * template.spacing.lineHeight * scale + template.spacing.paragraphGap;
+    // Account for lists, blockquotes, tables adding extra height
+    const extraElements = (text.match(/<\/li>/g) || []).length * 4;
+    const blockquotes = (text.match(/<blockquote>/g) || []).length * 12;
+    const tables = (text.match(/<table>/g) || []).length * 60;
+    return lines * fontSize * template.spacing.lineHeight * scale + template.spacing.paragraphGap + extraElements + blockquotes + tables;
   }
   return 40;
 }

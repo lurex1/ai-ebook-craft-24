@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TEMPLATES } from "@/lib/templates";
 import type { Block, ChapterData, ProjectData } from "@/lib/blocks";
 import { createBlock } from "@/lib/blocks";
+import { splitContentIntoBlocks } from "@/lib/blockUtils";
 import { LeftPanel } from "@/components/editor/LeftPanel";
 import { CenterCanvas } from "@/components/editor/CenterCanvas";
 import { RightPanel } from "@/components/editor/RightPanel";
@@ -294,7 +295,12 @@ export default function Editor() {
             },
           });
           if (!error && data?.content) {
-            newBlocks.push({ id: crypto.randomUUID(), type: "text", content: data.content });
+            // Split AI content into multiple well-structured blocks
+            const contentBlocks = splitContentIntoBlocks(data.content);
+            newBlocks.push(...contentBlocks);
+
+            // Add a small spacer between sections for visual breathing room
+            newBlocks.push({ id: crypto.randomUUID(), type: "spacer", height: 20 });
           }
         } catch {
           // Skip failed generations

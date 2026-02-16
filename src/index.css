@@ -68,9 +68,13 @@
 /* Markdown rendered content in ebook blocks */
 .prose-ebook {
   line-height: 1.8;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 .prose-ebook p {
-  margin-bottom: 0.75em;
+  margin-bottom: 0.85em;
+  text-align: justify;
+  hyphens: auto;
 }
 .prose-ebook strong {
   font-weight: 700;
@@ -79,7 +83,7 @@
   font-style: italic;
 }
 .prose-ebook ul, .prose-ebook ol {
-  margin: 0.5em 0;
+  margin: 0.6em 0;
   padding-left: 1.5em;
 }
 .prose-ebook ul {
@@ -89,19 +93,26 @@
   list-style-type: decimal;
 }
 .prose-ebook li {
-  margin-bottom: 0.25em;
+  margin-bottom: 0.35em;
+  line-height: 1.6;
 }
 .prose-ebook blockquote {
   border-left: 3px solid currentColor;
   opacity: 0.85;
-  padding-left: 1em;
-  margin: 0.75em 0;
+  padding: 0.75em 1em;
+  margin: 1em 0;
   font-style: italic;
+  background: rgba(0,0,0,0.02);
+  border-radius: 0 4px 4px 0;
 }
 .prose-ebook h1, .prose-ebook h2, .prose-ebook h3 {
   font-weight: 700;
-  margin-top: 1em;
-  margin-bottom: 0.4em;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+.prose-ebook h3 {
+  font-size: 1.15em;
 }
 .prose-ebook code {
   font-family: monospace;
@@ -109,6 +120,25 @@
   padding: 0.15em 0.3em;
   border-radius: 3px;
   background: rgba(0,0,0,0.06);
+}
+.prose-ebook table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.9em;
+}
+.prose-ebook table th,
+.prose-ebook table td {
+  border: 1px solid rgba(0,0,0,0.15);
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+.prose-ebook table th {
+  background: rgba(0,0,0,0.04);
+  font-weight: 600;
+}
+.prose-ebook table tr:nth-child(even) td {
+  background: rgba(0,0,0,0.015);
 }
 
 @layer utilities {
