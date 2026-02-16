@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TEMPLATES } from "@/lib/templates";
 import type { Block, ChapterData, ProjectData } from "@/lib/blocks";
 import { createBlock } from "@/lib/blocks";
-import { splitContentIntoBlocks } from "@/lib/blockUtils";
+import { splitContentIntoBlocks, normalizeBlocks } from "@/lib/blockUtils";
 import { LeftPanel } from "@/components/editor/LeftPanel";
 import { CenterCanvas } from "@/components/editor/CenterCanvas";
 import { RightPanel } from "@/components/editor/RightPanel";
@@ -55,10 +55,15 @@ export default function Editor() {
     ]);
     if (!proj) { navigate("/"); return; }
     setProject(proj as any);
-    const parsedChapters = ((chs as any[]) || []).map((c) => ({
-      ...c,
-      blocks: Array.isArray(c.blocks) ? c.blocks : [],
-    }));
+    const parsedChapters = ((chs as any[]) || []).map((c) => {
+      const rawBlocks = Array.isArray(c.blocks) ? c.blocks : [];
+      const normalized = normalizeBlocks(rawBlocks);
+      // Save normalized blocks back if they changed
+      if (normalized.length !== rawBlocks.length) {
+        supabase.from("chapters").update({ blocks: normalized as any }).eq("id", c.id);
+      }
+      return { ...c, blocks: normalized };
+    });
     setChapters(parsedChapters);
     if (parsedChapters.length > 0) setSelectedChapterId(parsedChapters[0].id);
     setLoading(false);

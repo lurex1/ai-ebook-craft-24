@@ -224,10 +224,9 @@ export function CenterCanvas({
             }}
           >
             <div
-              className="overflow-hidden"
               style={{
                 padding: `${marginPx}px`,
-                height: pageHeightPx - (showPageNumbers ? footerHeight : 0),
+                minHeight: pageHeightPx - (showPageNumbers ? footerHeight : 0),
               }}
             >
               {pageBlocks.length === 0 ? (
