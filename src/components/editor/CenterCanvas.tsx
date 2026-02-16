@@ -60,11 +60,15 @@ function estimateBlockHeight(block: Block, template: Template, contentWidth: num
     const plainText = text.replace(/<[^>]*>/g, "");
     const fontSize = 16;
     const charsPerLine = Math.floor(contentWidth / (fontSize * 0.5 * scale));
-    const lines = Math.max(1, Math.ceil(plainText.length / Math.max(charsPerLine, 1)));
+    const newlineCount = (plainText.match(/\n/g) || []).length;
+    const wrappedLines = Math.max(1, Math.ceil(plainText.length / Math.max(charsPerLine, 1)));
+    const totalLines = Math.max(wrappedLines, newlineCount + 1);
     const extraElements = (text.match(/<\/li>/g) || []).length * 4;
     const blockquotes = (text.match(/<blockquote>/g) || []).length * 12;
     const tables = (text.match(/<table>/g) || []).length * 60;
-    return lines * fontSize * template.spacing.lineHeight * scale + template.spacing.paragraphGap + extraElements + blockquotes + tables;
+    const codeBlocks = (text.match(/<pre/gi) || []).length;
+    const lineH = codeBlocks > 0 ? fontSize * 1.6 : fontSize * template.spacing.lineHeight;
+    return totalLines * lineH * scale + template.spacing.paragraphGap + extraElements + blockquotes + tables + 8;
   }
   return 40;
 }
@@ -285,9 +289,8 @@ export function CenterCanvas({
             <div
               style={{
                 padding: `${marginPx}px`,
-                minHeight: pageHeightPx - (showPageNumbers ? footerHeight : 0),
-                maxHeight: pageHeightPx - (showPageNumbers ? footerHeight : 0),
-                overflow: "visible",
+                height: pageHeightPx - (showPageNumbers ? footerHeight : 0),
+                overflow: "hidden",
               }}
             >
               {pageBlocks.length === 0 ? (
