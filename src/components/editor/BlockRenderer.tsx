@@ -1,8 +1,17 @@
 import { useRef, useMemo, useCallback } from "react";
-import { marked } from "marked";
 import type { Block } from "@/lib/blocks";
 import type { Template } from "@/lib/templates";
 import { TextSelectionToolbar } from "./TextSelectionToolbar";
+import { cleanMarkdownToHtml } from "@/lib/blockUtils";
+
+function renderContent(text: string): string {
+  // If content already has HTML tags, clean up any stray markdown
+  if (text.includes("<") && text.includes(">")) {
+    return cleanMarkdownToHtml(text);
+  }
+  // Convert pure text/markdown to HTML
+  return cleanMarkdownToHtml(text);
+}
 
 interface Props {
   block: Block;
@@ -10,15 +19,6 @@ interface Props {
   onUpdate: (updates: Partial<Block>) => void;
   isSelected: boolean;
   onGenerateImage?: (contextText: string) => void;
-}
-
-marked.setOptions({ breaks: true, gfm: true });
-
-function renderMarkdown(text: string): string {
-  const cleaned = text.replace(/^#{1,3}\s+.*$/gm, (match) => {
-    return `<strong>${match.replace(/^#{1,3}\s+/, "")}</strong>`;
-  });
-  return marked.parse(cleaned) as string;
 }
 
 export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerateImage }: Props) {
@@ -33,11 +33,7 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
 
   const renderedHtml = useMemo(() => {
     if (block.type === "text" && block.content) {
-      // If content already has HTML tags (from contentEditable), use as-is
-      if (block.content.includes("<") && block.content.includes(">")) {
-        return block.content;
-      }
-      return renderMarkdown(block.content);
+      return renderContent(block.content);
     }
     return "";
   }, [block.type, block.content]);
