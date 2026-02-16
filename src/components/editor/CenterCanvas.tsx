@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Heading1, Type, ImageIcon, MinusSquare, Scissors, ChevronUp, ChevronDown, Trash2, Wand2, Plus } from "lucide-react";
+import { useMemo, useState, useRef, useCallback } from "react";
+import { Heading1, Type, ImageIcon, MinusSquare, Scissors, ChevronUp, ChevronDown, Trash2, Wand2, Plus, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Block, BlockType, ChapterData } from "@/lib/blocks";
 import type { Template } from "@/lib/templates";
@@ -15,6 +15,7 @@ interface Props {
   onUpdateBlock: (id: string, updates: Partial<Block>) => void;
   onDeleteBlock: (id: string) => void;
   onMoveBlock: (id: string, dir: -1 | 1) => void;
+  onReorderBlocks?: (fromIndex: number, toIndex: number) => void;
   pageSize: string;
   onGenerateContent?: () => void;
   isGenerating?: boolean;
@@ -23,6 +24,8 @@ interface Props {
   headerConfig?: Record<string, any>;
   projectTitle?: string;
   authorName?: string;
+  watermarkText?: string;
+  pricePerPage?: number;
 }
 
 const BLOCK_TOOLS: { type: BlockType; icon: React.ElementType; label: string }[] = [
@@ -58,7 +61,6 @@ function estimateBlockHeight(block: Block, template: Template, contentWidth: num
     const fontSize = 16;
     const charsPerLine = Math.floor(contentWidth / (fontSize * 0.5 * scale));
     const lines = Math.max(1, Math.ceil(plainText.length / Math.max(charsPerLine, 1)));
-    // Account for lists, blockquotes, tables adding extra height
     const extraElements = (text.match(/<\/li>/g) || []).length * 4;
     const blockquotes = (text.match(/<blockquote>/g) || []).length * 12;
     const tables = (text.match(/<table>/g) || []).length * 60;
@@ -67,7 +69,7 @@ function estimateBlockHeight(block: Block, template: Template, contentWidth: num
   return 40;
 }
 
-// Inline insert menu that appears between blocks
+// Inline insert menu between blocks
 function InsertMenu({ onInsert, visible }: { onInsert: (type: BlockType) => void; visible: boolean }) {
   const [open, setOpen] = useState(false);
 
@@ -107,9 +109,9 @@ function InsertMenu({ onInsert, visible }: { onInsert: (type: BlockType) => void
 
 export function CenterCanvas({
   chapter, template, selectedBlockId, onSelectBlock,
-  onAddBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, pageSize,
-  onGenerateContent, isGenerating, onGenerateImage,
-  footerConfig,
+  onAddBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, onReorderBlocks,
+  pageSize, onGenerateContent, isGenerating, onGenerateImage,
+  footerConfig, watermarkText, pricePerPage,
 }: Props) {
   const size = PAGE_SIZES[pageSize] || PAGE_SIZES.A4;
   const pageWidthPx = size.width * MM_TO_PX * CANVAS_SCALE;
@@ -121,6 +123,46 @@ export function CenterCanvas({
   const showPageNumbers = footerConfig?.showPageNumbers ?? true;
   const usableHeight = pageHeightPx - marginPx * 2 - (showPageNumbers ? footerHeight : 0);
 
+  // Drag and drop state
+  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+
+  const handleDragStart = useCallback((e: React.DragEvent, blockId: string) => {
+    setDraggedBlockId(blockId);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", blockId);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, blockId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (blockId !== draggedBlockId) {
+      setDropTargetId(blockId);
+    }
+  }, [draggedBlockId]);
+
+  const handleDrop = useCallback((e: React.DragEvent, targetBlockId: string) => {
+    e.preventDefault();
+    if (!draggedBlockId || !chapter || draggedBlockId === targetBlockId) {
+      setDraggedBlockId(null);
+      setDropTargetId(null);
+      return;
+    }
+    const fromIndex = chapter.blocks.findIndex((b) => b.id === draggedBlockId);
+    const toIndex = chapter.blocks.findIndex((b) => b.id === targetBlockId);
+    if (fromIndex >= 0 && toIndex >= 0 && onReorderBlocks) {
+      onReorderBlocks(fromIndex, toIndex);
+    }
+    setDraggedBlockId(null);
+    setDropTargetId(null);
+  }, [draggedBlockId, chapter, onReorderBlocks]);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedBlockId(null);
+    setDropTargetId(null);
+  }, []);
+
+  // Pagination: move whole block to next page if it doesn't fit
   const pages = useMemo(() => {
     if (!chapter) return [];
     const result: Block[][] = [[]];
@@ -135,6 +177,7 @@ export function CenterCanvas({
 
       const blockH = estimateBlockHeight(block, template, contentWidth);
 
+      // If block doesn't fit and page has content, move ENTIRE block to next page
       if (currentHeight + blockH > usableHeight && result[result.length - 1].length > 0) {
         result.push([]);
         currentHeight = 0;
@@ -146,6 +189,9 @@ export function CenterCanvas({
 
     return result;
   }, [chapter?.blocks, template, contentWidth, usableHeight]);
+
+  const totalPages = pages.length;
+  const estimatedCost = pricePerPage ? (totalPages * pricePerPage).toFixed(2) : null;
 
   const needsContent = chapter && chapter.blocks.some((b) => b.type === "heading") && !chapter.blocks.some((b) => b.type === "text" && b.content && b.content.trim().length > 50);
 
@@ -159,7 +205,7 @@ export function CenterCanvas({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Top toolbar - inserts after selected block */}
+      {/* Top toolbar */}
       <div className="h-10 border-b border-border/30 bg-card/50 px-3 flex items-center gap-1 shrink-0">
         <span className="text-xs text-muted-foreground mr-2">Wstaw{selectedBlockId ? " po bloku" : ""}:</span>
         {BLOCK_TOOLS.map((tool) => {
@@ -177,6 +223,18 @@ export function CenterCanvas({
             </Button>
           );
         })}
+
+        {/* Page count & cost */}
+        <div className="ml-auto flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">
+            {totalPages} {totalPages === 1 ? "strona" : totalPages < 5 ? "strony" : "stron"}
+          </span>
+          {estimatedCost && (
+            <span className="text-xs font-medium text-primary">
+              Koszt: {estimatedCost} PLN
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Canvas scroll area */}
@@ -218,6 +276,7 @@ export function CenterCanvas({
               fontFamily: template.bodyFont,
               color: template.colors.text,
               lineHeight: template.spacing.lineHeight,
+              overflow: "hidden",
             }}
             onClick={(e) => {
               if (e.target === e.currentTarget) onSelectBlock(null);
@@ -226,7 +285,8 @@ export function CenterCanvas({
             <div
               style={{
                 padding: `${marginPx}px`,
-                minHeight: pageHeightPx - (showPageNumbers ? footerHeight : 0),
+                height: pageHeightPx - (showPageNumbers ? footerHeight : 0),
+                overflow: "hidden",
               }}
             >
               {pageBlocks.length === 0 ? (
@@ -237,20 +297,34 @@ export function CenterCanvas({
                   Pusta strona — użyj paska powyżej lub kliknij + między blokami
                 </div>
               ) : (
-                pageBlocks.map((block, idx) => (
+                pageBlocks.map((block) => (
                   <div key={block.id}>
                     <div
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, block.id)}
+                      onDragOver={(e) => handleDragOver(e, block.id)}
+                      onDrop={(e) => handleDrop(e, block.id)}
+                      onDragEnd={handleDragEnd}
                       className={`relative group cursor-pointer transition-all duration-150 rounded-sm ${
                         selectedBlockId === block.id
                           ? "ring-2 ring-blue-400/50 ring-offset-1"
+                          : dropTargetId === block.id
+                          ? "ring-2 ring-primary/50 ring-offset-1 bg-primary/5"
+                          : draggedBlockId === block.id
+                          ? "opacity-40"
                           : "hover:ring-1 hover:ring-blue-200/40"
                       }`}
-                      style={{
-                        marginBottom: 0,
-                        padding: "2px 4px",
-                      }}
+                      style={{ marginBottom: 0, padding: "2px 4px" }}
                       onClick={(e) => { e.stopPropagation(); onSelectBlock(block.id); }}
                     >
+                      {/* Drag handle */}
+                      <div
+                        className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
+                        onMouseDown={(e) => e.stopPropagation()}
+                      >
+                        <GripVertical className="h-4 w-4 text-gray-400" />
+                      </div>
+
                       <BlockRenderer
                         block={block}
                         template={template}
@@ -281,7 +355,7 @@ export function CenterCanvas({
                         </div>
                       )}
                     </div>
-                    {/* Insert button between blocks */}
+                    {/* Insert menu between blocks */}
                     <div onClick={(e) => e.stopPropagation()}>
                       <InsertMenu
                         onInsert={(type) => onAddBlock(type, block.id)}
@@ -292,6 +366,23 @@ export function CenterCanvas({
                 ))
               )}
             </div>
+
+            {/* Watermark */}
+            {watermarkText && (
+              <div
+                className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
+                style={{
+                  fontSize: "1.6em",
+                  color: "rgba(0,0,0,0.05)",
+                  fontFamily: template.bodyFont,
+                  transform: "rotate(-30deg)",
+                  whiteSpace: "nowrap",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                {watermarkText}
+              </div>
+            )}
 
             {showPageNumbers && (
               <div

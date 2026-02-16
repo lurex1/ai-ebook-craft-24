@@ -10,9 +10,10 @@ import { splitContentIntoBlocks, normalizeBlocks } from "@/lib/blockUtils";
 import { LeftPanel } from "@/components/editor/LeftPanel";
 import { CenterCanvas } from "@/components/editor/CenterCanvas";
 import { RightPanel } from "@/components/editor/RightPanel";
+import { FlipbookView } from "@/components/editor/FlipbookView";
 import {
   BookOpen, ArrowLeft, Save, Loader2, Check,
-  Import, Download, ImageIcon, Sparkles, Wand2, Plus,
+  Import, Download, ImageIcon, Sparkles, Wand2, Plus, BookOpenCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImportDialog } from "@/components/editor/ImportDialog";
@@ -37,6 +38,7 @@ export default function Editor() {
   const [coverOpen, setCoverOpen] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiProgress, setAiProgress] = useState({ current: 0, total: 0 });
+  const [flipbookOpen, setFlipbookOpen] = useState(false);
 
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
@@ -151,6 +153,17 @@ export default function Editor() {
       const target = idx + dir;
       if (target < 0 || target >= blocks.length) return;
       [blocks[idx], blocks[target]] = [blocks[target], blocks[idx]];
+      updateBlocks(blocks);
+    },
+    [currentChapter, updateBlocks]
+  );
+
+  const reorderBlocks = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (!currentChapter) return;
+      const blocks = [...currentChapter.blocks];
+      const [moved] = blocks.splice(fromIndex, 1);
+      blocks.splice(toIndex, 0, moved);
       updateBlocks(blocks);
     },
     [currentChapter, updateBlocks]
@@ -415,6 +428,9 @@ export default function Editor() {
           <Button variant="ghost" size="sm" onClick={() => setCoverOpen(true)} className="text-muted-foreground gap-1 text-xs">
             <ImageIcon className="h-3.5 w-3.5" /> Okładka
           </Button>
+          <Button variant="ghost" size="sm" onClick={() => setFlipbookOpen(true)} className="text-muted-foreground gap-1 text-xs">
+            <BookOpenCheck className="h-3.5 w-3.5" /> Flipbook
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => setExportOpen(true)} className="text-primary gap-1 text-xs">
             <Download className="h-3.5 w-3.5" /> Eksport
           </Button>
@@ -456,11 +472,14 @@ export default function Editor() {
           onUpdateBlock={updateBlock}
           onDeleteBlock={deleteBlock}
           onMoveBlock={moveBlock}
+          onReorderBlocks={reorderBlocks}
           pageSize={project.page_size}
           onGenerateContent={generateCurrentChapterContent}
           isGenerating={aiGenerating}
           onGenerateImage={generateIllustration}
           footerConfig={project.footer_config}
+          watermarkText={user?.email || user?.id}
+          pricePerPage={0.5}
         />
         <RightPanel
           project={project}
@@ -482,6 +501,7 @@ export default function Editor() {
         project={project}
         chapters={chapters}
         template={template}
+        watermarkText={user?.email || user?.id}
       />
       <CoverGenerator
         open={coverOpen}
@@ -489,6 +509,16 @@ export default function Editor() {
         project={project}
         onUpdateProject={updateProject}
       />
+      {flipbookOpen && (
+        <FlipbookView
+          chapters={chapters}
+          template={template}
+          pageSize={project.page_size}
+          onClose={() => setFlipbookOpen(false)}
+          watermarkText={user?.email || user?.id}
+          footerConfig={project.footer_config}
+        />
+      )}
     </div>
   );
 }
