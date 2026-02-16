@@ -8,13 +8,14 @@ interface Props {
   chapters: ChapterData[];
   selectedChapterId: string | null;
   onSelect: (id: string) => void;
+  onScrollToBlock?: (chapterId: string, blockId: string) => void;
   onAdd: () => void;
   onDelete: (id: string) => void;
   onRename: (id: string, title: string) => void;
   onMove: (id: string, dir: -1 | 1) => void;
 }
 
-export function LeftPanel({ chapters, selectedChapterId, onSelect, onAdd, onDelete, onRename, onMove }: Props) {
+export function LeftPanel({ chapters, selectedChapterId, onSelect, onScrollToBlock, onAdd, onDelete, onRename, onMove }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -158,7 +159,10 @@ export function LeftPanel({ chapters, selectedChapterId, onSelect, onAdd, onDele
                       key={item.id}
                       className="flex items-center gap-1.5 px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/50 cursor-pointer transition-colors"
                       style={{ paddingLeft: item.level === 3 ? "1.25rem" : undefined }}
-                      onClick={() => onSelect(ch.id)}
+                      onClick={() => {
+                        onSelect(ch.id);
+                        onScrollToBlock?.(ch.id, item.id);
+                      }}
                     >
                       <span className="w-1 h-1 rounded-full bg-primary/50 shrink-0" />
                       <span className="truncate">{item.title}</span>
