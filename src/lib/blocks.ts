@@ -9,6 +9,7 @@ export interface Block {
   alt?: string;
   width?: number;
   height?: number;
+  align?: "left" | "center" | "right";
   textColor?: string;
   bgColor?: string;
 }

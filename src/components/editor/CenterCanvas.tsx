@@ -318,7 +318,10 @@ export function CenterCanvas({
                 </div>
               ) : (
                 pageBlocks.map((block) => (
-                   <div key={block.id} data-block-id={block.id}>
+                   <div key={block.id} data-block-id={block.id} style={{
+                      display: "flex",
+                      justifyContent: block.align === "center" ? "center" : block.align === "right" ? "flex-end" : "flex-start",
+                    }}>
                     <div
                       draggable
                       onDragStart={(e) => handleDragStart(e, block.id)}
