@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -8,8 +8,9 @@ import { TEMPLATES, PAGE_SIZES, FONT_OPTIONS } from "@/lib/templates";
 import type { Block, ProjectData } from "@/lib/blocks";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, ImageIcon, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Props {
   project: ProjectData;
@@ -21,7 +22,33 @@ interface Props {
 export function RightPanel({ project, onUpdateProject, selectedBlock, onUpdateBlock }: Props) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [libraryImages, setLibraryImages] = useState<{ name: string; url: string }[]>([]);
+  const [loadingLibrary, setLoadingLibrary] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const loadLibrary = async () => {
+    setLoadingLibrary(true);
+    try {
+      const { data, error } = await supabase.storage.from("ebook-materials").list("", { limit: 100, sortBy: { column: "created_at", order: "desc" } });
+      if (error) throw error;
+      const images = (data || [])
+        .filter((f) => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(f.name))
+        .map((f) => ({
+          name: f.name,
+          url: supabase.storage.from("ebook-materials").getPublicUrl(f.name).data.publicUrl,
+        }));
+      setLibraryImages(images);
+    } catch {
+      // silent
+    } finally {
+      setLoadingLibrary(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showLibrary) loadLibrary();
+  }, [showLibrary]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -76,17 +103,67 @@ export function RightPanel({ project, onUpdateProject, selectedBlock, onUpdateBl
             )}
             {selectedBlock.type === "image" && (
               <div className="space-y-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full border-border text-xs gap-2"
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploading}
-                >
-                  {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-                  Wgraj obraz
-                </Button>
+                {/* Preview */}
+                {selectedBlock.url && (
+                  <div className="rounded-lg overflow-hidden border border-border/50 bg-secondary">
+                    <img src={selectedBlock.url} alt="" className="w-full h-auto max-h-32 object-cover" />
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-border text-xs gap-1.5"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                    Wgraj
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-border text-xs gap-1.5"
+                    onClick={() => setShowLibrary(!showLibrary)}
+                  >
+                    <ImageIcon className="h-3 w-3" />
+                    Biblioteka
+                  </Button>
+                </div>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+
+                {/* Media Library */}
+                {showLibrary && (
+                  <div className="border border-border/50 rounded-lg overflow-hidden">
+                    <div className="px-2 py-1.5 bg-secondary/50 border-b border-border/30 flex items-center justify-between">
+                      <span className="text-[10px] font-medium text-muted-foreground uppercase">Biblioteka mediów</span>
+                      {loadingLibrary && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                    </div>
+                    <ScrollArea className="max-h-48">
+                      {libraryImages.length === 0 && !loadingLibrary ? (
+                        <p className="text-xs text-muted-foreground p-3 text-center">Brak obrazów. Wgraj pierwszy!</p>
+                      ) : (
+                        <div className="grid grid-cols-3 gap-1 p-1.5">
+                          {libraryImages.map((img) => (
+                            <button
+                              key={img.name}
+                              onClick={() => {
+                                onUpdateBlock({ url: img.url });
+                                setShowLibrary(false);
+                              }}
+                              className={`relative rounded overflow-hidden border transition-all hover:ring-2 hover:ring-primary/50 aspect-square ${
+                                selectedBlock.url === img.url ? "ring-2 ring-primary" : "border-border/30"
+                              }`}
+                            >
+                              <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </div>
+                )}
+
                 <div>
                   <Label className="text-xs text-muted-foreground">URL obrazu</Label>
                   <Input
