@@ -367,6 +367,10 @@ ${nextTitle ? `Następna sekcja: "${nextTitle}"` : ""}`,
     throw new Error("Nieznana akcja: " + action);
   } catch (e) {
     console.error("Error:", e);
-    return json({ error: e instanceof Error ? e.message : "Nieznany błąd" }, 500);
+    const msg = e instanceof Error ? e.message : "Nieznany błąd";
+    // Return proper status codes for rate limit / payment errors
+    if (msg.includes("Limit zapytań") || msg.includes("429")) return json({ error: msg }, 429);
+    if (msg.includes("Brak środków") || msg.includes("402")) return json({ error: msg }, 402);
+    return json({ error: msg }, 500);
   }
 });

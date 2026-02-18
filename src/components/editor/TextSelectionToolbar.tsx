@@ -84,7 +84,23 @@ export function TextSelectionToolbar({ containerRef, onApplyInlineStyle, onGener
           transformType,
         },
       });
-      if (error) throw error;
+      if (error) {
+        // Try to parse error body for user-friendly message
+        try {
+          const ctx = error?.context;
+          if (ctx && typeof ctx.json === 'function') {
+            const body = await ctx.json();
+            if (body?.error) {
+              const { toast } = await import("@/hooks/use-toast");
+              toast({ title: "Błąd AI", description: body.error, variant: "destructive" });
+              return;
+            }
+          }
+        } catch {}
+        const { toast } = await import("@/hooks/use-toast");
+        toast({ title: "Błąd AI", description: "Nie udało się przetworzyć tekstu. Sprawdź kredyty AI w Settings → Workspace → Usage.", variant: "destructive" });
+        return;
+      }
       if (data?.transformedText && onReplaceSelection) {
         onReplaceSelection(data.transformedText);
         setSubMenu(null);
@@ -92,6 +108,8 @@ export function TextSelectionToolbar({ containerRef, onApplyInlineStyle, onGener
       }
     } catch (err: any) {
       console.error("AI transform error:", err);
+      const { toast } = await import("@/hooks/use-toast");
+      toast({ title: "Błąd", description: "Wystąpił nieoczekiwany błąd.", variant: "destructive" });
     } finally {
       setAiLoading(false);
     }
