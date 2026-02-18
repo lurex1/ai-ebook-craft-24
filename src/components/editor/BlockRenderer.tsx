@@ -19,9 +19,10 @@ interface Props {
   onUpdate: (updates: Partial<Block>) => void;
   isSelected: boolean;
   onGenerateImage?: (contextText: string) => void;
+  onReplaceSelection?: (newHtml: string) => void;
 }
 
-export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerateImage }: Props) {
+export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerateImage, onReplaceSelection }: Props) {
   const editRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -30,6 +31,25 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
       onUpdate({ content: editRef.current.innerHTML });
     }
   }, [block.type, onUpdate]);
+
+  const replaceSelectedContent = useCallback((newHtml: string) => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !editRef.current) return;
+    try {
+      const range = sel.getRangeAt(0);
+      if (!editRef.current.contains(range.commonAncestorContainer)) return;
+      range.deleteContents();
+      const temp = document.createElement("div");
+      temp.innerHTML = newHtml;
+      const frag = document.createDocumentFragment();
+      while (temp.firstChild) frag.appendChild(temp.firstChild);
+      range.insertNode(frag);
+      sel.removeAllRanges();
+      onUpdate({ content: editRef.current.innerHTML });
+    } catch {
+      // fallback
+    }
+  }, [onUpdate]);
 
   const renderedHtml = useMemo(() => {
     if (block.type === "text" && block.content) {
@@ -78,6 +98,7 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
             containerRef={containerRef as React.RefObject<HTMLElement>}
             onApplyInlineStyle={(style, value) => applyInlineStyle(style, value)}
             onGenerateImage={(text) => onGenerateImage(text)}
+            onReplaceSelection={onReplaceSelection || replaceSelectedContent}
           />
         )}
       </div>
@@ -110,6 +131,7 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
             containerRef={containerRef as React.RefObject<HTMLElement>}
             onApplyInlineStyle={(style, value) => applyInlineStyle(style, value)}
             onGenerateImage={(text) => onGenerateImage(text)}
+            onReplaceSelection={onReplaceSelection || replaceSelectedContent}
           />
         )}
       </div>
