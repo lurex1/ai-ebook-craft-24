@@ -338,6 +338,32 @@ ${nextTitle ? `Następna sekcja: "${nextTitle}"` : ""}`,
       return json({ imageUrl: urlData.publicUrl });
     }
 
+    // ====== TRANSFORM TEXT — rewrite/convert selected text ======
+    if (action === "transform-text") {
+      const { selectedText, transformType } = params;
+      
+      const prompts: Record<string, string> = {
+        "to-table": `Zamień poniższy tekst na tabelę HTML. Użyj tagów <table>, <tr>, <th>, <td>. Nie dodawaj nic poza tabelą. Zwróć TYLKO czysty HTML tabeli.\n\nTekst:\n${selectedText}`,
+        "to-bullets": `Zamień poniższy tekst na listę wypunktowaną HTML. Użyj tagów <ul> i <li>. Nie dodawaj nic poza listą. Zwróć TYLKO czysty HTML listy.\n\nTekst:\n${selectedText}`,
+        "simplify": `Przepisz poniższy tekst w sposób PROSTY — krótkie zdania, łatwy język, bez żargonu. Pisz po polsku. Zachowaj formatowanie HTML (tagi <p>, <strong>, <em>). Zwróć TYLKO przerobiony HTML.\n\nTekst:\n${selectedText}`,
+        "medium": `Przepisz poniższy tekst na ŚREDNIM poziomie zaawansowania — profesjonalny ale przystępny. Pisz po polsku. Zachowaj formatowanie HTML. Zwróć TYLKO przerobiony HTML.\n\nTekst:\n${selectedText}`,
+        "advanced": `Przepisz poniższy tekst na ZAAWANSOWANYM poziomie — ekspercki język, terminologia branżowa, głębia merytoryczna. Pisz po polsku. Zachowaj formatowanie HTML. Zwróć TYLKO przerobiony HTML.\n\nTekst:\n${selectedText}`,
+      };
+
+      const prompt = prompts[transformType];
+      if (!prompt) throw new Error("Nieznany typ transformacji: " + transformType);
+
+      const data = await callAI([
+        { role: "system", content: "Jesteś redaktorem tekstu. Zwracasz TYLKO przerobiony HTML, bez dodatkowych komentarzy, wyjaśnień ani markdown." },
+        { role: "user", content: prompt },
+      ]);
+
+      const result = data.choices?.[0]?.message?.content || "";
+      // Strip markdown code fences if AI wrapped the response
+      const cleaned = result.replace(/^```html?\n?/i, "").replace(/\n?```$/i, "").trim();
+      return json({ transformedText: cleaned });
+    }
+
     throw new Error("Nieznana akcja: " + action);
   } catch (e) {
     console.error("Error:", e);
