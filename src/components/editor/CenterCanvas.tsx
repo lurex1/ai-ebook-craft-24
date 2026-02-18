@@ -133,7 +133,7 @@ export function CenterCanvas({
   const footerHeight = 28;
 
   const showPageNumbers = footerConfig?.showPageNumbers ?? true;
-  const usableHeight = pageHeightPx - marginPx * 2 - (showPageNumbers ? footerHeight : 0);
+  const usableHeight = pageHeightPx - marginPx * 2 - (showPageNumbers ? footerHeight : 0) - 16; // 16px safety buffer
 
   // Scroll to block
   const canvasScrollRef = useRef<HTMLDivElement>(null);
@@ -400,6 +400,7 @@ export function CenterCanvas({
                 padding: `${marginPx}px`,
                 height: pageHeightPx - (showPageNumbers ? footerHeight : 0),
                 overflow: "hidden",
+                position: "relative",
               }}
             >
               {pageBlocks.length === 0 ? (
