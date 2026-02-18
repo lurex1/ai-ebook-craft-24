@@ -55,7 +55,7 @@ function estimateBlockHeight(block: Block, template: Template, contentWidth: num
     const text = (block.content || "").replace(/<[^>]*>/g, "");
     const charsPerLine = Math.floor(contentWidth / (fontSize * 0.55 * scale));
     const lines = Math.max(1, Math.ceil(text.length / Math.max(charsPerLine, 1)));
-    return lines * fontSize * 1.3 * scale + template.spacing.paragraphGap + 8;
+    return lines * fontSize * 1.3 * scale + template.spacing.paragraphGap + 16;
   }
   if (block.type === "text") {
     const text = block.content || "";
@@ -66,16 +66,16 @@ function estimateBlockHeight(block: Block, template: Template, contentWidth: num
     const wrappedLines = Math.max(1, Math.ceil(plainText.length / Math.max(charsPerLine, 1)));
     const totalLines = Math.max(wrappedLines, newlineCount + 1);
     const liCount = (text.match(/<\/li>/g) || []).length;
-    const extraElements = liCount * 6;
-    const blockquotes = (text.match(/<blockquote>/g) || []).length * 16;
-    const tables = (text.match(/<table>/g) || []).length * 60;
+    const extraElements = liCount * 10;
+    const blockquotes = (text.match(/<blockquote>/g) || []).length * 24;
+    const tables = (text.match(/<table>/g) || []).length * 80;
     const pCount = (text.match(/<\/p>/g) || []).length;
-    const paragraphSpacing = pCount * 8;
+    const paragraphSpacing = pCount * 12;
     const codeBlocks = (text.match(/<pre/gi) || []).length;
     const lineH = codeBlocks > 0 ? fontSize * 1.6 : fontSize * template.spacing.lineHeight;
-    // Add 20% safety margin to prevent overflow
-    const raw = totalLines * lineH * scale + template.spacing.paragraphGap + extraElements + blockquotes + tables + paragraphSpacing + 12;
-    return raw * 1.2;
+    // 40% safety margin to prevent overflow — better to wrap early than clip content
+    const raw = totalLines * lineH * scale + template.spacing.paragraphGap + extraElements + blockquotes + tables + paragraphSpacing + 20;
+    return raw * 1.4;
   }
   return 40;
 }
@@ -133,7 +133,7 @@ export function CenterCanvas({
   const footerHeight = 28;
 
   const showPageNumbers = footerConfig?.showPageNumbers ?? true;
-  const usableHeight = pageHeightPx - marginPx * 2 - (showPageNumbers ? footerHeight : 0) - 16; // 16px safety buffer
+  const usableHeight = pageHeightPx - marginPx * 2 - (showPageNumbers ? footerHeight : 0) - 24; // 24px safety buffer
 
   // Scroll to block
   const canvasScrollRef = useRef<HTMLDivElement>(null);
