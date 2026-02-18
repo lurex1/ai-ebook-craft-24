@@ -55,7 +55,7 @@ function estimateBlockHeight(block: Block, template: Template, contentWidth: num
     const text = (block.content || "").replace(/<[^>]*>/g, "");
     const charsPerLine = Math.floor(contentWidth / (fontSize * 0.55 * scale));
     const lines = Math.max(1, Math.ceil(text.length / Math.max(charsPerLine, 1)));
-    return lines * fontSize * 1.3 * scale + template.spacing.paragraphGap + 4;
+    return lines * fontSize * 1.3 * scale + template.spacing.paragraphGap + 8;
   }
   if (block.type === "text") {
     const text = block.content || "";
@@ -65,12 +65,17 @@ function estimateBlockHeight(block: Block, template: Template, contentWidth: num
     const newlineCount = (plainText.match(/\n/g) || []).length;
     const wrappedLines = Math.max(1, Math.ceil(plainText.length / Math.max(charsPerLine, 1)));
     const totalLines = Math.max(wrappedLines, newlineCount + 1);
-    const extraElements = (text.match(/<\/li>/g) || []).length * 4;
-    const blockquotes = (text.match(/<blockquote>/g) || []).length * 12;
+    const liCount = (text.match(/<\/li>/g) || []).length;
+    const extraElements = liCount * 6;
+    const blockquotes = (text.match(/<blockquote>/g) || []).length * 16;
     const tables = (text.match(/<table>/g) || []).length * 60;
+    const pCount = (text.match(/<\/p>/g) || []).length;
+    const paragraphSpacing = pCount * 8;
     const codeBlocks = (text.match(/<pre/gi) || []).length;
     const lineH = codeBlocks > 0 ? fontSize * 1.6 : fontSize * template.spacing.lineHeight;
-    return totalLines * lineH * scale + template.spacing.paragraphGap + extraElements + blockquotes + tables + 8;
+    // Add 20% safety margin to prevent overflow
+    const raw = totalLines * lineH * scale + template.spacing.paragraphGap + extraElements + blockquotes + tables + paragraphSpacing + 12;
+    return raw * 1.2;
   }
   return 40;
 }
@@ -181,11 +186,109 @@ export function CenterCanvas({
     setDropTargetId(null);
   }, []);
 
-  // Pagination: split blocks across pages if they don't fit
+  // Pagination: split blocks across pages, splitting text blocks at paragraph boundaries
   const pages = useMemo(() => {
     if (!chapter) return [];
     const result: Block[][] = [[]];
     let currentHeight = 0;
+
+    const splitTextBlock = (block: Block, availableHeight: number): { fit: Block | null; overflow: Block | null } => {
+      if (block.type !== "text" || !block.content) return { fit: block, overflow: null };
+      
+      const segments = block.content.split(/(?<=<\/p>|<\/ul>|<\/ol>|<\/blockquote>|<\/table>|<\/li>)\s*/);
+      if (segments.length <= 1) return { fit: block, overflow: null };
+
+      let fitContent = "";
+      let overflowContent = "";
+      let foundSplit = false;
+
+      for (const seg of segments) {
+        if (foundSplit) {
+          overflowContent += (overflowContent ? "\n" : "") + seg;
+          continue;
+        }
+        const testContent = fitContent ? fitContent + "\n" + seg : seg;
+        const testBlock: Block = { ...block, id: "test", content: testContent };
+        const testH = estimateBlockHeight(testBlock, template, contentWidth);
+
+        if (testH > availableHeight && fitContent) {
+          foundSplit = true;
+          overflowContent = seg;
+        } else {
+          fitContent = testContent;
+        }
+      }
+
+      if (!foundSplit) return { fit: block, overflow: null };
+
+      const fitBlock = fitContent.trim() ? { ...block, id: crypto.randomUUID(), content: fitContent } : null;
+      const overflowBlock = overflowContent.trim() ? { ...block, id: crypto.randomUUID(), content: overflowContent } : null;
+      return { fit: fitBlock, overflow: overflowBlock };
+    };
+
+    const addBlock = (block: Block) => {
+      const blockH = estimateBlockHeight(block, template, contentWidth);
+      const remainingHeight = usableHeight - currentHeight;
+
+      // Fits on current page
+      if (blockH <= remainingHeight) {
+        result[result.length - 1].push(block);
+        currentHeight += blockH;
+        return;
+      }
+
+      // Doesn't fit — try splitting text blocks
+      if (block.type === "text" && block.content) {
+        // Try to fit part on current page if there's meaningful space left
+        if (remainingHeight > usableHeight * 0.15 && result[result.length - 1].length > 0) {
+          const { fit, overflow } = splitTextBlock(block, remainingHeight);
+          if (fit) {
+            result[result.length - 1].push(fit);
+          }
+          if (overflow) {
+            result.push([]);
+            currentHeight = 0;
+            // Recursively handle the overflow (it might need further splitting)
+            addBlock(overflow);
+          } else {
+            currentHeight += blockH;
+          }
+          return;
+        }
+
+        // Move to fresh page, then split if still too tall
+        if (result[result.length - 1].length > 0) {
+          result.push([]);
+          currentHeight = 0;
+        }
+
+        if (blockH <= usableHeight) {
+          result[result.length - 1].push(block);
+          currentHeight = blockH;
+        } else {
+          // Block is taller than entire page — force split
+          const { fit, overflow } = splitTextBlock(block, usableHeight);
+          if (fit) {
+            result[result.length - 1].push(fit);
+            currentHeight = estimateBlockHeight(fit, template, contentWidth);
+          }
+          if (overflow) {
+            result.push([]);
+            currentHeight = 0;
+            addBlock(overflow);
+          }
+        }
+        return;
+      }
+
+      // Non-text block: move to next page
+      if (result[result.length - 1].length > 0) {
+        result.push([]);
+        currentHeight = 0;
+      }
+      result[result.length - 1].push(block);
+      currentHeight = blockH;
+    };
 
     for (const block of chapter.blocks) {
       if (block.type === "chapter-break") {
@@ -193,67 +296,7 @@ export function CenterCanvas({
         currentHeight = 0;
         continue;
       }
-
-      const blockH = estimateBlockHeight(block, template, contentWidth);
-
-      // If block fits on current page, add it
-      if (currentHeight + blockH <= usableHeight) {
-        result[result.length - 1].push(block);
-        currentHeight += blockH;
-        continue;
-      }
-
-      // Block doesn't fit — if page has content, try next page first
-      if (result[result.length - 1].length > 0) {
-        result.push([]);
-        currentHeight = 0;
-      }
-
-      // If the block fits on a fresh page, just add it
-      if (blockH <= usableHeight) {
-        result[result.length - 1].push(block);
-        currentHeight = blockH;
-        continue;
-      }
-
-      // Block is taller than a full page — split text blocks by paragraphs
-      if (block.type === "text" && block.content) {
-        const segments = block.content.split(/(?<=<\/p>|<\/ul>|<\/ol>|<\/blockquote>|<\/table>|<\/li>)\s*/);
-        let accumContent = "";
-        
-        for (const seg of segments) {
-          const testContent = accumContent ? accumContent + "\n" + seg : seg;
-          const testBlock: Block = { ...block, id: crypto.randomUUID(), content: testContent };
-          const testH = estimateBlockHeight(testBlock, template, contentWidth);
-
-          if (testH > usableHeight && accumContent) {
-            // Push what we have so far
-            const partBlock: Block = { ...block, id: crypto.randomUUID(), content: accumContent };
-            result[result.length - 1].push(partBlock);
-            result.push([]);
-            currentHeight = 0;
-            accumContent = seg;
-          } else {
-            accumContent = testContent;
-          }
-        }
-
-        // Push remaining content
-        if (accumContent.trim()) {
-          const remainBlock: Block = { ...block, id: crypto.randomUUID(), content: accumContent };
-          const remainH = estimateBlockHeight(remainBlock, template, contentWidth);
-          if (currentHeight + remainH > usableHeight && result[result.length - 1].length > 0) {
-            result.push([]);
-            currentHeight = 0;
-          }
-          result[result.length - 1].push(remainBlock);
-          currentHeight += estimateBlockHeight(remainBlock, template, contentWidth);
-        }
-      } else {
-        // Non-text block that's too tall — just place it (images, etc.)
-        result[result.length - 1].push(block);
-        currentHeight = blockH;
-      }
+      addBlock(block);
     }
 
     return result;
