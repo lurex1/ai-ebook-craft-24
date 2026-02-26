@@ -5,11 +5,9 @@ import { TextSelectionToolbar } from "./TextSelectionToolbar";
 import { cleanMarkdownToHtml } from "@/lib/blockUtils";
 
 function renderContent(text: string): string {
-  // If content already has HTML tags, clean up any stray markdown
   if (text.includes("<") && text.includes(">")) {
     return cleanMarkdownToHtml(text);
   }
-  // Convert pure text/markdown to HTML
   return cleanMarkdownToHtml(text);
 }
 
@@ -32,24 +30,27 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
     }
   }, [block.type, onUpdate]);
 
-  const replaceSelectedContent = useCallback((newHtml: string) => {
-    const sel = window.getSelection();
-    if (!sel || sel.isCollapsed || !editRef.current) return;
-    try {
-      const range = sel.getRangeAt(0);
-      if (!editRef.current.contains(range.commonAncestorContainer)) return;
-      range.deleteContents();
-      const temp = document.createElement("div");
-      temp.innerHTML = newHtml;
-      const frag = document.createDocumentFragment();
-      while (temp.firstChild) frag.appendChild(temp.firstChild);
-      range.insertNode(frag);
-      sel.removeAllRanges();
-      onUpdate({ content: editRef.current.innerHTML });
-    } catch {
-      // fallback
-    }
-  }, [onUpdate]);
+  const replaceSelectedContent = useCallback(
+    (newHtml: string) => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !editRef.current) return;
+      try {
+        const range = sel.getRangeAt(0);
+        if (!editRef.current.contains(range.commonAncestorContainer)) return;
+        range.deleteContents();
+        const temp = document.createElement("div");
+        temp.innerHTML = newHtml;
+        const frag = document.createDocumentFragment();
+        while (temp.firstChild) frag.appendChild(temp.firstChild);
+        range.insertNode(frag);
+        sel.removeAllRanges();
+        onUpdate({ content: editRef.current.innerHTML });
+      } catch {
+        // fallback
+      }
+    },
+    [onUpdate],
+  );
 
   const renderedHtml = useMemo(() => {
     if (block.type === "text" && block.content) {
@@ -63,16 +64,24 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
       if (block.content.includes("<") && block.content.includes(">")) {
         return block.content;
       }
-      // Strip markdown # prefixes for display
       return block.content.replace(/^#{1,3}\s+/, "");
     }
     return block.content || "";
   }, [block.type, block.content]);
 
+  // ── SHARED overflow-safe styles ──────────────────────────────
+  const overflowSafeStyle: React.CSSProperties = {
+    wordBreak: "break-word",
+    overflowWrap: "break-word",
+    hyphens: "auto",
+    maxWidth: "100%",
+    overflow: "hidden",
+  };
+
   if (block.type === "heading") {
     const sizes: Record<number, string> = { 1: "2.2em", 2: "1.6em", 3: "1.3em" };
     return (
-      <div ref={containerRef} className="relative">
+      <div ref={containerRef} className="relative" style={{ maxWidth: "100%", overflow: "hidden" }}>
         <div
           ref={editRef}
           contentEditable={isSelected}
@@ -80,6 +89,7 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
           onInput={handleInput}
           dangerouslySetInnerHTML={{ __html: headingHtml }}
           style={{
+            ...overflowSafeStyle,
             fontFamily: template.headingFont,
             fontSize: sizes[block.level || 2],
             fontWeight: 700,
@@ -107,7 +117,7 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
 
   if (block.type === "text") {
     return (
-      <div ref={containerRef} className="relative">
+      <div ref={containerRef} className="relative" style={{ maxWidth: "100%", overflow: "hidden" }}>
         <div
           ref={editRef}
           contentEditable={isSelected}
@@ -116,6 +126,7 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
           className="prose-ebook"
           dangerouslySetInnerHTML={{ __html: renderedHtml }}
           style={{
+            ...overflowSafeStyle,
             fontFamily: template.bodyFont,
             fontSize: "1em",
             color: block.textColor || template.colors.text,
@@ -159,19 +170,19 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
       );
     }
     return (
-      <div style={{ width: `${block.width || 100}%` }}>
-        <img src={block.url} alt={block.alt || ""} className="max-w-full rounded" style={{ display: "block" }} />
+      <div style={{ width: `${block.width || 100}%`, maxWidth: "100%", overflow: "hidden" }}>
+        <img
+          src={block.url}
+          alt={block.alt || ""}
+          className="max-w-full rounded"
+          style={{ display: "block", maxWidth: "100%", height: "auto" }}
+        />
       </div>
     );
   }
 
   if (block.type === "spacer") {
-    return (
-      <div
-        style={{ height: block.height || 40 }}
-        className={isSelected ? "border border-dashed rounded" : ""}
-      />
-    );
+    return <div style={{ height: block.height || 40 }} className={isSelected ? "border border-dashed rounded" : ""} />;
   }
 
   if (block.type === "chapter-break") {
@@ -189,20 +200,16 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
   return null;
 }
 
-/** Apply inline CSS style to current selection (word-level coloring) */
 function applyInlineStyle(style: "color" | "backgroundColor", value: string) {
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) return;
-
   const range = sel.getRangeAt(0);
   const span = document.createElement("span");
   span.style[style] = value;
-
   try {
     range.surroundContents(span);
     sel.removeAllRanges();
   } catch {
-    // If selection crosses element boundaries, use execCommand fallback
     if (style === "color") {
       document.execCommand("foreColor", false, value);
     } else {
