@@ -1,5 +1,17 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from "react";
-import { Heading1, Type, ImageIcon, MinusSquare, Scissors, ChevronUp, ChevronDown, Trash2, Wand2, Plus, GripVertical } from "lucide-react";
+import {
+  Heading1,
+  Type,
+  ImageIcon,
+  MinusSquare,
+  Scissors,
+  ChevronUp,
+  ChevronDown,
+  Trash2,
+  Wand2,
+  Plus,
+  GripVertical,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Block, BlockType, ChapterData } from "@/lib/blocks";
 import type { Template } from "@/lib/templates";
@@ -73,14 +85,20 @@ function estimateBlockHeight(block: Block, template: Template, contentWidth: num
     const paragraphSpacing = pCount * 12;
     const codeBlocks = (text.match(/<pre/gi) || []).length;
     const lineH = codeBlocks > 0 ? fontSize * 1.6 : fontSize * template.spacing.lineHeight;
-    // 40% safety margin to prevent overflow — better to wrap early than clip content
-    const raw = totalLines * lineH * scale + template.spacing.paragraphGap + extraElements + blockquotes + tables + paragraphSpacing + 20;
-    return raw * 1.4;
+    // 60% safety margin — generous buffer to prevent any overflow
+    const raw =
+      totalLines * lineH * scale +
+      template.spacing.paragraphGap +
+      extraElements +
+      blockquotes +
+      tables +
+      paragraphSpacing +
+      20;
+    return raw * 1.6;
   }
   return 40;
 }
 
-// Inline insert menu between blocks
 function InsertMenu({ onInsert, visible }: { onInsert: (type: BlockType) => void; visible: boolean }) {
   const [open, setOpen] = useState(false);
 
@@ -97,7 +115,11 @@ function InsertMenu({ onInsert, visible }: { onInsert: (type: BlockType) => void
             return (
               <button
                 key={tool.type}
-                onClick={(e) => { e.stopPropagation(); onInsert(tool.type); setOpen(false); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onInsert(tool.type);
+                  setOpen(false);
+                }}
                 className="p-1 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
                 title={tool.label}
               >
@@ -108,7 +130,10 @@ function InsertMenu({ onInsert, visible }: { onInsert: (type: BlockType) => void
         </div>
       ) : (
         <button
-          onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(true);
+          }}
           className="h-5 w-5 rounded-full border border-border/40 bg-card text-muted-foreground hover:text-primary hover:border-primary/40 flex items-center justify-center shadow-sm transition-colors"
         >
           <Plus className="h-3 w-3" />
@@ -119,11 +144,24 @@ function InsertMenu({ onInsert, visible }: { onInsert: (type: BlockType) => void
 }
 
 export function CenterCanvas({
-  chapter, template, selectedBlockId, onSelectBlock,
-  onAddBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, onReorderBlocks,
-  pageSize, onGenerateContent, isGenerating, onGenerateImage,
-  footerConfig, watermarkText, pricePerPage,
-  scrollToBlockId, onScrollComplete,
+  chapter,
+  template,
+  selectedBlockId,
+  onSelectBlock,
+  onAddBlock,
+  onUpdateBlock,
+  onDeleteBlock,
+  onMoveBlock,
+  onReorderBlocks,
+  pageSize,
+  onGenerateContent,
+  isGenerating,
+  onGenerateImage,
+  footerConfig,
+  watermarkText,
+  pricePerPage,
+  scrollToBlockId,
+  onScrollComplete,
 }: Props) {
   const size = PAGE_SIZES[pageSize] || PAGE_SIZES.A4;
   const pageWidthPx = size.width * MM_TO_PX * CANVAS_SCALE;
@@ -133,9 +171,8 @@ export function CenterCanvas({
   const footerHeight = 28;
 
   const showPageNumbers = footerConfig?.showPageNumbers ?? true;
-  const usableHeight = pageHeightPx - marginPx * 2 - (showPageNumbers ? footerHeight : 0) - 24; // 24px safety buffer
+  const usableHeight = pageHeightPx - marginPx * 2 - (showPageNumbers ? footerHeight : 0) - 32; // 32px safety buffer
 
-  // Scroll to block
   const canvasScrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (scrollToBlockId && canvasScrollRef.current) {
@@ -147,7 +184,6 @@ export function CenterCanvas({
     }
   }, [scrollToBlockId, onScrollComplete]);
 
-  // Drag and drop state
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
 
@@ -157,36 +193,41 @@ export function CenterCanvas({
     e.dataTransfer.setData("text/plain", blockId);
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent, blockId: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (blockId !== draggedBlockId) {
-      setDropTargetId(blockId);
-    }
-  }, [draggedBlockId]);
+  const handleDragOver = useCallback(
+    (e: React.DragEvent, blockId: string) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if (blockId !== draggedBlockId) {
+        setDropTargetId(blockId);
+      }
+    },
+    [draggedBlockId],
+  );
 
-  const handleDrop = useCallback((e: React.DragEvent, targetBlockId: string) => {
-    e.preventDefault();
-    if (!draggedBlockId || !chapter || draggedBlockId === targetBlockId) {
+  const handleDrop = useCallback(
+    (e: React.DragEvent, targetBlockId: string) => {
+      e.preventDefault();
+      if (!draggedBlockId || !chapter || draggedBlockId === targetBlockId) {
+        setDraggedBlockId(null);
+        setDropTargetId(null);
+        return;
+      }
+      const fromIndex = chapter.blocks.findIndex((b) => b.id === draggedBlockId);
+      const toIndex = chapter.blocks.findIndex((b) => b.id === targetBlockId);
+      if (fromIndex >= 0 && toIndex >= 0 && onReorderBlocks) {
+        onReorderBlocks(fromIndex, toIndex);
+      }
       setDraggedBlockId(null);
       setDropTargetId(null);
-      return;
-    }
-    const fromIndex = chapter.blocks.findIndex((b) => b.id === draggedBlockId);
-    const toIndex = chapter.blocks.findIndex((b) => b.id === targetBlockId);
-    if (fromIndex >= 0 && toIndex >= 0 && onReorderBlocks) {
-      onReorderBlocks(fromIndex, toIndex);
-    }
-    setDraggedBlockId(null);
-    setDropTargetId(null);
-  }, [draggedBlockId, chapter, onReorderBlocks]);
+    },
+    [draggedBlockId, chapter, onReorderBlocks],
+  );
 
   const handleDragEnd = useCallback(() => {
     setDraggedBlockId(null);
     setDropTargetId(null);
   }, []);
 
-  // Pagination: split blocks across pages, splitting text blocks at paragraph boundaries
   const pages = useMemo(() => {
     if (!chapter) return [];
     const result: Block[][] = [[]];
@@ -194,7 +235,7 @@ export function CenterCanvas({
 
     const splitTextBlock = (block: Block, availableHeight: number): { fit: Block | null; overflow: Block | null } => {
       if (block.type !== "text" || !block.content) return { fit: block, overflow: null };
-      
+
       const segments = block.content.split(/(?<=<\/p>|<\/ul>|<\/ol>|<\/blockquote>|<\/table>|<\/li>)\s*/);
       if (segments.length <= 1) return { fit: block, overflow: null };
 
@@ -222,7 +263,9 @@ export function CenterCanvas({
       if (!foundSplit) return { fit: block, overflow: null };
 
       const fitBlock = fitContent.trim() ? { ...block, id: crypto.randomUUID(), content: fitContent } : null;
-      const overflowBlock = overflowContent.trim() ? { ...block, id: crypto.randomUUID(), content: overflowContent } : null;
+      const overflowBlock = overflowContent.trim()
+        ? { ...block, id: crypto.randomUUID(), content: overflowContent }
+        : null;
       return { fit: fitBlock, overflow: overflowBlock };
     };
 
@@ -230,16 +273,13 @@ export function CenterCanvas({
       const blockH = estimateBlockHeight(block, template, contentWidth);
       const remainingHeight = usableHeight - currentHeight;
 
-      // Fits on current page
       if (blockH <= remainingHeight) {
         result[result.length - 1].push(block);
         currentHeight += blockH;
         return;
       }
 
-      // Doesn't fit — try splitting text blocks
       if (block.type === "text" && block.content) {
-        // Try to fit part on current page if there's meaningful space left
         if (remainingHeight > usableHeight * 0.15 && result[result.length - 1].length > 0) {
           const { fit, overflow } = splitTextBlock(block, remainingHeight);
           if (fit) {
@@ -248,7 +288,6 @@ export function CenterCanvas({
           if (overflow) {
             result.push([]);
             currentHeight = 0;
-            // Recursively handle the overflow (it might need further splitting)
             addBlock(overflow);
           } else {
             currentHeight += blockH;
@@ -256,7 +295,6 @@ export function CenterCanvas({
           return;
         }
 
-        // Move to fresh page, then split if still too tall
         if (result[result.length - 1].length > 0) {
           result.push([]);
           currentHeight = 0;
@@ -266,7 +304,6 @@ export function CenterCanvas({
           result[result.length - 1].push(block);
           currentHeight = blockH;
         } else {
-          // Block is taller than entire page — force split
           const { fit, overflow } = splitTextBlock(block, usableHeight);
           if (fit) {
             result[result.length - 1].push(fit);
@@ -281,7 +318,6 @@ export function CenterCanvas({
         return;
       }
 
-      // Non-text block: move to next page
       if (result[result.length - 1].length > 0) {
         result.push([]);
         currentHeight = 0;
@@ -305,7 +341,10 @@ export function CenterCanvas({
   const totalPages = pages.length;
   const estimatedCost = pricePerPage ? (totalPages * pricePerPage).toFixed(2) : null;
 
-  const needsContent = chapter && chapter.blocks.some((b) => b.type === "heading") && !chapter.blocks.some((b) => b.type === "text" && b.content && b.content.trim().length > 50);
+  const needsContent =
+    chapter &&
+    chapter.blocks.some((b) => b.type === "heading") &&
+    !chapter.blocks.some((b) => b.type === "text" && b.content && b.content.trim().length > 50);
 
   if (!chapter) {
     return (
@@ -335,17 +374,11 @@ export function CenterCanvas({
             </Button>
           );
         })}
-
-        {/* Page count & cost */}
         <div className="ml-auto flex items-center gap-3">
           <span className="text-xs text-muted-foreground">
             {totalPages} {totalPages === 1 ? "strona" : totalPages < 5 ? "strony" : "stron"}
           </span>
-          {estimatedCost && (
-            <span className="text-xs font-medium text-primary">
-              Koszt: {estimatedCost} PLN
-            </span>
-          )}
+          {estimatedCost && <span className="text-xs font-medium text-primary">Koszt: {estimatedCost} PLN</span>}
         </div>
       </div>
 
@@ -363,7 +396,9 @@ export function CenterCanvas({
             onClick={(e) => e.stopPropagation()}
           >
             <Wand2 className="h-7 w-7" style={{ color: template.colors.accent }} />
-            <p className="text-sm font-medium" style={{ color: "#333" }}>Ten rozdział ma tylko nagłówki</p>
+            <p className="text-sm font-medium" style={{ color: "#333" }}>
+              Ten rozdział ma tylko nagłówki
+            </p>
             <Button
               onClick={onGenerateContent}
               disabled={isGenerating}
@@ -389,18 +424,24 @@ export function CenterCanvas({
               fontFamily: template.bodyFont,
               color: template.colors.text,
               lineHeight: template.spacing.lineHeight,
-              overflow: "hidden",
+              overflow: "hidden", // PAGE BOUNDARY — clips anything that escapes
             }}
             onClick={(e) => {
               if (e.target === e.currentTarget) onSelectBlock(null);
             }}
           >
+            {/* ── Page content area ── */}
             <div
               style={{
-                padding: `${marginPx}px`,
-                height: pageHeightPx - (showPageNumbers ? footerHeight : 0),
-                overflow: "hidden",
-                position: "relative",
+                position: "absolute",
+                top: marginPx,
+                left: marginPx,
+                right: marginPx,
+                bottom: showPageNumbers ? footerHeight : marginPx,
+                overflow: "hidden", // CRITICAL: second line of defence
+                display: "flex",
+                flexDirection: "column",
+                gap: 0,
               }}
             >
               {pageBlocks.length === 0 ? (
@@ -411,149 +452,191 @@ export function CenterCanvas({
                   Pusta strona — użyj paska powyżej lub kliknij + między blokami
                 </div>
               ) : (
-                pageBlocks.map((block) => (
-                   <div key={block.id} data-block-id={block.id} style={{
-                      display: "flex",
-                      justifyContent: block.align === "center" ? "center" : block.align === "right" ? "flex-end" : "flex-start",
-                    }}>
+                pageBlocks.map((block, blockIdx) => (
+                  // ── FIXED: block wrapper is now plain div, no flex/justify ──
+                  <div
+                    key={block.id}
+                    data-block-id={block.id}
+                    style={{
+                      width: "100%",
+                      maxWidth: "100%",
+                      overflow: "hidden",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {/* Inner wrapper handles alignment */}
                     <div
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, block.id)}
-                      onDragOver={(e) => handleDragOver(e, block.id)}
-                      onDrop={(e) => handleDrop(e, block.id)}
-                      onDragEnd={handleDragEnd}
-                      className={`relative group cursor-pointer transition-all duration-150 rounded-sm ${
-                        selectedBlockId === block.id
-                          ? "ring-2 ring-blue-400/50 ring-offset-1"
-                          : dropTargetId === block.id
-                          ? "ring-2 ring-primary/50 ring-offset-1 bg-primary/5"
-                          : draggedBlockId === block.id
-                          ? "opacity-40"
-                          : "hover:ring-1 hover:ring-blue-200/40"
-                      }`}
                       style={{
-                        marginBottom: 0,
-                        padding: "2px 4px",
-                        width: block.width && block.type !== "image" ? `${block.width}%` : undefined,
-                        minHeight: block.height && (block.type === "text" || block.type === "heading") ? block.height : undefined,
+                        display: "flex",
+                        justifyContent:
+                          block.align === "center" ? "center" : block.align === "right" ? "flex-end" : "flex-start",
+                        width: "100%",
+                        maxWidth: "100%",
+                        overflow: "hidden",
                       }}
-                      onClick={(e) => { e.stopPropagation(); onSelectBlock(block.id); }}
                     >
-                      {/* Drag handle */}
                       <div
-                        className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
-                        onMouseDown={(e) => e.stopPropagation()}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, block.id)}
+                        onDragOver={(e) => handleDragOver(e, block.id)}
+                        onDrop={(e) => handleDrop(e, block.id)}
+                        onDragEnd={handleDragEnd}
+                        className={`relative group cursor-pointer transition-all duration-150 rounded-sm ${
+                          selectedBlockId === block.id
+                            ? "ring-2 ring-blue-400/50 ring-offset-1"
+                            : dropTargetId === block.id
+                              ? "ring-2 ring-primary/50 ring-offset-1 bg-primary/5"
+                              : draggedBlockId === block.id
+                                ? "opacity-40"
+                                : "hover:ring-1 hover:ring-blue-200/40"
+                        }`}
+                        style={{
+                          marginBottom: 0,
+                          padding: "2px 4px",
+                          // FIXED: width capped at 100% to prevent overflow
+                          width: block.width && block.type !== "image" ? `${Math.min(block.width, 100)}%` : "100%",
+                          maxWidth: "100%",
+                          minHeight:
+                            block.height && (block.type === "text" || block.type === "heading")
+                              ? block.height
+                              : undefined,
+                          overflow: "hidden",
+                          wordBreak: "break-word",
+                          overflowWrap: "break-word",
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectBlock(block.id);
+                        }}
                       >
-                        <GripVertical className="h-4 w-4 text-gray-400" />
+                        {/* Drag handle */}
+                        <div
+                          className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
+                          onMouseDown={(e) => e.stopPropagation()}
+                        >
+                          <GripVertical className="h-4 w-4 text-gray-400" />
+                        </div>
+
+                        <BlockRenderer
+                          block={block}
+                          template={template}
+                          onUpdate={(updates) => onUpdateBlock(block.id, updates)}
+                          isSelected={selectedBlockId === block.id}
+                          onGenerateImage={onGenerateImage}
+                        />
+
+                        {selectedBlockId === block.id && (
+                          <>
+                            <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onMoveBlock(block.id, -1);
+                                }}
+                                className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
+                              >
+                                <ChevronUp className="h-3 w-3" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onMoveBlock(block.id, 1);
+                                }}
+                                className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
+                              >
+                                <ChevronDown className="h-3 w-3" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDeleteBlock(block.id);
+                                }}
+                                className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-red-500 shadow-sm"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+
+                            {/* Resize handle - right edge */}
+                            <div
+                              className="absolute top-0 -right-1 w-2 h-full cursor-ew-resize hover:bg-blue-400/30 transition-colors z-10"
+                              onMouseDown={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                const startX = e.clientX;
+                                const startWidth = block.width || 100;
+                                const onMove = (ev: MouseEvent) => {
+                                  const delta = ev.clientX - startX;
+                                  const pxPerPercent = contentWidth / 100;
+                                  const newWidth = Math.max(20, Math.min(100, startWidth + delta / pxPerPercent));
+                                  onUpdateBlock(block.id, { width: Math.round(newWidth) });
+                                };
+                                const onUp = () => {
+                                  document.removeEventListener("mousemove", onMove);
+                                  document.removeEventListener("mouseup", onUp);
+                                };
+                                document.addEventListener("mousemove", onMove);
+                                document.addEventListener("mouseup", onUp);
+                              }}
+                            />
+
+                            {/* Resize handle - bottom edge */}
+                            <div
+                              className="absolute -bottom-1 left-0 w-full h-2 cursor-ns-resize hover:bg-blue-400/30 transition-colors z-10"
+                              onMouseDown={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                const startY = e.clientY;
+                                const startHeight = block.height || e.currentTarget.parentElement?.offsetHeight || 40;
+                                const onMove = (ev: MouseEvent) => {
+                                  const delta = ev.clientY - startY;
+                                  const newHeight = Math.max(20, startHeight + delta);
+                                  onUpdateBlock(block.id, { height: Math.round(newHeight) });
+                                };
+                                const onUp = () => {
+                                  document.removeEventListener("mousemove", onMove);
+                                  document.removeEventListener("mouseup", onUp);
+                                };
+                                document.addEventListener("mousemove", onMove);
+                                document.addEventListener("mouseup", onUp);
+                              }}
+                            />
+
+                            {/* Resize handle - corner */}
+                            <div
+                              className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-blue-400 border border-white rounded-sm cursor-nwse-resize z-20 shadow-sm"
+                              onMouseDown={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                const startX = e.clientX;
+                                const startY = e.clientY;
+                                const startWidth = block.width || 100;
+                                const startHeight = block.height || e.currentTarget.parentElement?.offsetHeight || 40;
+                                const onMove = (ev: MouseEvent) => {
+                                  const deltaX = ev.clientX - startX;
+                                  const deltaY = ev.clientY - startY;
+                                  const pxPerPercent = contentWidth / 100;
+                                  const newWidth = Math.max(20, Math.min(100, startWidth + deltaX / pxPerPercent));
+                                  const newHeight = Math.max(20, startHeight + deltaY);
+                                  onUpdateBlock(block.id, {
+                                    width: Math.round(newWidth),
+                                    height: Math.round(newHeight),
+                                  });
+                                };
+                                const onUp = () => {
+                                  document.removeEventListener("mousemove", onMove);
+                                  document.removeEventListener("mouseup", onUp);
+                                };
+                                document.addEventListener("mousemove", onMove);
+                                document.addEventListener("mouseup", onUp);
+                              }}
+                            />
+                          </>
+                        )}
                       </div>
-
-                      <BlockRenderer
-                        block={block}
-                        template={template}
-                        onUpdate={(updates) => onUpdateBlock(block.id, updates)}
-                        isSelected={selectedBlockId === block.id}
-                        onGenerateImage={onGenerateImage}
-                      />
-
-                      {selectedBlockId === block.id && (
-                        <>
-                          {/* Action buttons */}
-                          <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, -1); }}
-                              className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
-                            >
-                              <ChevronUp className="h-3 w-3" />
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, 1); }}
-                              className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
-                            >
-                              <ChevronDown className="h-3 w-3" />
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); onDeleteBlock(block.id); }}
-                              className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-red-500 shadow-sm"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          </div>
-
-                          {/* Resize handle - right edge */}
-                          <div
-                            className="absolute top-0 -right-1 w-2 h-full cursor-ew-resize hover:bg-blue-400/30 transition-colors z-10"
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              const startX = e.clientX;
-                              const startWidth = block.width || 100;
-                              const onMove = (ev: MouseEvent) => {
-                                const delta = ev.clientX - startX;
-                                const pxPerPercent = contentWidth / 100;
-                                const newWidth = Math.max(20, Math.min(100, startWidth + delta / pxPerPercent));
-                                onUpdateBlock(block.id, { width: Math.round(newWidth) });
-                              };
-                              const onUp = () => {
-                                document.removeEventListener("mousemove", onMove);
-                                document.removeEventListener("mouseup", onUp);
-                              };
-                              document.addEventListener("mousemove", onMove);
-                              document.addEventListener("mouseup", onUp);
-                            }}
-                          />
-
-                          {/* Resize handle - bottom edge */}
-                          <div
-                            className="absolute -bottom-1 left-0 w-full h-2 cursor-ns-resize hover:bg-blue-400/30 transition-colors z-10"
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              const startY = e.clientY;
-                              const startHeight = block.height || (e.currentTarget.parentElement?.offsetHeight || 40);
-                              const onMove = (ev: MouseEvent) => {
-                                const delta = ev.clientY - startY;
-                                const newHeight = Math.max(20, startHeight + delta);
-                                onUpdateBlock(block.id, { height: Math.round(newHeight) });
-                              };
-                              const onUp = () => {
-                                document.removeEventListener("mousemove", onMove);
-                                document.removeEventListener("mouseup", onUp);
-                              };
-                              document.addEventListener("mousemove", onMove);
-                              document.addEventListener("mouseup", onUp);
-                            }}
-                          />
-
-                          {/* Resize handle - corner */}
-                          <div
-                            className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-blue-400 border border-white rounded-sm cursor-nwse-resize z-20 shadow-sm"
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              const startX = e.clientX;
-                              const startY = e.clientY;
-                              const startWidth = block.width || 100;
-                              const startHeight = block.height || (e.currentTarget.parentElement?.offsetHeight || 40);
-                              const onMove = (ev: MouseEvent) => {
-                                const deltaX = ev.clientX - startX;
-                                const deltaY = ev.clientY - startY;
-                                const pxPerPercent = contentWidth / 100;
-                                const newWidth = Math.max(20, Math.min(100, startWidth + deltaX / pxPerPercent));
-                                const newHeight = Math.max(20, startHeight + deltaY);
-                                onUpdateBlock(block.id, { width: Math.round(newWidth), height: Math.round(newHeight) });
-                              };
-                              const onUp = () => {
-                                document.removeEventListener("mousemove", onMove);
-                                document.removeEventListener("mouseup", onUp);
-                              };
-                              document.addEventListener("mousemove", onMove);
-                              document.addEventListener("mouseup", onUp);
-                            }}
-                          />
-                        </>
-                      )}
                     </div>
-                    {/* Insert menu between blocks */}
+
+                    {/* InsertMenu OUTSIDE the alignment flex wrapper */}
                     <div onClick={(e) => e.stopPropagation()}>
                       <InsertMenu
                         onInsert={(type) => onAddBlock(type, block.id)}
