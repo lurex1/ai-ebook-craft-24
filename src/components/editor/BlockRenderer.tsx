@@ -5,9 +5,6 @@ import { TextSelectionToolbar } from "./TextSelectionToolbar";
 import { cleanMarkdownToHtml } from "@/lib/blockUtils";
 
 function renderContent(text: string): string {
-  if (text.includes("<") && text.includes(">")) {
-    return cleanMarkdownToHtml(text);
-  }
   return cleanMarkdownToHtml(text);
 }
 
@@ -69,10 +66,6 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
     return block.content || "";
   }, [block.type, block.content]);
 
-  // ── SHARED overflow-safe styles ──────────────────────────────
-  // NOTE: overflow must be "visible" here so TextSelectionToolbar
-  // (which has negative top position) is not clipped by this element.
-  // The true overflow boundary is the PAGE div in CenterCanvas (overflow:hidden).
   const overflowSafeStyle: React.CSSProperties = {
     wordBreak: "break-word",
     overflowWrap: "break-word",
@@ -81,8 +74,11 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
     overflow: "visible",
   };
 
+  // ── HEADING ──
   if (block.type === "heading") {
     const sizes: Record<number, string> = { 1: "2.2em", 2: "1.6em", 3: "1.3em" };
+    const level = block.level || 2;
+
     return (
       <div ref={containerRef} className="relative" style={{ maxWidth: "100%", overflow: "visible" }}>
         <div
@@ -94,14 +90,19 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
           style={{
             ...overflowSafeStyle,
             fontFamily: template.headingFont,
-            fontSize: sizes[block.level || 2],
-            fontWeight: 700,
+            fontSize: sizes[level],
+            fontWeight: template.headingWeight || 700,
             color: block.textColor || template.colors.heading,
             backgroundColor: block.bgColor && block.bgColor !== "transparent" ? block.bgColor : undefined,
             outline: "none",
             cursor: isSelected ? "text" : "pointer",
             lineHeight: 1.3,
-            paddingBottom: 4,
+            textTransform: (template.headingTransform || "none") as React.CSSProperties["textTransform"],
+            fontVariant: template.headingTransform === "capitalize" ? "small-caps" : "normal",
+            letterSpacing: template.headingLetterSpacing || "0",
+            borderBottom: level <= 2 && template.headingBorderBottom ? template.headingBorderBottom : undefined,
+            paddingBottom: template.headingBorderBottom && level <= 2 ? 8 : 4,
+            marginBottom: template.headingBorderBottom && level <= 2 ? 6 : 0,
             borderRadius: block.bgColor ? 4 : undefined,
             padding: block.bgColor && block.bgColor !== "transparent" ? "4px 8px" : undefined,
           }}
@@ -118,6 +119,7 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
     );
   }
 
+  // ── TEXT ──
   if (block.type === "text") {
     return (
       <div ref={containerRef} className="relative" style={{ maxWidth: "100%", overflow: "visible" }}>
@@ -136,6 +138,7 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
             backgroundColor: block.bgColor && block.bgColor !== "transparent" ? block.bgColor : undefined,
             outline: "none",
             cursor: isSelected ? "text" : "pointer",
+            textAlign: template.bodyTextAlign || "left",
             borderRadius: block.bgColor ? 4 : undefined,
             padding: block.bgColor && block.bgColor !== "transparent" ? "8px 12px" : undefined,
           }}
@@ -152,6 +155,7 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
     );
   }
 
+  // ── IMAGE ──
   if (block.type === "image") {
     if (!block.url) {
       return (
@@ -184,10 +188,12 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
     );
   }
 
+  // ── SPACER ──
   if (block.type === "spacer") {
     return <div style={{ height: block.height || 40 }} className={isSelected ? "border border-dashed rounded" : ""} />;
   }
 
+  // ── CHAPTER BREAK ──
   if (block.type === "chapter-break") {
     return (
       <div className="flex items-center gap-3 py-4">
