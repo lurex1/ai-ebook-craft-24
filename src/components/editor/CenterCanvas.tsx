@@ -493,14 +493,13 @@ export function CenterCanvas({
                         style={{
                           marginBottom: 0,
                           padding: "2px 4px",
-                          // FIXED: width capped at 100% to prevent overflow
                           width: block.width && block.type !== "image" ? `${Math.min(block.width, 100)}%` : "100%",
                           maxWidth: "100%",
                           minHeight:
                             block.height && (block.type === "text" || block.type === "heading")
                               ? block.height
                               : undefined,
-                          overflow: "hidden",
+                          overflow: "visible", // visible so TextSelectionToolbar shows above block
                           wordBreak: "break-word",
                           overflowWrap: "break-word",
                         }}
