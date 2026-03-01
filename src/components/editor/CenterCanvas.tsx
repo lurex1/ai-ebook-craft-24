@@ -460,7 +460,7 @@ export function CenterCanvas({
                     style={{
                       width: "100%",
                       maxWidth: "100%",
-                      overflow: "hidden",
+                      overflow: "visible",
                       flexShrink: 0,
                     }}
                   >
@@ -472,7 +472,7 @@ export function CenterCanvas({
                           block.align === "center" ? "center" : block.align === "right" ? "flex-end" : "flex-start",
                         width: "100%",
                         maxWidth: "100%",
-                        overflow: "hidden",
+                        overflow: "visible",
                       }}
                     >
                       <div
