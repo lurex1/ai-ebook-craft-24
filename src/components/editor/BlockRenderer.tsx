@@ -70,18 +70,21 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
   }, [block.type, block.content]);
 
   // ── SHARED overflow-safe styles ──────────────────────────────
+  // NOTE: overflow must be "visible" here so TextSelectionToolbar
+  // (which has negative top position) is not clipped by this element.
+  // The true overflow boundary is the PAGE div in CenterCanvas (overflow:hidden).
   const overflowSafeStyle: React.CSSProperties = {
     wordBreak: "break-word",
     overflowWrap: "break-word",
     hyphens: "auto",
     maxWidth: "100%",
-    overflow: "hidden",
+    overflow: "visible",
   };
 
   if (block.type === "heading") {
     const sizes: Record<number, string> = { 1: "2.2em", 2: "1.6em", 3: "1.3em" };
     return (
-      <div ref={containerRef} className="relative" style={{ maxWidth: "100%", overflow: "hidden" }}>
+      <div ref={containerRef} className="relative" style={{ maxWidth: "100%", overflow: "visible" }}>
         <div
           ref={editRef}
           contentEditable={isSelected}
@@ -117,7 +120,7 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
 
   if (block.type === "text") {
     return (
-      <div ref={containerRef} className="relative" style={{ maxWidth: "100%", overflow: "hidden" }}>
+      <div ref={containerRef} className="relative" style={{ maxWidth: "100%", overflow: "visible" }}>
         <div
           ref={editRef}
           contentEditable={isSelected}
