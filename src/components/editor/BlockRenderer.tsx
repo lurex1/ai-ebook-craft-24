@@ -15,9 +15,10 @@ interface Props {
   isSelected: boolean;
   onGenerateImage?: (contextText: string) => void;
   onReplaceSelection?: (newHtml: string) => void;
+  onExtractToBlock?: (html: string) => void;
 }
 
-export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerateImage, onReplaceSelection }: Props) {
+export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerateImage, onReplaceSelection, onExtractToBlock }: Props) {
   const editRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -113,6 +114,7 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
             onApplyInlineStyle={(style, value) => applyInlineStyle(style, value)}
             onGenerateImage={(text) => onGenerateImage(text)}
             onReplaceSelection={onReplaceSelection || replaceSelectedContent}
+            onExtractToBlock={onExtractToBlock}
           />
         )}
       </div>
@@ -149,6 +151,7 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
             onApplyInlineStyle={(style, value) => applyInlineStyle(style, value)}
             onGenerateImage={(text) => onGenerateImage(text)}
             onReplaceSelection={onReplaceSelection || replaceSelectedContent}
+            onExtractToBlock={onExtractToBlock}
           />
         )}
       </div>
