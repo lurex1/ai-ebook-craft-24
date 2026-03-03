@@ -40,6 +40,7 @@ interface Props {
   pricePerPage?: number;
   scrollToBlockId?: string | null;
   onScrollComplete?: () => void;
+  onExtractToBlock?: (sourceBlockId: string, html: string) => void;
 }
 
 const BLOCK_TOOLS: { type: BlockType; icon: React.ElementType; label: string }[] = [
@@ -162,6 +163,7 @@ export function CenterCanvas({
   pricePerPage,
   scrollToBlockId,
   onScrollComplete,
+  onExtractToBlock,
 }: Props) {
   const size = PAGE_SIZES[pageSize] || PAGE_SIZES.A4;
   const pageWidthPx = size.width * MM_TO_PX * CANVAS_SCALE;
@@ -522,6 +524,7 @@ export function CenterCanvas({
                           onUpdate={(updates) => onUpdateBlock(block.id, updates)}
                           isSelected={selectedBlockId === block.id}
                           onGenerateImage={onGenerateImage}
+                          onExtractToBlock={onExtractToBlock ? (html) => onExtractToBlock(block.id, html) : undefined}
                         />
 
                         {selectedBlockId === block.id && (

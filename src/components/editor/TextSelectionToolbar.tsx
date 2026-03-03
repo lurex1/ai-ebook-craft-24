@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Palette, Paintbrush, Sparkles, Table, List, Replace, Brain, Loader2, ChevronDown } from "lucide-react";
+import { Palette, Paintbrush, Sparkles, Table, List, Replace, Brain, Loader2, ChevronDown, SplitSquareHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
@@ -7,6 +7,7 @@ interface Props {
   onApplyInlineStyle: (style: "color" | "backgroundColor", value: string) => void;
   onGenerateImage: (selectedText: string) => void;
   onReplaceSelection?: (newHtml: string) => void;
+  onExtractToBlock?: (html: string) => void;
 }
 
 const TEXT_COLORS = [
@@ -21,7 +22,7 @@ const BG_COLORS = [
 
 type SubMenu = "textColor" | "bgColor" | "replace" | "ai" | null;
 
-export function TextSelectionToolbar({ containerRef, onApplyInlineStyle, onGenerateImage, onReplaceSelection }: Props) {
+export function TextSelectionToolbar({ containerRef, onApplyInlineStyle, onGenerateImage, onReplaceSelection, onExtractToBlock }: Props) {
   const [subMenu, setSubMenu] = useState<SubMenu>(null);
   const [selectedText, setSelectedText] = useState("");
   const [selectedHtml, setSelectedHtml] = useState("");
@@ -175,6 +176,21 @@ export function TextSelectionToolbar({ containerRef, onApplyInlineStyle, onGener
         </button>
 
         <div className="w-px h-5 bg-gray-200 mx-0.5" />
+
+        {/* Extract to block */}
+        {onExtractToBlock && (
+          <button
+            onClick={() => {
+              onExtractToBlock(selectedHtml || selectedText);
+              setVisible(false);
+            }}
+            className="p-1.5 rounded hover:bg-gray-100 transition-colors flex items-center gap-1"
+            title="Wyciągnij do osobnego bloku"
+          >
+            <SplitSquareHorizontal className="h-3.5 w-3.5 text-teal-600" />
+            <span className="text-[10px] text-gray-600 whitespace-nowrap">Blok</span>
+          </button>
+        )}
 
         {/* Generate image */}
         <button

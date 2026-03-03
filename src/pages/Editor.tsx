@@ -171,6 +171,23 @@ export default function Editor() {
     [currentChapter, updateBlocks]
   );
 
+  const extractToBlock = useCallback(
+    (sourceBlockId: string, html: string) => {
+      if (!currentChapter) return;
+      const newBlock: Block = {
+        id: crypto.randomUUID(),
+        type: "text",
+        content: html,
+      };
+      const blocks = [...currentChapter.blocks];
+      const idx = blocks.findIndex((b) => b.id === sourceBlockId);
+      blocks.splice(idx + 1, 0, newBlock);
+      updateBlocks(blocks);
+      setSelectedBlockId(newBlock.id);
+    },
+    [currentChapter, updateBlocks]
+  );
+
   // Chapter operations
   const addChapter = async () => {
     if (!id) return;
@@ -489,6 +506,7 @@ export default function Editor() {
           pricePerPage={0.5}
           scrollToBlockId={scrollToBlockId}
           onScrollComplete={() => setScrollToBlockId(null)}
+          onExtractToBlock={extractToBlock}
         />
         <RightPanel
           project={project}

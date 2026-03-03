@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Plus, LogOut, Trash2, Copy, Calendar, Edit3, Loader2, Crown } from "lucide-react";
+import { BookOpen, Plus, LogOut, Trash2, Copy, Calendar, Edit3, Loader2, Crown, MousePointerClick, Wand2, SplitSquareHorizontal, Palette } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-ebook.jpg";
 
@@ -123,6 +123,44 @@ export default function Dashboard() {
               >
                 <Plus className="h-4 w-4" /> Utwórz nowy e-book
               </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* "Zaznacz i edytuj" feature section */}
+        <div className="mb-10 bg-card border border-border/50 rounded-2xl p-6 sm:p-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <MousePointerClick className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-display text-lg font-bold text-foreground">Zaznacz i edytuj</h3>
+              <p className="text-xs text-muted-foreground">Intuicyjna edycja — wystarczy zaznaczyć tekst</p>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground mb-5 max-w-2xl">
+            Zaznacz dowolny fragment tekstu w edytorze, a natychmiast pojawi się pływający toolbar z zestawem narzędzi. Bez menu, bez szukania opcji — wszystko pod kursorem.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-background rounded-lg p-3 border border-border/30">
+              <Wand2 className="h-4 w-4 text-purple-400 mb-2" />
+              <p className="text-xs font-medium text-foreground">AI transformacje</p>
+              <p className="text-[10px] text-muted-foreground">Zamień w tabelę, listę, uprość lub rozwiń treść</p>
+            </div>
+            <div className="bg-background rounded-lg p-3 border border-border/30">
+              <SplitSquareHorizontal className="h-4 w-4 text-teal-400 mb-2" />
+              <p className="text-xs font-medium text-foreground">Wyciągnij do bloku</p>
+              <p className="text-[10px] text-muted-foreground">Utwórz osobny blok z zaznaczonego fragmentu</p>
+            </div>
+            <div className="bg-background rounded-lg p-3 border border-border/30">
+              <Palette className="h-4 w-4 text-amber-400 mb-2" />
+              <p className="text-xs font-medium text-foreground">Kolory i podświetlenie</p>
+              <p className="text-[10px] text-muted-foreground">Zmień kolor tekstu lub dodaj podświetlenie</p>
+            </div>
+            <div className="bg-background rounded-lg p-3 border border-border/30">
+              <Edit3 className="h-4 w-4 text-blue-400 mb-2" />
+              <p className="text-xs font-medium text-foreground">Generuj grafikę</p>
+              <p className="text-[10px] text-muted-foreground">AI wygeneruje obraz na podstawie zaznaczenia</p>
             </div>
           </div>
         </div>
