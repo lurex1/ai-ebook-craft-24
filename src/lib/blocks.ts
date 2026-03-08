@@ -12,6 +12,9 @@ export interface Block {
   align?: "left" | "center" | "right";
   textColor?: string;
   bgColor?: string;
+  // Free positioning (percentage of content area, undefined = flow layout)
+  posX?: number;
+  posY?: number;
 }
 
 export function createBlock(type: BlockType): Block {
