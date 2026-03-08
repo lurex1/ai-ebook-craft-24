@@ -11,6 +11,7 @@ import {
   Wand2,
   Plus,
   GripVertical,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Block, BlockType, ChapterData } from "@/lib/blocks";
