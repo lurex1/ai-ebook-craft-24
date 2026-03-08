@@ -188,48 +188,64 @@ export function CenterCanvas({
   }, [scrollToBlockId, onScrollComplete]);
 
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
-  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const [dragGhost, setDragGhost] = useState<{ x: number; y: number } | null>(null);
+  const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
-  const handleDragStart = useCallback((e: React.DragEvent, blockId: string) => {
-    setDraggedBlockId(blockId);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", blockId);
-  }, []);
-
-  const handleDragOver = useCallback(
-    (e: React.DragEvent, blockId: string) => {
+  // Free-form drag via mousedown on grip handle
+  const handleGripMouseDown = useCallback(
+    (e: React.MouseEvent, blockId: string) => {
       e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-      if (blockId !== draggedBlockId) {
-        setDropTargetId(blockId);
-      }
-    },
-    [draggedBlockId],
-  );
+      e.stopPropagation();
+      setDraggedBlockId(blockId);
+      const startX = e.clientX;
+      const startY = e.clientY;
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent, targetBlockId: string) => {
-      e.preventDefault();
-      if (!draggedBlockId || !chapter || draggedBlockId === targetBlockId) {
+      // Find which page content area this block is in
+      const blockEl = (e.currentTarget as HTMLElement).closest("[data-block-id]");
+      const pageContentEl = blockEl?.closest("[data-page-content]") as HTMLElement | null;
+      if (!pageContentEl) return;
+
+      const block = chapter?.blocks.find((b) => b.id === blockId);
+      if (!block) return;
+
+      const contentRect = pageContentEl.getBoundingClientRect();
+      const blockRect = blockEl!.getBoundingClientRect();
+
+      // Starting position (either existing posX/posY or current rendered position)
+      const startPosX = block.posX ?? (blockRect.left - contentRect.left);
+      const startPosY = block.posY ?? (blockRect.top - contentRect.top);
+
+      const onMove = (ev: MouseEvent) => {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        const newX = Math.max(0, Math.min(contentRect.width - 40, startPosX + dx));
+        const newY = Math.max(0, Math.min(contentRect.height - 20, startPosY + dy));
+        setDragGhost({ x: ev.clientX, y: ev.clientY });
+        onUpdateBlock(blockId, {
+          posX: Math.round(newX),
+          posY: Math.round(newY),
+        });
+      };
+
+      const onUp = () => {
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
         setDraggedBlockId(null);
-        setDropTargetId(null);
-        return;
-      }
-      const fromIndex = chapter.blocks.findIndex((b) => b.id === draggedBlockId);
-      const toIndex = chapter.blocks.findIndex((b) => b.id === targetBlockId);
-      if (fromIndex >= 0 && toIndex >= 0 && onReorderBlocks) {
-        onReorderBlocks(fromIndex, toIndex);
-      }
-      setDraggedBlockId(null);
-      setDropTargetId(null);
+        setDragGhost(null);
+      };
+
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
     },
-    [draggedBlockId, chapter, onReorderBlocks],
+    [chapter, onUpdateBlock],
   );
 
-  const handleDragEnd = useCallback(() => {
-    setDraggedBlockId(null);
-    setDropTargetId(null);
-  }, []);
+  const resetBlockPosition = useCallback(
+    (blockId: string) => {
+      onUpdateBlock(blockId, { posX: undefined, posY: undefined } as any);
+    },
+    [onUpdateBlock],
+  );
 
   const pages = useMemo(() => {
     if (!chapter) return [];
