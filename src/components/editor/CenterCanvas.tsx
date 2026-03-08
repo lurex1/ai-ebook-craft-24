@@ -11,6 +11,7 @@ import {
   Wand2,
   Plus,
   GripVertical,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Block, BlockType, ChapterData } from "@/lib/blocks";
@@ -187,48 +188,64 @@ export function CenterCanvas({
   }, [scrollToBlockId, onScrollComplete]);
 
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
-  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const [dragGhost, setDragGhost] = useState<{ x: number; y: number } | null>(null);
+  const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
-  const handleDragStart = useCallback((e: React.DragEvent, blockId: string) => {
-    setDraggedBlockId(blockId);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", blockId);
-  }, []);
-
-  const handleDragOver = useCallback(
-    (e: React.DragEvent, blockId: string) => {
+  // Free-form drag via mousedown on grip handle
+  const handleGripMouseDown = useCallback(
+    (e: React.MouseEvent, blockId: string) => {
       e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-      if (blockId !== draggedBlockId) {
-        setDropTargetId(blockId);
-      }
-    },
-    [draggedBlockId],
-  );
+      e.stopPropagation();
+      setDraggedBlockId(blockId);
+      const startX = e.clientX;
+      const startY = e.clientY;
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent, targetBlockId: string) => {
-      e.preventDefault();
-      if (!draggedBlockId || !chapter || draggedBlockId === targetBlockId) {
+      // Find which page content area this block is in
+      const blockEl = (e.currentTarget as HTMLElement).closest("[data-block-id]");
+      const pageContentEl = blockEl?.closest("[data-page-content]") as HTMLElement | null;
+      if (!pageContentEl) return;
+
+      const block = chapter?.blocks.find((b) => b.id === blockId);
+      if (!block) return;
+
+      const contentRect = pageContentEl.getBoundingClientRect();
+      const blockRect = blockEl!.getBoundingClientRect();
+
+      // Starting position (either existing posX/posY or current rendered position)
+      const startPosX = block.posX ?? (blockRect.left - contentRect.left);
+      const startPosY = block.posY ?? (blockRect.top - contentRect.top);
+
+      const onMove = (ev: MouseEvent) => {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        const newX = Math.max(0, Math.min(contentRect.width - 40, startPosX + dx));
+        const newY = Math.max(0, Math.min(contentRect.height - 20, startPosY + dy));
+        setDragGhost({ x: ev.clientX, y: ev.clientY });
+        onUpdateBlock(blockId, {
+          posX: Math.round(newX),
+          posY: Math.round(newY),
+        });
+      };
+
+      const onUp = () => {
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
         setDraggedBlockId(null);
-        setDropTargetId(null);
-        return;
-      }
-      const fromIndex = chapter.blocks.findIndex((b) => b.id === draggedBlockId);
-      const toIndex = chapter.blocks.findIndex((b) => b.id === targetBlockId);
-      if (fromIndex >= 0 && toIndex >= 0 && onReorderBlocks) {
-        onReorderBlocks(fromIndex, toIndex);
-      }
-      setDraggedBlockId(null);
-      setDropTargetId(null);
+        setDragGhost(null);
+      };
+
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
     },
-    [draggedBlockId, chapter, onReorderBlocks],
+    [chapter, onUpdateBlock],
   );
 
-  const handleDragEnd = useCallback(() => {
-    setDraggedBlockId(null);
-    setDropTargetId(null);
-  }, []);
+  const resetBlockPosition = useCallback(
+    (blockId: string) => {
+      onUpdateBlock(blockId, { posX: undefined, posY: undefined } as any);
+    },
+    [onUpdateBlock],
+  );
 
   const pages = useMemo(() => {
     if (!chapter) return [];
@@ -340,6 +357,145 @@ export function CenterCanvas({
     return result;
   }, [chapter?.blocks, template, contentWidth, usableHeight]);
 
+  // Shared block rendering logic for both flow and positioned blocks
+  const renderBlockInner = useCallback((block: Block, _pageIndex: number) => (
+    <div
+      className={`relative group cursor-pointer transition-all duration-150 rounded-sm ${
+        selectedBlockId === block.id
+          ? "ring-2 ring-blue-400/50 ring-offset-1"
+          : draggedBlockId === block.id
+            ? "opacity-40"
+            : "hover:ring-1 hover:ring-blue-200/40"
+      }`}
+      style={{
+        marginBottom: 4,
+        padding: "2px 4px",
+        width: block.width ? `${Math.min(block.width, 100)}%` : (block.posX != null ? "auto" : "100%"),
+        maxWidth: block.posX != null ? contentWidth : "100%",
+        minHeight: block.height ? block.height : undefined,
+        overflow: "visible",
+        wordBreak: "break-word",
+        overflowWrap: "break-word",
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelectBlock(block.id);
+      }}
+    >
+      {/* Drag handle — free positioning */}
+      <div
+        className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
+        onMouseDown={(e) => handleGripMouseDown(e, block.id)}
+      >
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      </div>
+
+      <BlockRenderer
+        block={block}
+        template={template}
+        onUpdate={(updates) => onUpdateBlock(block.id, updates)}
+        isSelected={selectedBlockId === block.id}
+        onGenerateImage={onGenerateImage}
+        onExtractToBlock={onExtractToBlock ? (html) => onExtractToBlock(block.id, html) : undefined}
+      />
+
+      {selectedBlockId === block.id && (
+        <>
+          <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
+            <button
+              onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, -1); }}
+              className="p-0.5 rounded bg-card border border-border text-muted-foreground hover:text-foreground shadow-sm"
+            >
+              <ChevronUp className="h-3 w-3" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, 1); }}
+              className="p-0.5 rounded bg-card border border-border text-muted-foreground hover:text-foreground shadow-sm"
+            >
+              <ChevronDown className="h-3 w-3" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDeleteBlock(block.id); }}
+              className="p-0.5 rounded bg-card border border-border text-muted-foreground hover:text-destructive shadow-sm"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+            {/* Reset position button — only for positioned blocks */}
+            {(block.posX != null || block.posY != null) && (
+              <button
+                onClick={(e) => { e.stopPropagation(); resetBlockPosition(block.id); }}
+                className="p-0.5 rounded bg-card border border-border text-muted-foreground hover:text-primary shadow-sm"
+                title="Resetuj pozycję"
+              >
+                <RotateCcw className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+
+          {/* Resize handle - right edge */}
+          <div
+            className="absolute top-0 -right-1 w-2 h-full cursor-ew-resize hover:bg-primary/30 transition-colors z-10"
+            onMouseDown={(e) => {
+              e.stopPropagation(); e.preventDefault();
+              const startX = e.clientX;
+              const startWidth = block.width || 100;
+              const onMove = (ev: MouseEvent) => {
+                const delta = ev.clientX - startX;
+                const pxPerPercent = contentWidth / 100;
+                const newWidth = Math.max(20, Math.min(100, startWidth + delta / pxPerPercent));
+                onUpdateBlock(block.id, { width: Math.round(newWidth) });
+              };
+              const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+              document.addEventListener("mousemove", onMove);
+              document.addEventListener("mouseup", onUp);
+            }}
+          />
+
+          {/* Resize handle - bottom edge */}
+          <div
+            className="absolute -bottom-1 left-0 w-full h-2 cursor-ns-resize hover:bg-primary/30 transition-colors z-10"
+            onMouseDown={(e) => {
+              e.stopPropagation(); e.preventDefault();
+              const startY = e.clientY;
+              const startHeight = block.height || e.currentTarget.parentElement?.offsetHeight || 40;
+              const onMove = (ev: MouseEvent) => {
+                const delta = ev.clientY - startY;
+                const newHeight = Math.max(20, startHeight + delta);
+                onUpdateBlock(block.id, { height: Math.round(newHeight) });
+              };
+              const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+              document.addEventListener("mousemove", onMove);
+              document.addEventListener("mouseup", onUp);
+            }}
+          />
+
+          {/* Resize handle - corner */}
+          <div
+            className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-primary border border-background rounded-sm cursor-nwse-resize z-20 shadow-sm"
+            onMouseDown={(e) => {
+              e.stopPropagation(); e.preventDefault();
+              const startX = e.clientX;
+              const startY = e.clientY;
+              const startWidth = block.width || 100;
+              const startHeight = block.height || e.currentTarget.parentElement?.offsetHeight || 40;
+              const onMove = (ev: MouseEvent) => {
+                const deltaX = ev.clientX - startX;
+                const deltaY = ev.clientY - startY;
+                const pxPerPercent = contentWidth / 100;
+                const newWidth = Math.max(20, Math.min(100, startWidth + deltaX / pxPerPercent));
+                const newHeight = Math.max(20, startHeight + deltaY);
+                onUpdateBlock(block.id, { width: Math.round(newWidth), height: Math.round(newHeight) });
+              };
+              const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+              document.addEventListener("mousemove", onMove);
+              document.addEventListener("mouseup", onUp);
+            }}
+          />
+        </>
+      )}
+    </div>
+  ), [selectedBlockId, draggedBlockId, contentWidth, template, onSelectBlock, onUpdateBlock, onMoveBlock, onDeleteBlock, onGenerateImage, onExtractToBlock, handleGripMouseDown, resetBlockPosition]);
+
   const totalPages = pages.length;
   const estimatedCost = pricePerPage ? (totalPages * pricePerPage).toFixed(2) : null;
 
@@ -434,217 +590,69 @@ export function CenterCanvas({
           >
             {/* ── Page content area ── */}
             <div
+              data-page-content
+              ref={(el) => { if (el) pageRefs.current.set(pageIndex, el); }}
               style={{
                 position: "absolute",
                 top: marginPx,
                 left: marginPx,
                 right: marginPx,
                 bottom: showPageNumbers ? footerHeight : marginPx,
-                overflow: "hidden", // CRITICAL: second line of defence
-                display: "flex",
-                flexDirection: "column",
-                gap: 0,
+                overflow: "hidden",
               }}
             >
-              {pageBlocks.length === 0 ? (
-                <div
-                  className="flex items-center justify-center h-32 text-sm"
-                  style={{ color: template.colors.accent, opacity: 0.6 }}
-                >
-                  Pusta strona — użyj paska powyżej lub kliknij + między blokami
-                </div>
-              ) : (
-                pageBlocks.map((block, blockIdx) => (
-                  // ── FIXED: block wrapper is now plain div, no flex/justify ──
+              {/* Flow blocks (no posX/posY) */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 0, width: "100%", height: "100%" }}>
+                {pageBlocks.filter((b) => b.posX == null && b.posY == null).length === 0 &&
+                 pageBlocks.filter((b) => b.posX != null || b.posY != null).length === 0 && (
+                  <div
+                    className="flex items-center justify-center h-32 text-sm"
+                    style={{ color: template.colors.accent, opacity: 0.6 }}
+                  >
+                    Pusta strona — użyj paska powyżej lub kliknij + między blokami
+                  </div>
+                )}
+                {pageBlocks.filter((b) => b.posX == null && b.posY == null).map((block) => (
                   <div
                     key={block.id}
                     data-block-id={block.id}
-                    style={{
-                      width: "100%",
-                      maxWidth: "100%",
-                      overflow: "visible",
-                      flexShrink: 0,
-                    }}
+                    style={{ width: "100%", maxWidth: "100%", overflow: "visible", flexShrink: 0 }}
                   >
-                    {/* Inner wrapper handles alignment */}
                     <div
                       style={{
                         display: "flex",
-                        justifyContent:
-                          block.align === "center" ? "center" : block.align === "right" ? "flex-end" : "flex-start",
+                        justifyContent: block.align === "center" ? "center" : block.align === "right" ? "flex-end" : "flex-start",
                         width: "100%",
                         maxWidth: "100%",
                         overflow: "visible",
                       }}
                     >
-                      <div
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, block.id)}
-                        onDragOver={(e) => handleDragOver(e, block.id)}
-                        onDrop={(e) => handleDrop(e, block.id)}
-                        onDragEnd={handleDragEnd}
-                        className={`relative group cursor-pointer transition-all duration-150 rounded-sm ${
-                          selectedBlockId === block.id
-                            ? "ring-2 ring-blue-400/50 ring-offset-1"
-                            : dropTargetId === block.id
-                              ? "ring-2 ring-primary/50 ring-offset-1 bg-primary/5"
-                              : draggedBlockId === block.id
-                                ? "opacity-40"
-                                : "hover:ring-1 hover:ring-blue-200/40"
-                        }`}
-                        style={{
-                          marginBottom: 4,
-                          padding: "2px 4px",
-                          width: block.width ? `${Math.min(block.width, 100)}%` : "100%",
-                          maxWidth: "100%",
-                          minHeight: block.height ? block.height : undefined,
-                          overflow: "visible", // visible so TextSelectionToolbar shows above block
-                          wordBreak: "break-word",
-                          overflowWrap: "break-word",
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectBlock(block.id);
-                        }}
-                      >
-                        {/* Drag handle */}
-                        <div
-                          className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
-                          onMouseDown={(e) => e.stopPropagation()}
-                        >
-                          <GripVertical className="h-4 w-4 text-gray-400" />
-                        </div>
-
-                        <BlockRenderer
-                          block={block}
-                          template={template}
-                          onUpdate={(updates) => onUpdateBlock(block.id, updates)}
-                          isSelected={selectedBlockId === block.id}
-                          onGenerateImage={onGenerateImage}
-                          onExtractToBlock={onExtractToBlock ? (html) => onExtractToBlock(block.id, html) : undefined}
-                        />
-
-                        {selectedBlockId === block.id && (
-                          <>
-                            <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onMoveBlock(block.id, -1);
-                                }}
-                                className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
-                              >
-                                <ChevronUp className="h-3 w-3" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onMoveBlock(block.id, 1);
-                                }}
-                                className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-gray-700 shadow-sm"
-                              >
-                                <ChevronDown className="h-3 w-3" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDeleteBlock(block.id);
-                                }}
-                                className="p-0.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-red-500 shadow-sm"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            </div>
-
-                            {/* Resize handle - right edge */}
-                            <div
-                              className="absolute top-0 -right-1 w-2 h-full cursor-ew-resize hover:bg-blue-400/30 transition-colors z-10"
-                              onMouseDown={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                const startX = e.clientX;
-                                const startWidth = block.width || 100;
-                                const onMove = (ev: MouseEvent) => {
-                                  const delta = ev.clientX - startX;
-                                  const pxPerPercent = contentWidth / 100;
-                                  const newWidth = Math.max(20, Math.min(100, startWidth + delta / pxPerPercent));
-                                  onUpdateBlock(block.id, { width: Math.round(newWidth) });
-                                };
-                                const onUp = () => {
-                                  document.removeEventListener("mousemove", onMove);
-                                  document.removeEventListener("mouseup", onUp);
-                                };
-                                document.addEventListener("mousemove", onMove);
-                                document.addEventListener("mouseup", onUp);
-                              }}
-                            />
-
-                            {/* Resize handle - bottom edge */}
-                            <div
-                              className="absolute -bottom-1 left-0 w-full h-2 cursor-ns-resize hover:bg-blue-400/30 transition-colors z-10"
-                              onMouseDown={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                const startY = e.clientY;
-                                const startHeight = block.height || e.currentTarget.parentElement?.offsetHeight || 40;
-                                const onMove = (ev: MouseEvent) => {
-                                  const delta = ev.clientY - startY;
-                                  const newHeight = Math.max(20, startHeight + delta);
-                                  onUpdateBlock(block.id, { height: Math.round(newHeight) });
-                                };
-                                const onUp = () => {
-                                  document.removeEventListener("mousemove", onMove);
-                                  document.removeEventListener("mouseup", onUp);
-                                };
-                                document.addEventListener("mousemove", onMove);
-                                document.addEventListener("mouseup", onUp);
-                              }}
-                            />
-
-                            {/* Resize handle - corner */}
-                            <div
-                              className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-blue-400 border border-white rounded-sm cursor-nwse-resize z-20 shadow-sm"
-                              onMouseDown={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                const startX = e.clientX;
-                                const startY = e.clientY;
-                                const startWidth = block.width || 100;
-                                const startHeight = block.height || e.currentTarget.parentElement?.offsetHeight || 40;
-                                const onMove = (ev: MouseEvent) => {
-                                  const deltaX = ev.clientX - startX;
-                                  const deltaY = ev.clientY - startY;
-                                  const pxPerPercent = contentWidth / 100;
-                                  const newWidth = Math.max(20, Math.min(100, startWidth + deltaX / pxPerPercent));
-                                  const newHeight = Math.max(20, startHeight + deltaY);
-                                  onUpdateBlock(block.id, {
-                                    width: Math.round(newWidth),
-                                    height: Math.round(newHeight),
-                                  });
-                                };
-                                const onUp = () => {
-                                  document.removeEventListener("mousemove", onMove);
-                                  document.removeEventListener("mouseup", onUp);
-                                };
-                                document.addEventListener("mousemove", onMove);
-                                document.addEventListener("mouseup", onUp);
-                              }}
-                            />
-                          </>
-                        )}
-                      </div>
+                      {renderBlockInner(block, pageIndex)}
                     </div>
-
-                    {/* InsertMenu OUTSIDE the alignment flex wrapper */}
                     <div onClick={(e) => e.stopPropagation()}>
-                      <InsertMenu
-                        onInsert={(type) => onAddBlock(type, block.id)}
-                        visible={selectedBlockId === block.id}
-                      />
+                      <InsertMenu onInsert={(type) => onAddBlock(type, block.id)} visible={selectedBlockId === block.id} />
                     </div>
                   </div>
-                ))
-              )}
+                ))}
+              </div>
+
+              {/* Positioned blocks (have posX/posY) — rendered absolutely */}
+              {pageBlocks.filter((b) => b.posX != null || b.posY != null).map((block) => (
+                <div
+                  key={block.id}
+                  data-block-id={block.id}
+                  style={{
+                    position: "absolute",
+                    left: block.posX ?? 0,
+                    top: block.posY ?? 0,
+                    maxWidth: "100%",
+                    overflow: "visible",
+                    zIndex: selectedBlockId === block.id ? 10 : 5,
+                  }}
+                >
+                  {renderBlockInner(block, pageIndex)}
+                </div>
+              ))}
             </div>
 
             {/* Watermark */}
