@@ -357,6 +357,145 @@ export function CenterCanvas({
     return result;
   }, [chapter?.blocks, template, contentWidth, usableHeight]);
 
+  // Shared block rendering logic for both flow and positioned blocks
+  const renderBlockInner = useCallback((block: Block, _pageIndex: number) => (
+    <div
+      className={`relative group cursor-pointer transition-all duration-150 rounded-sm ${
+        selectedBlockId === block.id
+          ? "ring-2 ring-blue-400/50 ring-offset-1"
+          : draggedBlockId === block.id
+            ? "opacity-40"
+            : "hover:ring-1 hover:ring-blue-200/40"
+      }`}
+      style={{
+        marginBottom: 4,
+        padding: "2px 4px",
+        width: block.width ? `${Math.min(block.width, 100)}%` : (block.posX != null ? "auto" : "100%"),
+        maxWidth: block.posX != null ? contentWidth : "100%",
+        minHeight: block.height ? block.height : undefined,
+        overflow: "visible",
+        wordBreak: "break-word",
+        overflowWrap: "break-word",
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelectBlock(block.id);
+      }}
+    >
+      {/* Drag handle — free positioning */}
+      <div
+        className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
+        onMouseDown={(e) => handleGripMouseDown(e, block.id)}
+      >
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      </div>
+
+      <BlockRenderer
+        block={block}
+        template={template}
+        onUpdate={(updates) => onUpdateBlock(block.id, updates)}
+        isSelected={selectedBlockId === block.id}
+        onGenerateImage={onGenerateImage}
+        onExtractToBlock={onExtractToBlock ? (html) => onExtractToBlock(block.id, html) : undefined}
+      />
+
+      {selectedBlockId === block.id && (
+        <>
+          <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
+            <button
+              onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, -1); }}
+              className="p-0.5 rounded bg-card border border-border text-muted-foreground hover:text-foreground shadow-sm"
+            >
+              <ChevronUp className="h-3 w-3" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, 1); }}
+              className="p-0.5 rounded bg-card border border-border text-muted-foreground hover:text-foreground shadow-sm"
+            >
+              <ChevronDown className="h-3 w-3" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDeleteBlock(block.id); }}
+              className="p-0.5 rounded bg-card border border-border text-muted-foreground hover:text-destructive shadow-sm"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+            {/* Reset position button — only for positioned blocks */}
+            {(block.posX != null || block.posY != null) && (
+              <button
+                onClick={(e) => { e.stopPropagation(); resetBlockPosition(block.id); }}
+                className="p-0.5 rounded bg-card border border-border text-muted-foreground hover:text-primary shadow-sm"
+                title="Resetuj pozycję"
+              >
+                <RotateCcw className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+
+          {/* Resize handle - right edge */}
+          <div
+            className="absolute top-0 -right-1 w-2 h-full cursor-ew-resize hover:bg-primary/30 transition-colors z-10"
+            onMouseDown={(e) => {
+              e.stopPropagation(); e.preventDefault();
+              const startX = e.clientX;
+              const startWidth = block.width || 100;
+              const onMove = (ev: MouseEvent) => {
+                const delta = ev.clientX - startX;
+                const pxPerPercent = contentWidth / 100;
+                const newWidth = Math.max(20, Math.min(100, startWidth + delta / pxPerPercent));
+                onUpdateBlock(block.id, { width: Math.round(newWidth) });
+              };
+              const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+              document.addEventListener("mousemove", onMove);
+              document.addEventListener("mouseup", onUp);
+            }}
+          />
+
+          {/* Resize handle - bottom edge */}
+          <div
+            className="absolute -bottom-1 left-0 w-full h-2 cursor-ns-resize hover:bg-primary/30 transition-colors z-10"
+            onMouseDown={(e) => {
+              e.stopPropagation(); e.preventDefault();
+              const startY = e.clientY;
+              const startHeight = block.height || e.currentTarget.parentElement?.offsetHeight || 40;
+              const onMove = (ev: MouseEvent) => {
+                const delta = ev.clientY - startY;
+                const newHeight = Math.max(20, startHeight + delta);
+                onUpdateBlock(block.id, { height: Math.round(newHeight) });
+              };
+              const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+              document.addEventListener("mousemove", onMove);
+              document.addEventListener("mouseup", onUp);
+            }}
+          />
+
+          {/* Resize handle - corner */}
+          <div
+            className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-primary border border-background rounded-sm cursor-nwse-resize z-20 shadow-sm"
+            onMouseDown={(e) => {
+              e.stopPropagation(); e.preventDefault();
+              const startX = e.clientX;
+              const startY = e.clientY;
+              const startWidth = block.width || 100;
+              const startHeight = block.height || e.currentTarget.parentElement?.offsetHeight || 40;
+              const onMove = (ev: MouseEvent) => {
+                const deltaX = ev.clientX - startX;
+                const deltaY = ev.clientY - startY;
+                const pxPerPercent = contentWidth / 100;
+                const newWidth = Math.max(20, Math.min(100, startWidth + deltaX / pxPerPercent));
+                const newHeight = Math.max(20, startHeight + deltaY);
+                onUpdateBlock(block.id, { width: Math.round(newWidth), height: Math.round(newHeight) });
+              };
+              const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+              document.addEventListener("mousemove", onMove);
+              document.addEventListener("mouseup", onUp);
+            }}
+          />
+        </>
+      )}
+    </div>
+  ), [selectedBlockId, draggedBlockId, contentWidth, template, onSelectBlock, onUpdateBlock, onMoveBlock, onDeleteBlock, onGenerateImage, onExtractToBlock, handleGripMouseDown, resetBlockPosition]);
+
   const totalPages = pages.length;
   const estimatedCost = pricePerPage ? (totalPages * pricePerPage).toFixed(2) : null;
 
