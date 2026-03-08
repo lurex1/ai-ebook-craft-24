@@ -493,14 +493,11 @@ export function CenterCanvas({
                                 : "hover:ring-1 hover:ring-blue-200/40"
                         }`}
                         style={{
-                          marginBottom: 0,
+                          marginBottom: 4,
                           padding: "2px 4px",
-                          width: block.width && block.type !== "image" ? `${Math.min(block.width, 100)}%` : "100%",
+                          width: block.width ? `${Math.min(block.width, 100)}%` : "100%",
                           maxWidth: "100%",
-                          minHeight:
-                            block.height && (block.type === "text" || block.type === "heading")
-                              ? block.height
-                              : undefined,
+                          minHeight: block.height ? block.height : undefined,
                           overflow: "visible", // visible so TextSelectionToolbar shows above block
                           wordBreak: "break-word",
                           overflowWrap: "break-word",

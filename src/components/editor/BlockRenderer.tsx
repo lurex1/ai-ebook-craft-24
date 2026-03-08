@@ -180,12 +180,17 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
       );
     }
     return (
-      <div style={{ width: `${block.width || 100}%`, maxWidth: "100%", overflow: "hidden" }}>
+      <div style={{ width: "100%", maxWidth: "100%", overflow: "hidden" }}>
         <img
           src={block.url}
           alt={block.alt || ""}
           className="max-w-full rounded"
-          style={{ display: "block", maxWidth: "100%", height: "auto" }}
+          style={{
+            display: "block",
+            width: "100%",
+            height: block.height ? `${block.height}px` : "auto",
+            objectFit: block.height ? "cover" : undefined,
+          }}
         />
       </div>
     );
