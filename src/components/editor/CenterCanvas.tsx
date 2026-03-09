@@ -363,13 +363,11 @@ export function CenterCanvas({
       className={`relative group cursor-pointer transition-all duration-150 rounded-sm ${
         selectedBlockId === block.id
           ? "ring-2 ring-blue-400/50 ring-offset-1"
-          : draggedBlockId === block.id
-            ? "opacity-40"
-            : "hover:ring-1 hover:ring-blue-200/40"
+          : "hover:ring-1 hover:ring-blue-200/40"
       }`}
       style={{
         marginBottom: 4,
-        padding: "2px 4px",
+        padding: "2px 4px 2px 20px",
         width: block.width ? `${Math.min(block.width, 100)}%` : (block.posX != null ? "auto" : "100%"),
         maxWidth: block.posX != null ? contentWidth : "100%",
         minHeight: block.height ? block.height : undefined,
@@ -382,9 +380,10 @@ export function CenterCanvas({
         onSelectBlock(block.id);
       }}
     >
-      {/* Drag handle — free positioning */}
+      {/* Drag handle — inside the block padding */}
       <div
-        className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
+        className="absolute left-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing transition-opacity z-10"
+        style={{ width: 16 }}
         onMouseDown={(e) => handleGripMouseDown(e, block.id)}
       >
         <GripVertical className="h-4 w-4 text-muted-foreground" />
