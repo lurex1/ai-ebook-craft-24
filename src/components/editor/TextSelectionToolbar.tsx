@@ -181,7 +181,12 @@ export function TextSelectionToolbar({ containerRef, onApplyInlineStyle, onGener
         {onExtractToBlock && (
           <button
             onClick={() => {
-              onExtractToBlock(selectedHtml || selectedText);
+              const html = selectedHtml || selectedText;
+              // Remove the selected text from the source block
+              if (onReplaceSelection) {
+                onReplaceSelection("");
+              }
+              onExtractToBlock(html);
               setVisible(false);
             }}
             className="p-1.5 rounded hover:bg-gray-100 transition-colors flex items-center gap-1"
