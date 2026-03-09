@@ -20,6 +20,7 @@ import { ImportDialog } from "@/components/editor/ImportDialog";
 import { ExportDialog } from "@/components/editor/ExportDialog";
 import { CoverGenerator } from "@/components/editor/CoverGenerator";
 import { Progress } from "@/components/ui/progress";
+import { useI18n, LanguageSwitcher } from "@/lib/i18n";
 
 export default function Editor() {
   const { id } = useParams<{ id: string }>();
