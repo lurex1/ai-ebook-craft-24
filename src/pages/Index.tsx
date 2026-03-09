@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Plus, LogOut, Trash2, Copy, Calendar, Edit3, Loader2, Crown, MousePointerClick, Wand2, SplitSquareHorizontal, Palette } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-ebook.jpg";
+import { useI18n, LanguageSwitcher } from "@/lib/i18n";
 
 export default function Dashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t, lang } = useI18n();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,7 +36,7 @@ export default function Dashboard() {
 
   const deleteProject = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm("Czy na pewno chcesz usunąć ten projekt?")) return;
+    if (!confirm(t("dash.confirmDelete"))) return;
     await supabase.from("projects").delete().eq("id", id);
     setProjects(projects.filter((p: any) => p.id !== id));
   };
@@ -47,7 +49,7 @@ export default function Dashboard() {
       .insert({
         ...project,
         id: undefined,
-        title: project.title + " (kopia)",
+        title: project.title + " " + t("dash.copy"),
         created_at: undefined,
         updated_at: undefined,
       } as any)
@@ -69,7 +71,7 @@ export default function Dashboard() {
         }
       }
       loadProjects();
-      toast({ title: "Zduplikowano projekt" });
+      toast({ title: t("dash.duplicated") });
     }
   };
 
@@ -95,12 +97,13 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <Button variant="ghost" size="sm" onClick={() => navigate("/pricing")} className="text-muted-foreground gap-2">
-              <Crown className="h-4 w-4" /> Cennik
+              <Crown className="h-4 w-4" /> {t("dash.pricing")}
             </Button>
             <span className="text-sm text-muted-foreground hidden sm:inline">{user?.email}</span>
             <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground gap-2">
-              <LogOut className="h-4 w-4" /> Wyloguj
+              <LogOut className="h-4 w-4" /> {t("dash.logout")}
             </Button>
           </div>
         </div>
@@ -108,73 +111,73 @@ export default function Dashboard() {
 
       <main className="mx-auto max-w-6xl px-6 py-10">
         <div className="relative rounded-2xl overflow-hidden mb-10">
-          <img src={heroImage} alt="Scripto - twórz e-booki z AI" className="w-full h-48 sm:h-64 object-cover" />
+          <img src={heroImage} alt="Scripto" className="w-full h-48 sm:h-64 object-cover" />
           <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent flex items-center">
             <div className="px-8 sm:px-12">
               <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-2">
-                Twórz <span className="text-gradient-gold">profesjonalne</span> e-booki
+                {t("dash.createPro").split(" ").slice(0, 1).join(" ")} <span className="text-gradient-gold">{t("dash.createPro").split(" ").slice(1, 2).join(" ")}</span> {t("dash.createPro").split(" ").slice(2).join(" ")}
               </h2>
               <p className="text-muted-foreground text-sm sm:text-base max-w-md mb-4">
-                Wgraj materiały, wybierz strukturę i pozwól AI wygenerować treść. Edytuj, formatuj i eksportuj w kilka minut.
+                {t("dash.heroDesc")}
               </p>
               <Button
                 onClick={() => navigate("/new")}
                 className="bg-gradient-gold text-primary-foreground hover:opacity-90 gap-2"
               >
-                <Plus className="h-4 w-4" /> Utwórz nowy e-book
+                <Plus className="h-4 w-4" /> {t("dash.createNew")}
               </Button>
             </div>
           </div>
         </div>
 
-        {/* "Zaznacz i edytuj" feature section */}
+        {/* "Select & edit" feature section */}
         <div className="mb-10 bg-card border border-border/50 rounded-2xl p-6 sm:p-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
               <MousePointerClick className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-display text-lg font-bold text-foreground">Zaznacz i edytuj</h3>
-              <p className="text-xs text-muted-foreground">Intuicyjna edycja — wystarczy zaznaczyć tekst</p>
+              <h3 className="font-display text-lg font-bold text-foreground">{t("dash.selectEdit")}</h3>
+              <p className="text-xs text-muted-foreground">{t("dash.selectEditDesc")}</p>
             </div>
           </div>
           <p className="text-sm text-muted-foreground mb-5 max-w-2xl">
-            Zaznacz dowolny fragment tekstu w edytorze, a natychmiast pojawi się pływający toolbar z zestawem narzędzi. Bez menu, bez szukania opcji — wszystko pod kursorem.
+            {t("dash.selectEditLong")}
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-background rounded-lg p-3 border border-border/30">
               <Wand2 className="h-4 w-4 text-purple-400 mb-2" />
-              <p className="text-xs font-medium text-foreground">AI transformacje</p>
-              <p className="text-[10px] text-muted-foreground">Zamień w tabelę, listę, uprość lub rozwiń treść</p>
+              <p className="text-xs font-medium text-foreground">{t("dash.aiTransforms")}</p>
+              <p className="text-[10px] text-muted-foreground">{t("dash.aiTransformsDesc")}</p>
             </div>
             <div className="bg-background rounded-lg p-3 border border-border/30">
               <SplitSquareHorizontal className="h-4 w-4 text-teal-400 mb-2" />
-              <p className="text-xs font-medium text-foreground">Wyciągnij do bloku</p>
-              <p className="text-[10px] text-muted-foreground">Utwórz osobny blok z zaznaczonego fragmentu</p>
+              <p className="text-xs font-medium text-foreground">{t("dash.extractBlock")}</p>
+              <p className="text-[10px] text-muted-foreground">{t("dash.extractBlockDesc")}</p>
             </div>
             <div className="bg-background rounded-lg p-3 border border-border/30">
               <Palette className="h-4 w-4 text-amber-400 mb-2" />
-              <p className="text-xs font-medium text-foreground">Kolory i podświetlenie</p>
-              <p className="text-[10px] text-muted-foreground">Zmień kolor tekstu lub dodaj podświetlenie</p>
+              <p className="text-xs font-medium text-foreground">{t("dash.colorsHighlight")}</p>
+              <p className="text-[10px] text-muted-foreground">{t("dash.colorsHighlightDesc")}</p>
             </div>
             <div className="bg-background rounded-lg p-3 border border-border/30">
               <Edit3 className="h-4 w-4 text-blue-400 mb-2" />
-              <p className="text-xs font-medium text-foreground">Generuj grafikę</p>
-              <p className="text-[10px] text-muted-foreground">AI wygeneruje obraz na podstawie zaznaczenia</p>
+              <p className="text-xs font-medium text-foreground">{t("dash.generateGraphic")}</p>
+              <p className="text-[10px] text-muted-foreground">{t("dash.generateGraphicDesc")}</p>
             </div>
           </div>
         </div>
 
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="font-display text-2xl font-bold text-foreground">Twoje projekty</h2>
-            <p className="text-muted-foreground text-sm">{projects.length} e-booków</p>
+            <h2 className="font-display text-2xl font-bold text-foreground">{t("dash.yourProjects")}</h2>
+            <p className="text-muted-foreground text-sm">{projects.length} {t("dash.ebooks")}</p>
           </div>
           <Button
             onClick={() => navigate("/new")}
             className="bg-gradient-gold text-primary-foreground hover:opacity-90 gap-2"
           >
-            <Plus className="h-4 w-4" /> Nowy projekt
+            <Plus className="h-4 w-4" /> {t("dash.newProject")}
           </Button>
         </div>
 
@@ -183,13 +186,13 @@ export default function Dashboard() {
             <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <BookOpen className="h-9 w-9 text-primary" />
             </div>
-            <h3 className="font-display text-xl font-semibold text-foreground mb-2">Brak projektów</h3>
-            <p className="text-muted-foreground mb-6">Utwórz swój pierwszy e-book</p>
+            <h3 className="font-display text-xl font-semibold text-foreground mb-2">{t("dash.noProjects")}</h3>
+            <p className="text-muted-foreground mb-6">{t("dash.createFirst")}</p>
             <Button
               onClick={() => navigate("/new")}
               className="bg-gradient-gold text-primary-foreground hover:opacity-90 gap-2"
             >
-              <Plus className="h-4 w-4" /> Nowy projekt
+              <Plus className="h-4 w-4" /> {t("dash.newProject")}
             </Button>
           </div>
         ) : (
@@ -217,7 +220,7 @@ export default function Dashboard() {
                 {p.author_name && <p className="text-xs text-muted-foreground mb-2">{p.author_name}</p>}
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Calendar className="h-3 w-3" />
-                  {new Date(p.updated_at).toLocaleDateString("pl")}
+                  {new Date(p.updated_at).toLocaleDateString(lang === "en" ? "en" : "pl")}
                 </div>
               </div>
             ))}
@@ -229,9 +232,9 @@ export default function Dashboard() {
         <div className="mx-auto max-w-6xl flex flex-col md:flex-row justify-between text-xs text-muted-foreground gap-4">
           <p>© {new Date().getFullYear()} Paveelo</p>
           <div className="flex gap-4">
-            <Link to="/terms" className="hover:text-primary transition-colors">Regulamin</Link>
-            <Link to="/privacy" className="hover:text-primary transition-colors">Polityka prywatności</Link>
-            <Link to="/cookies" className="hover:text-primary transition-colors">Cookies</Link>
+            <Link to="/terms" className="hover:text-primary transition-colors">{t("dash.terms")}</Link>
+            <Link to="/privacy" className="hover:text-primary transition-colors">{t("dash.privacy")}</Link>
+            <Link to="/cookies" className="hover:text-primary transition-colors">{t("dash.cookies")}</Link>
           </div>
         </div>
       </footer>

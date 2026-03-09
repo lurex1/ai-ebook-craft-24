@@ -20,12 +20,14 @@ import { ImportDialog } from "@/components/editor/ImportDialog";
 import { ExportDialog } from "@/components/editor/ExportDialog";
 import { CoverGenerator } from "@/components/editor/CoverGenerator";
 import { Progress } from "@/components/ui/progress";
+import { useI18n, LanguageSwitcher } from "@/lib/i18n";
 
 export default function Editor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { t } = useI18n();
 
   const [project, setProject] = useState<ProjectData | null>(null);
   const [chapters, setChapters] = useState<ChapterData[]>([]);
@@ -419,14 +421,15 @@ export default function Editor() {
             className="bg-transparent border-none text-sm font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-2 py-1 max-w-[200px]"
           />
           <span className="text-xs text-muted-foreground flex items-center gap-1">
-            {saveStatus === "saving" && <><Loader2 className="h-3 w-3 animate-spin" /> Zapisuję...</>}
-            {saveStatus === "saved" && <><Check className="h-3 w-3 text-primary" /> Zapisano</>}
-            {saveStatus === "unsaved" && "Niezapisane"}
+            {saveStatus === "saving" && <><Loader2 className="h-3 w-3 animate-spin" /> {t("editor.saving")}</>}
+            {saveStatus === "saved" && <><Check className="h-3 w-3 text-primary" /> {t("editor.saved")}</>}
+            {saveStatus === "unsaved" && t("editor.unsaved")}
           </span>
         </div>
         <div className="flex items-center gap-1">
+          <LanguageSwitcher />
           <Button variant="ghost" size="sm" onClick={() => navigate("/new")} className="text-muted-foreground gap-1 text-xs">
-            <Plus className="h-3.5 w-3.5" /> Nowy
+            <Plus className="h-3.5 w-3.5" /> {t("editor.new")}
           </Button>
           <Button
             variant="ghost"
@@ -436,22 +439,22 @@ export default function Editor() {
             className="text-primary gap-1 text-xs bg-primary/10 hover:bg-primary/20"
           >
             {aiGenerating ? (
-              <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Generuję {aiProgress.current}/{aiProgress.total}...</>
+              <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("editor.generating")} {aiProgress.current}/{aiProgress.total}...</>
             ) : (
-              <><Wand2 className="h-3.5 w-3.5" /> Generuj treści AI</>
+              <><Wand2 className="h-3.5 w-3.5" /> {t("editor.generateAI")}</>
             )}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setImportOpen(true)} className="text-muted-foreground gap-1 text-xs">
-            <Import className="h-3.5 w-3.5" /> Import
+            <Import className="h-3.5 w-3.5" /> {t("editor.import")}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setCoverOpen(true)} className="text-muted-foreground gap-1 text-xs">
-            <ImageIcon className="h-3.5 w-3.5" /> Okładka
+            <ImageIcon className="h-3.5 w-3.5" /> {t("editor.cover")}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setFlipbookOpen(true)} className="text-muted-foreground gap-1 text-xs">
-            <BookOpenCheck className="h-3.5 w-3.5" /> Flipbook
+            <BookOpenCheck className="h-3.5 w-3.5" /> {t("editor.flipbook")}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setExportOpen(true)} className="text-primary gap-1 text-xs">
-            <Download className="h-3.5 w-3.5" /> Eksport
+            <Download className="h-3.5 w-3.5" /> {t("editor.export")}
           </Button>
         </div>
       </header>
@@ -465,7 +468,7 @@ export default function Editor() {
               <Progress value={aiProgress.total > 0 ? (aiProgress.current / aiProgress.total) * 100 : 0} className="h-2" />
             </div>
             <span className="text-xs text-muted-foreground whitespace-nowrap">
-              Rozdział {aiProgress.current}/{aiProgress.total}
+              {t("editor.chapter")} {aiProgress.current}/{aiProgress.total}
             </span>
           </div>
         </div>

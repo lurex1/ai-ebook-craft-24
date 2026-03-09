@@ -3,32 +3,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Check, Crown, ArrowLeft, Loader2 } from "lucide-react";
-
-const FREE_FEATURES = [
-  "Tworzenie projektu e-booka",
-  "Edytor z podglądem na żywo",
-  "Podstawowe szablony",
-];
-
-const FREE_LIMITATIONS = [
-  "Brak generowania AI",
-  "Brak eksportu do PDF/EPUB",
-  "Brak ilustracji AI",
-];
-
-const PRO_FEATURES = [
-  "Nielimitowane generowanie AI",
-  "Nielimitowane ilustracje AI",
-  "Eksport do PDF i EPUB — bez limitu",
-  "Wszystkie szablony premium",
-  "Priorytetowe generowanie",
-  "Wsparcie premium",
-];
+import { useI18n, LanguageSwitcher } from "@/lib/i18n";
 
 export default function Pricing() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { plan, subscribed, startCheckout, openPortal, loading } = useCredits();
+  const { t } = useI18n();
+
+  const FREE_FEATURES = [t("pricing.freeCreate"), t("pricing.freeEditor"), t("pricing.freeTemplates")];
+  const FREE_LIMITATIONS = [t("pricing.noAI"), t("pricing.noExport"), t("pricing.noIllustrations")];
+  const PRO_FEATURES = [t("pricing.unlimitedAI"), t("pricing.unlimitedIllustrations"), t("pricing.unlimitedExport"), t("pricing.premiumTemplates"), t("pricing.priorityGen"), t("pricing.premiumSupport")];
 
   if (loading) {
     return (
@@ -44,10 +29,11 @@ export default function Pricing() {
         <div className="mx-auto max-w-5xl flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="text-muted-foreground gap-2">
-              <ArrowLeft className="h-4 w-4" /> Powrót
+              <ArrowLeft className="h-4 w-4" /> {t("common.back")}
             </Button>
           </div>
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <div className="h-10 w-10 rounded-lg bg-gradient-gold flex items-center justify-center">
               <BookOpen className="h-5 w-5 text-primary-foreground" />
             </div>
@@ -59,10 +45,10 @@ export default function Pricing() {
       <main className="mx-auto max-w-5xl px-6 py-16">
         <div className="text-center mb-12">
           <h1 className="font-display text-4xl font-bold text-foreground mb-3">
-            Wybierz swój <span className="text-gradient-gold">plan</span>
+            {t("pricing.choosePlan").split(" ").slice(0, -1).join(" ")} <span className="text-gradient-gold">{t("pricing.choosePlan").split(" ").slice(-1)}</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-lg mx-auto">
-            Zacznij za darmo. Ulepsz do Pro, aby odblokować AI i eksport.
+            {t("pricing.startFreeUpgrade")}
           </p>
         </div>
 
@@ -71,13 +57,13 @@ export default function Pricing() {
           <div className={`relative bg-card border rounded-2xl p-8 transition-all ${plan === "free" && user ? "border-primary/50 shadow-gold" : "border-border/50"}`}>
             {plan === "free" && user && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
-                Twój plan
+                {t("common.yourPlan")}
               </div>
             )}
             <h3 className="font-display text-2xl font-bold text-foreground mb-1">Free</h3>
             <div className="flex items-baseline gap-1 mb-6">
               <span className="font-display text-4xl font-bold text-foreground">$0</span>
-              <span className="text-muted-foreground text-sm">/miesiąc</span>
+              <span className="text-muted-foreground text-sm">{t("common.month")}</span>
             </div>
             <ul className="space-y-3 mb-3">
               {FREE_FEATURES.map((f) => (
@@ -96,11 +82,11 @@ export default function Pricing() {
             </ul>
             {!user ? (
               <Button onClick={() => navigate("/auth")} variant="outline" className="w-full">
-                Zacznij za darmo
+                {t("pricing.startFree")}
               </Button>
             ) : (
               <Button variant="outline" className="w-full" disabled>
-                {plan === "free" ? "Aktualny plan" : "Plan darmowy"}
+                {plan === "free" ? t("pricing.currentPlan") : t("pricing.freePlan")}
               </Button>
             )}
           </div>
@@ -109,17 +95,17 @@ export default function Pricing() {
           <div className={`relative bg-card border rounded-2xl p-8 transition-all ${plan === "pro" && user ? "border-primary/50 shadow-gold" : "border-border/50"} ring-2 ring-primary/20`}>
             {plan === "pro" && user ? (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-gold text-primary-foreground text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
-                <Crown className="h-3 w-3" /> Twój plan
+                <Crown className="h-3 w-3" /> {t("common.yourPlan")}
               </div>
             ) : (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-gold text-primary-foreground text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
-                <Crown className="h-3 w-3" /> Popularne
+                <Crown className="h-3 w-3" /> {t("pricing.popular")}
               </div>
             )}
             <h3 className="font-display text-2xl font-bold text-foreground mb-1">Pro</h3>
             <div className="flex items-baseline gap-1 mb-6">
               <span className="font-display text-4xl font-bold text-foreground">$7.99</span>
-              <span className="text-muted-foreground text-sm">/miesiąc</span>
+              <span className="text-muted-foreground text-sm">{t("common.month")}</span>
             </div>
             <ul className="space-y-3 mb-8">
               {PRO_FEATURES.map((f) => (
@@ -131,27 +117,26 @@ export default function Pricing() {
             </ul>
             {!user ? (
               <Button onClick={() => navigate("/auth")} className="w-full bg-gradient-gold text-primary-foreground hover:opacity-90">
-                Zacznij Pro
+                {t("pricing.startPro")}
               </Button>
             ) : subscribed ? (
               <Button onClick={openPortal} variant="outline" className="w-full">
-                Zarządzaj subskrypcją
+                {t("pricing.manageSub")}
               </Button>
             ) : (
               <Button onClick={startCheckout} className="w-full bg-gradient-gold text-primary-foreground hover:opacity-90">
-                Ulepsz do Pro
+                {t("pricing.upgradePro")}
               </Button>
             )}
           </div>
         </div>
 
-        {/* Pro benefits summary */}
         <div className="mt-16 max-w-3xl mx-auto text-center">
           <h2 className="font-display text-2xl font-bold text-foreground mb-3">
-            Pro = <span className="text-gradient-gold">pełen dostęp</span>
+            Pro = <span className="text-gradient-gold">{t("pricing.fullAccess")}</span>
           </h2>
           <p className="text-muted-foreground max-w-lg mx-auto">
-            Jedna subskrypcja odblokowuje wszystkie funkcje: generowanie treści AI, ilustracje, eksport do PDF/EPUB — bez żadnych dodatkowych opłat ani limitów.
+            {t("pricing.fullAccessDesc")}
           </p>
         </div>
       </main>
