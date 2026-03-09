@@ -468,7 +468,7 @@ export default function Editor() {
               <Progress value={aiProgress.total > 0 ? (aiProgress.current / aiProgress.total) * 100 : 0} className="h-2" />
             </div>
             <span className="text-xs text-muted-foreground whitespace-nowrap">
-              Rozdział {aiProgress.current}/{aiProgress.total}
+              {t("editor.chapter")} {aiProgress.current}/{aiProgress.total}
             </span>
           </div>
         </div>
