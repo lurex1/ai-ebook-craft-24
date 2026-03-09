@@ -27,6 +27,7 @@ export default function Editor() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { t } = useI18n();
 
   const [project, setProject] = useState<ProjectData | null>(null);
   const [chapters, setChapters] = useState<ChapterData[]>([]);
