@@ -220,7 +220,7 @@ export default function Dashboard() {
                 {p.author_name && <p className="text-xs text-muted-foreground mb-2">{p.author_name}</p>}
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Calendar className="h-3 w-3" />
-                  {new Date(p.updated_at).toLocaleDateString(useI18n().lang === "en" ? "en" : "pl")}
+                  {new Date(p.updated_at).toLocaleDateString(lang === "en" ? "en" : "pl")}
                 </div>
               </div>
             ))}
