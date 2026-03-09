@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BookOpen, Mail, Lock, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n, LanguageSwitcher } from "@/lib/i18n";
 
 type AuthMode = "login" | "register" | "forgot" | "reset";
 
@@ -14,28 +15,22 @@ export default function Auth() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { t } = useI18n();
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) navigate("/");
   }, [user, authLoading, navigate]);
 
-  // Detect password recovery flow from email link
   useEffect(() => {
     const type = searchParams.get("type");
-    if (type === "recovery") {
-      setMode("reset");
-    }
-
+    if (type === "recovery") setMode("reset");
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setMode("reset");
-      }
+      if (event === "PASSWORD_RECOVERY") setMode("reset");
     });
     return () => subscription.unsubscribe();
   }, [searchParams]);
@@ -49,53 +44,56 @@ export default function Auth() {
         if (error) throw error;
         navigate("/");
       } else if (mode === "register") {
-        if (password.length < 8) throw new Error("Hasło musi mieć minimum 8 znaków.");
-        if (password !== confirmPassword) throw new Error("Hasła nie są identyczne.");
+        if (password.length < 8) throw new Error(t("auth.passwordMinError"));
+        if (password !== confirmPassword) throw new Error(t("auth.passwordMismatch"));
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast({ title: "Sprawdź email", description: "Wysłaliśmy link weryfikacyjny na Twój adres email." });
+        toast({ title: t("auth.checkEmail"), description: t("auth.verifyLink") });
       } else if (mode === "forgot") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/auth?type=recovery`,
         });
         if (error) throw error;
-        toast({ title: "Sprawdź email", description: "Wysłaliśmy link do resetowania hasła." });
+        toast({ title: t("auth.checkEmail"), description: t("auth.resetLink") });
         setMode("login");
       } else if (mode === "reset") {
-        if (password.length < 8) throw new Error("Hasło musi mieć minimum 8 znaków.");
-        if (password !== confirmPassword) throw new Error("Hasła nie są identyczne.");
+        if (password.length < 8) throw new Error(t("auth.passwordMinError"));
+        if (password !== confirmPassword) throw new Error(t("auth.passwordMismatch"));
         const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
-        toast({ title: "Sukces", description: "Hasło zostało zmienione. Możesz się zalogować." });
+        toast({ title: t("common.success"), description: t("auth.passwordChanged") });
         setMode("login");
       }
     } catch (err: any) {
-      toast({ title: "Błąd", description: err.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
   const titles: Record<AuthMode, string> = {
-    login: "Logowanie",
-    register: "Rejestracja",
-    forgot: "Resetuj hasło",
-    reset: "Nowe hasło",
+    login: t("auth.login"),
+    register: t("auth.register"),
+    forgot: t("auth.forgotPassword"),
+    reset: t("auth.newPassword"),
   };
 
   return (
     <div className="min-h-screen bg-gradient-dark flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <LanguageSwitcher />
+          </div>
           <div className="h-14 w-14 rounded-xl bg-gradient-gold flex items-center justify-center mx-auto mb-4">
             <BookOpen className="h-7 w-7 text-primary-foreground" />
           </div>
           <h1 className="font-display text-3xl font-bold text-foreground">Scripto</h1>
-          <p className="text-muted-foreground mt-1">Profesjonalny kreator e-booków</p>
+          <p className="text-muted-foreground mt-1">{t("auth.subtitle")}</p>
         </div>
 
         <div className="bg-card rounded-xl border border-border/50 p-6">
@@ -107,7 +105,7 @@ export default function Auth() {
                   mode === "login" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
                 }`}
               >
-                Logowanie
+                {t("auth.login")}
               </button>
               <button
                 onClick={() => setMode("register")}
@@ -115,7 +113,7 @@ export default function Auth() {
                   mode === "register" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
                 }`}
               >
-                Rejestracja
+                {t("auth.register")}
               </button>
             </div>
           )}
@@ -127,13 +125,11 @@ export default function Auth() {
                 className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Wróć do logowania
+                {t("auth.backToLogin")}
               </button>
               <h2 className="text-lg font-semibold text-foreground mt-3">{titles[mode]}</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                {mode === "forgot"
-                  ? "Podaj email — wyślemy Ci link do resetowania hasła."
-                  : "Ustaw nowe hasło dla swojego konta."}
+                {mode === "forgot" ? t("auth.forgotDesc") : t("auth.resetDesc")}
               </p>
             </div>
           )}
@@ -144,7 +140,7 @@ export default function Auth() {
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="email"
-                  placeholder="Email"
+                  placeholder={t("auth.email")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10 bg-secondary border-border"
@@ -159,7 +155,7 @@ export default function Auth() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="password"
-                  placeholder={mode === "reset" ? "Nowe hasło (min. 8 znaków)" : "Hasło (min. 8 znaków)"}
+                  placeholder={mode === "reset" ? t("auth.newPasswordPlaceholder") : t("auth.password")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 bg-secondary border-border"
@@ -175,7 +171,7 @@ export default function Auth() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="password"
-                  placeholder="Potwierdź hasło"
+                  placeholder={t("auth.confirmPassword")}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="pl-10 bg-secondary border-border"
@@ -194,12 +190,12 @@ export default function Auth() {
               {loading
                 ? "..."
                 : mode === "login"
-                ? "Zaloguj się"
+                ? t("auth.loginBtn")
                 : mode === "register"
-                ? "Zarejestruj się"
+                ? t("auth.registerBtn")
                 : mode === "forgot"
-                ? "Wyślij link"
-                : "Ustaw nowe hasło"}
+                ? t("auth.sendLink")
+                : t("auth.setNewPassword")}
               <ArrowRight className="h-4 w-4" />
             </Button>
 
@@ -209,7 +205,7 @@ export default function Auth() {
                 onClick={() => setMode("forgot")}
                 className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                Zapomniałeś hasła?
+                {t("auth.forgotBtn")}
               </button>
             )}
           </form>
