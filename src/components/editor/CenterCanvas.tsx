@@ -1,4 +1,6 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import {
   Heading1,
   Type,
@@ -166,6 +168,7 @@ export function CenterCanvas({
   onScrollComplete,
   onExtractToBlock,
 }: Props) {
+  const { toast } = useToast();
   const size = PAGE_SIZES[pageSize] || PAGE_SIZES.A4;
   const pageWidthPx = size.width * MM_TO_PX * CANVAS_SCALE;
   const pageHeightPx = size.height * MM_TO_PX * CANVAS_SCALE;
@@ -177,6 +180,27 @@ export function CenterCanvas({
   const usableHeight = pageHeightPx - marginPx * 2 - (showPageNumbers ? footerHeight : 0) - 32; // 32px safety buffer
 
   const canvasScrollRef = useRef<HTMLDivElement>(null);
+  const inlineFileRef = useRef<HTMLInputElement>(null);
+  const [uploadTargetBlockId, setUploadTargetBlockId] = useState<string | null>(null);
+
+  const handleInlineUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadTargetBlockId) return;
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("ebook-materials").upload(path, file);
+      if (error) throw error;
+      const { data } = supabase.storage.from("ebook-materials").getPublicUrl(path);
+      onUpdateBlock(uploadTargetBlockId, { url: data.publicUrl });
+    } catch (err: any) {
+      toast({ title: "Błąd", description: err.message, variant: "destructive" });
+    } finally {
+      if (inlineFileRef.current) inlineFileRef.current.value = "";
+      setUploadTargetBlockId(null);
+    }
+  }, [uploadTargetBlockId, onUpdateBlock, toast]);
+
   useEffect(() => {
     if (scrollToBlockId && canvasScrollRef.current) {
       const el = canvasScrollRef.current.querySelector(`[data-block-id="${scrollToBlockId}"]`);
@@ -396,6 +420,11 @@ export function CenterCanvas({
         isSelected={selectedBlockId === block.id}
         onGenerateImage={onGenerateImage}
         onExtractToBlock={onExtractToBlock ? (html) => onExtractToBlock(block.id, html) : undefined}
+        onUploadImage={() => {
+          setUploadTargetBlockId(block.id);
+          onSelectBlock(block.id);
+          inlineFileRef.current?.click();
+        }}
       />
 
       {selectedBlockId === block.id && (
@@ -493,7 +522,7 @@ export function CenterCanvas({
         </>
       )}
     </div>
-  ), [selectedBlockId, contentWidth, template, onSelectBlock, onUpdateBlock, onMoveBlock, onDeleteBlock, onGenerateImage, onExtractToBlock, handleGripMouseDown, resetBlockPosition]);
+  ), [selectedBlockId, contentWidth, template, onSelectBlock, onUpdateBlock, onMoveBlock, onDeleteBlock, onGenerateImage, onExtractToBlock, handleGripMouseDown, resetBlockPosition, inlineFileRef]);
 
   const totalPages = pages.length;
   const estimatedCost = pricePerPage ? (totalPages * pricePerPage).toFixed(2) : null;
@@ -513,6 +542,7 @@ export function CenterCanvas({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      <input ref={inlineFileRef} type="file" accept="image/*" className="hidden" onChange={handleInlineUpload} />
       {/* Top toolbar */}
       <div className="h-10 border-b border-border/30 bg-card/50 px-3 flex items-center gap-1 shrink-0">
         <span className="text-xs text-muted-foreground mr-2">Wstaw{selectedBlockId ? " po bloku" : ""}:</span>

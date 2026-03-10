@@ -51,6 +51,13 @@ export function RightPanel({ project, onUpdateProject, selectedBlock, onUpdateBl
     if (showLibrary) loadLibrary();
   }, [showLibrary]);
 
+  // Auto-open library when selecting an image block without URL
+  useEffect(() => {
+    if (selectedBlock?.type === "image" && !selectedBlock?.url) {
+      setShowLibrary(true);
+    }
+  }, [selectedBlock?.id, selectedBlock?.type]);
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;

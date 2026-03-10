@@ -16,9 +16,10 @@ interface Props {
   onGenerateImage?: (contextText: string) => void;
   onReplaceSelection?: (newHtml: string) => void;
   onExtractToBlock?: (html: string) => void;
+  onUploadImage?: () => void;
 }
 
-export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerateImage, onReplaceSelection, onExtractToBlock }: Props) {
+export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerateImage, onReplaceSelection, onExtractToBlock, onUploadImage }: Props) {
   const editRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -163,14 +164,21 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
     if (!block.url) {
       return (
         <div
-          className="border-2 border-dashed rounded-lg flex flex-col items-center justify-center py-8 gap-3"
+          className="border-2 border-dashed rounded-lg flex flex-col items-center justify-center py-8 gap-3 cursor-pointer hover:bg-accent/5 transition-colors"
           style={{ borderColor: template.colors.accent, color: template.colors.accent }}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onUploadImage) onUploadImage();
+          }}
         >
-          <span className="text-sm">Wybierz obraz w panelu ustawień →</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">📁 Kliknij aby wybrać obraz</span>
+          </div>
+          <span className="text-xs opacity-60">lub użyj panelu ustawień po prawej →</span>
           {onGenerateImage && (
             <button
-              onClick={() => onGenerateImage("")}
-              className="text-xs px-3 py-1.5 rounded-md transition-colors"
+              onClick={(e) => { e.stopPropagation(); onGenerateImage(""); }}
+              className="text-xs px-3 py-1.5 rounded-md transition-colors mt-1"
               style={{ backgroundColor: template.colors.accent, color: template.colors.bg }}
             >
               ✨ Generuj grafikę AI
