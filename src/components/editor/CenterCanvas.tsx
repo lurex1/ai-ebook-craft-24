@@ -522,7 +522,7 @@ export function CenterCanvas({
         </>
       )}
     </div>
-  ), [selectedBlockId, contentWidth, template, onSelectBlock, onUpdateBlock, onMoveBlock, onDeleteBlock, onGenerateImage, onExtractToBlock, handleGripMouseDown, resetBlockPosition]);
+  ), [selectedBlockId, contentWidth, template, onSelectBlock, onUpdateBlock, onMoveBlock, onDeleteBlock, onGenerateImage, onExtractToBlock, handleGripMouseDown, resetBlockPosition, inlineFileRef]);
 
   const totalPages = pages.length;
   const estimatedCost = pricePerPage ? (totalPages * pricePerPage).toFixed(2) : null;
