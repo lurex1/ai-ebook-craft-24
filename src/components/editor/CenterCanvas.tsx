@@ -168,6 +168,7 @@ export function CenterCanvas({
   onScrollComplete,
   onExtractToBlock,
 }: Props) {
+  const { toast } = useToast();
   const size = PAGE_SIZES[pageSize] || PAGE_SIZES.A4;
   const pageWidthPx = size.width * MM_TO_PX * CANVAS_SCALE;
   const pageHeightPx = size.height * MM_TO_PX * CANVAS_SCALE;
@@ -179,6 +180,27 @@ export function CenterCanvas({
   const usableHeight = pageHeightPx - marginPx * 2 - (showPageNumbers ? footerHeight : 0) - 32; // 32px safety buffer
 
   const canvasScrollRef = useRef<HTMLDivElement>(null);
+  const inlineFileRef = useRef<HTMLInputElement>(null);
+  const [uploadTargetBlockId, setUploadTargetBlockId] = useState<string | null>(null);
+
+  const handleInlineUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadTargetBlockId) return;
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("ebook-materials").upload(path, file);
+      if (error) throw error;
+      const { data } = supabase.storage.from("ebook-materials").getPublicUrl(path);
+      onUpdateBlock(uploadTargetBlockId, { url: data.publicUrl });
+    } catch (err: any) {
+      toast({ title: "Błąd", description: err.message, variant: "destructive" });
+    } finally {
+      if (inlineFileRef.current) inlineFileRef.current.value = "";
+      setUploadTargetBlockId(null);
+    }
+  }, [uploadTargetBlockId, onUpdateBlock, toast]);
+
   useEffect(() => {
     if (scrollToBlockId && canvasScrollRef.current) {
       const el = canvasScrollRef.current.querySelector(`[data-block-id="${scrollToBlockId}"]`);
