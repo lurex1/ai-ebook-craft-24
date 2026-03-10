@@ -19,7 +19,7 @@ interface Props {
   onUploadImage?: () => void;
 }
 
-export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerateImage, onReplaceSelection, onExtractToBlock }: Props) {
+export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerateImage, onReplaceSelection, onExtractToBlock, onUploadImage }: Props) {
   const editRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
