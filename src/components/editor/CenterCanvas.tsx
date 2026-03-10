@@ -542,6 +542,7 @@ export function CenterCanvas({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      <input ref={inlineFileRef} type="file" accept="image/*" className="hidden" onChange={handleInlineUpload} />
       {/* Top toolbar */}
       <div className="h-10 border-b border-border/30 bg-card/50 px-3 flex items-center gap-1 shrink-0">
         <span className="text-xs text-muted-foreground mr-2">Wstaw{selectedBlockId ? " po bloku" : ""}:</span>
