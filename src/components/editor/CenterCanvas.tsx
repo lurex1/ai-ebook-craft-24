@@ -420,6 +420,11 @@ export function CenterCanvas({
         isSelected={selectedBlockId === block.id}
         onGenerateImage={onGenerateImage}
         onExtractToBlock={onExtractToBlock ? (html) => onExtractToBlock(block.id, html) : undefined}
+        onUploadImage={() => {
+          setUploadTargetBlockId(block.id);
+          onSelectBlock(block.id);
+          inlineFileRef.current?.click();
+        }}
       />
 
       {selectedBlockId === block.id && (
