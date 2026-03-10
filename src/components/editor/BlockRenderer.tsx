@@ -16,6 +16,7 @@ interface Props {
   onGenerateImage?: (contextText: string) => void;
   onReplaceSelection?: (newHtml: string) => void;
   onExtractToBlock?: (html: string) => void;
+  onUploadImage?: () => void;
 }
 
 export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerateImage, onReplaceSelection, onExtractToBlock }: Props) {
