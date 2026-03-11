@@ -136,13 +136,22 @@ ZASADY:
 
     // ====== GENERATE SECTION CONTENT — returns structured blocks ======
     if (action === "generate-section") {
-      const { bookTitle, materials, sectionPath, sectionTitle, contextBefore, contextAfter, totalSections, currentIndex } = params;
+      const { bookTitle, materials, sectionPath, sectionTitle, contextBefore, contextAfter, totalSections, currentIndex, sources } = params;
 
       const positionDesc = currentIndex <= 1
         ? "To jest początek e-booka — zacznij od podstaw, wprowadź czytelnika w temat."
         : currentIndex >= totalSections - 2
         ? "To jest końcowa część e-booka — podsumuj, daj zaawansowane wskazówki i wnioski."
         : "To jest środkowa część e-booka — rozwijaj temat z przykładami.";
+
+      const sourcesInfo = sources && sources.length > 0
+        ? `\n\nŹRÓDŁA DO CYTOWANIA:
+Gdy korzystasz z informacji z materiałów źródłowych, dodawaj odnośniki w tekście w formie przypisów.
+Format: po zdaniu/akapicie opartym na źródle dodaj <sup>[N]</sup> gdzie N to numer źródła.
+Lista źródeł:
+${sources.map((s: any, i: number) => `[${i + 1}] ${s.title} — ${s.url}`).join("\n")}
+Nie dodawaj sekcji bibliografii na końcu — to zostanie zrobione automatycznie.`
+        : "";
 
       const data = await callAI([
         {
@@ -168,18 +177,9 @@ KLUCZOWE ZASADY FORMATOWANIA:
 - Na końcu sekcji dodaj <blockquote> z kluczowym wnioskiem lub poradą
 
 DODATKOWE ELEMENTY (wstaw jeśli pasują do tematu):
-- Jeśli temat dotyczy danych liczbowych, dodaj prostą tabelę HTML: <table><tr><th>...</th></tr><tr><td>...</td></tr></table>
-- Zasugeruj miejsce na ilustrację wstawiając: <!-- IMAGE: opis grafiki która pasowałaby tutaj -->
-
-WZÓR STRUKTURY:
-<p>Akapit wprowadzający temat...</p>
-<h3>Pierwszy podtemat</h3>
-<p>Rozwinięcie...</p>
-<ul><li>Punkt 1</li><li>Punkt 2</li></ul>
-<p>Kolejny akapit...</p>
-<h3>Drugi podtemat</h3>
-<p>Dalsze rozwinięcie...</p>
-<blockquote>Kluczowy wniosek lub porada</blockquote>
+- Jeśli temat dotyczy danych liczbowych, dodaj prostą tabelę HTML
+- Zasugeruj miejsce na ilustrację wstawiając: <!-- IMAGE: opis grafiki -->
+${sourcesInfo}
 
 ${contextBefore ? `Kontekst przed tą sekcją: "${contextBefore}"` : ""}
 ${contextAfter ? `Kontekst po tej sekcji: "${contextAfter}"` : ""}`,
