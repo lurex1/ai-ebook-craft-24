@@ -390,6 +390,21 @@ export default function NewProject() {
         } as any);
       }
 
+      // Add bibliography chapter if there are URL sources
+      const sources = getSourceUrls();
+      if (sources.length > 0) {
+        const bibBlocks: any[] = [
+          { id: crypto.randomUUID(), type: "heading", content: "Bibliografia i źródła", level: 1 },
+          { id: crypto.randomUUID(), type: "text", content: `<p>Niniejszy e-book został opracowany na podstawie następujących źródeł:</p><ol>${sources.map((s, i) => `<li><strong>[${i + 1}]</strong> ${s.title} — <a href="${s.url}" target="_blank">${s.url}</a></li>`).join("")}</ol><p><em>Wszystkie źródła zostały wykorzystane zgodnie z prawem cytatu (art. 29 ustawy o prawie autorskim i prawach pokrewnych). Treść e-booka stanowi opracowanie autorskie inspirowane powyższymi materiałami.</em></p>` },
+        ];
+        await supabase.from("chapters").insert({
+          project_id: (project as any).id,
+          title: "Bibliografia i źródła",
+          sort_order: chapterSections.length,
+          blocks: bibBlocks,
+        } as any);
+      }
+
       toast({ title: "Projekt utworzony!" });
       navigate(`/editor/${(project as any).id}`);
     } catch (err: any) {
