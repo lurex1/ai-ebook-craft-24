@@ -464,7 +464,7 @@ export default function NewProject() {
 
               {showUrl && (
                 <div className="bg-card rounded-xl border border-border/50 p-4 mb-4 space-y-3">
-                  <Input placeholder="https://example.com/artykul" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} className="bg-secondary border-border" />
+                  <Input placeholder="https://youtube.com/watch?v=... lub https://artykul.pl/..." value={urlInput} onChange={(e) => setUrlInput(e.target.value)} className="bg-secondary border-border" />
                   <div className="flex gap-2">
                     <Button size="sm" onClick={addUrl} className="bg-gradient-gold text-primary-foreground">Dodaj link</Button>
                     <Button size="sm" variant="ghost" onClick={() => { setShowUrl(false); setUrlInput(""); }}>Anuluj</Button>
