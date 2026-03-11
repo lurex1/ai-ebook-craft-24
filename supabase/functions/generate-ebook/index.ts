@@ -250,6 +250,116 @@ ${nextTitle ? `Następna sekcja: "${nextTitle}"` : ""}`,
       return json({ text });
     }
 
+    // ====== IMPORT YOUTUBE — extract transcript ======
+    if (action === "import-youtube") {
+      const { url } = params;
+      
+      // Extract video ID from various YouTube URL formats
+      let videoId = "";
+      const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+      ];
+      for (const p of patterns) {
+        const m = url.match(p);
+        if (m) { videoId = m[1]; break; }
+      }
+      if (!videoId) throw new Error("Nie rozpoznano ID filmu YouTube z podanego linku.");
+
+      // Fetch video page to get captions info
+      const pageResp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", "Accept-Language": "pl-PL,pl;q=0.9,en;q=0.8" },
+      });
+      const pageHtml = await pageResp.text();
+
+      // Extract video title
+      const titleMatch = pageHtml.match(/<title>([^<]*)<\/title>/);
+      const videoTitle = titleMatch ? titleMatch[1].replace(" - YouTube", "").trim() : "Film YouTube";
+
+      // Try to extract captions from ytInitialPlayerResponse
+      const playerMatch = pageHtml.match(/ytInitialPlayerResponse\s*=\s*({.+?});/s);
+      if (!playerMatch) {
+        // Fallback: use AI to summarize based on title and description
+        const descMatch = pageHtml.match(/"shortDescription":"((?:[^"\\]|\\.)*)"/);
+        const description = descMatch ? descMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"').slice(0, 5000) : "";
+        
+        if (!description) throw new Error("Nie udało się pobrać informacji o filmie. Film może być prywatny lub niedostępny.");
+        
+        // Use AI to expand the description into material
+        const aiData = await callAI([
+          { role: "system", content: "Na podstawie tytułu i opisu filmu YouTube, rozwiń te informacje w szczegółowy materiał merytoryczny po polsku (1000-2000 słów). Pisz tak, jakbyś oglądał ten film i notował najważniejsze punkty." },
+          { role: "user", content: `Tytuł filmu: "${videoTitle}"\n\nOpis filmu:\n${description}` },
+        ]);
+        const expandedText = aiData.choices?.[0]?.message?.content || description;
+        return json({ text: `[Materiał z filmu YouTube: "${videoTitle}"]\n\n${expandedText}`, title: videoTitle });
+      }
+
+      let playerData: any;
+      try { playerData = JSON.parse(playerMatch[1]); } catch { throw new Error("Nie udało się sparsować danych odtwarzacza YouTube."); }
+
+      const captions = playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+      
+      if (!captions || captions.length === 0) {
+        // No captions — use description + AI expansion
+        const descMatch = pageHtml.match(/"shortDescription":"((?:[^"\\]|\\.)*)"/);
+        const description = descMatch ? descMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"').slice(0, 5000) : "";
+        
+        const aiData = await callAI([
+          { role: "system", content: "Na podstawie tytułu i opisu filmu YouTube, rozwiń te informacje w szczegółowy materiał merytoryczny po polsku (1000-2000 słów). Pisz tak, jakbyś oglądał ten film i notował najważniejsze punkty. Dodaj strukturę z nagłówkami." },
+          { role: "user", content: `Tytuł filmu: "${videoTitle}"\n\nOpis filmu:\n${description || "(brak opisu)"}` },
+        ]);
+        const expandedText = aiData.choices?.[0]?.message?.content || `Tytuł: ${videoTitle}\n${description}`;
+        return json({ text: `[Materiał z filmu YouTube: "${videoTitle}" — brak napisów, treść oparta na opisie]\n\n${expandedText}`, title: videoTitle });
+      }
+
+      // Prefer Polish, then auto-generated Polish, then first available
+      const plTrack = captions.find((c: any) => c.languageCode === "pl" && !c.kind) 
+        || captions.find((c: any) => c.languageCode === "pl")
+        || captions.find((c: any) => c.languageCode === "en" && !c.kind)
+        || captions.find((c: any) => c.languageCode === "en")
+        || captions[0];
+
+      // Fetch the captions XML
+      const captionUrl = plTrack.baseUrl + "&fmt=srv3";
+      const captionResp = await fetch(captionUrl);
+      const captionXml = await captionResp.text();
+
+      // Parse XML to extract text
+      const textParts: string[] = [];
+      const regex = /<text[^>]*>([\s\S]*?)<\/text>/g;
+      let match;
+      while ((match = regex.exec(captionXml)) !== null) {
+        const decoded = match[1]
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/\n/g, " ")
+          .trim();
+        if (decoded) textParts.push(decoded);
+      }
+
+      if (textParts.length === 0) throw new Error("Nie udało się wyodrębnić tekstu z napisów.");
+
+      const rawTranscript = textParts.join(" ").slice(0, 30000);
+
+      // Use AI to clean up and structure the transcript
+      const aiData = await callAI([
+        { role: "system", content: `Otrzymasz surowy transkrypt (napisy) z filmu YouTube "${videoTitle}". Twoje zadanie:
+1. Oczyść tekst z powtórzeń, filler words, błędów transkrypcji
+2. Podziel na logiczne sekcje z nagłówkami (## Nagłówek)
+3. Zachowaj CAŁĄ merytoryczną treść — nic nie pomijaj
+4. Pisz po polsku (przetłumacz jeśli oryginał jest w innym języku)
+5. Wynik powinien być gotowym materiałem do stworzenia e-booka
+6. Zachowaj cytaty, dane, przykłady, statystyki jeśli występują` },
+        { role: "user", content: `Transkrypt filmu "${videoTitle}":\n\n${rawTranscript}` },
+      ]);
+
+      const cleanedText = aiData.choices?.[0]?.message?.content || rawTranscript;
+      return json({ text: `[Transkrypt z filmu YouTube: "${videoTitle}"]\n\n${cleanedText}`, title: videoTitle });
+    }
+
     // ====== COVER GENERATION ======
     if (action === "cover") {
       const { title, subtitle, style } = params;
