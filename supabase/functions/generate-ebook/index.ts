@@ -196,9 +196,13 @@ ${materials ? `\nMateriały źródłowe:\n${materials.slice(0, 8000)}` : "\nBrak
 
     // ====== GENERATE ALL CONTENT (batch) ======
     if (action === "generate-all-content") {
-      const { bookTitle, materials, sections } = params;
+      const { bookTitle, materials, sections, sources } = params;
       const results: Record<string, string> = {};
       const total = sections.length;
+
+      const sourcesInfo = sources && sources.length > 0
+        ? `\nŹRÓDŁA: Gdy korzystasz z materiałów źródłowych, dodawaj <sup>[N]</sup> po zdaniach opartych na źródłach.\n${sources.map((s: any, i: number) => `[${i + 1}] ${s.title} — ${s.url}`).join("\n")}`
+        : "";
 
       for (let i = 0; i < sections.length; i++) {
         const sec = sections[i];
@@ -219,7 +223,7 @@ Pisz 400-800 słów po polsku, profesjonalnie z akapitami.
 
 KLUCZOWE: Pisz czystym HTML (tagi <p>, <strong>, <em>, <ul>, <ol>, <li>, <h3>, <blockquote>, <table>).
 NIE używaj Markdown (*, #, _, ~~). Dziel treść na krótkie akapity (2-4 zdania każdy).
-Co 2-3 akapity wstaw <h3>podtytuł</h3>. Dodawaj listy i cytaty.
+Co 2-3 akapity wstaw <h3>podtytuł</h3>. Dodawaj listy i cytaty.${sourcesInfo}
 ${prevTitle ? `Poprzednia sekcja: "${prevTitle}"` : ""}
 ${nextTitle ? `Następna sekcja: "${nextTitle}"` : ""}`,
           },
