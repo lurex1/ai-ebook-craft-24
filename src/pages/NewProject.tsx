@@ -19,6 +19,7 @@ type Material = {
   type: "file" | "text" | "url" | "prompt";
   name: string;
   content: string;
+  sourceUrl?: string; // original URL for citations
 };
 
 type StructureConfig = {
@@ -135,7 +136,7 @@ export default function NewProject() {
           const idx = prev.findIndex((m) => m.name.includes("Pobieram transkrypt"));
           if (idx === -1) return prev;
           const updated = [...prev];
-          updated[idx] = { ...updated[idx], name: `🎬 ${data.title || "Film YouTube"}`, content: data.text };
+          updated[idx] = { ...updated[idx], name: `🎬 ${data.title || "Film YouTube"}`, content: data.text, sourceUrl: url };
           return updated;
         });
         toast({ title: "YouTube", description: "Transkrypt pobrany pomyślnie!" });
@@ -144,7 +145,7 @@ export default function NewProject() {
         toast({ title: "Błąd YouTube", description: err.message || "Nie udało się pobrać transkryptu", variant: "destructive" });
       }
     } else {
-      addMaterial({ type: "url", name: url, content: `[URL do pobrania] ${url}` });
+      addMaterial({ type: "url", name: url, content: `[URL do pobrania] ${url}`, sourceUrl: url });
       setUrlInput("");
       setShowUrl(false);
     }
@@ -155,6 +156,12 @@ export default function NewProject() {
     materials.forEach((m) => parts.push(`--- ${m.name} ---\n${m.content}`));
     if (promptText.trim()) parts.push(`--- Wytyczne użytkownika ---\n${promptText}`);
     return parts.join("\n\n");
+  };
+
+  const getSourceUrls = (): { url: string; title: string }[] => {
+    return materials
+      .filter((m) => m.sourceUrl)
+      .map((m) => ({ url: m.sourceUrl!, title: m.name.replace(/^🎬 /, "").replace(/^🔄.*$/, "") }));
   };
 
   // Flatten suggestion into sections
@@ -297,6 +304,7 @@ export default function NewProject() {
             contextAfter: idx < sections.length - 1 ? sections[idx + 1].title : "",
             totalSections: sections.length,
             currentIndex: idx,
+            sources: getSourceUrls(),
           },
         });
 
@@ -379,6 +387,21 @@ export default function NewProject() {
           title: group[0].title,
           sort_order: i,
           blocks,
+        } as any);
+      }
+
+      // Add bibliography chapter if there are URL sources
+      const sources = getSourceUrls();
+      if (sources.length > 0) {
+        const bibBlocks: any[] = [
+          { id: crypto.randomUUID(), type: "heading", content: "Bibliografia i źródła", level: 1 },
+          { id: crypto.randomUUID(), type: "text", content: `<p>Niniejszy e-book został opracowany na podstawie następujących źródeł:</p><ol>${sources.map((s, i) => `<li><strong>[${i + 1}]</strong> ${s.title} — <a href="${s.url}" target="_blank">${s.url}</a></li>`).join("")}</ol><p><em>Wszystkie źródła zostały wykorzystane zgodnie z prawem cytatu (art. 29 ustawy o prawie autorskim i prawach pokrewnych). Treść e-booka stanowi opracowanie autorskie inspirowane powyższymi materiałami.</em></p>` },
+        ];
+        await supabase.from("chapters").insert({
+          project_id: (project as any).id,
+          title: "Bibliografia i źródła",
+          sort_order: chapterSections.length,
+          blocks: bibBlocks,
         } as any);
       }
 
