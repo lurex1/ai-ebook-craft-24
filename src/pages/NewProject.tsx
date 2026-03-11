@@ -304,6 +304,7 @@ export default function NewProject() {
             contextAfter: idx < sections.length - 1 ? sections[idx + 1].title : "",
             totalSections: sections.length,
             currentIndex: idx,
+            sources: getSourceUrls(),
           },
         });
 
