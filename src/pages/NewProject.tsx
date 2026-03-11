@@ -145,7 +145,7 @@ export default function NewProject() {
         toast({ title: "Błąd YouTube", description: err.message || "Nie udało się pobrać transkryptu", variant: "destructive" });
       }
     } else {
-      addMaterial({ type: "url", name: url, content: `[URL do pobrania] ${url}` });
+      addMaterial({ type: "url", name: url, content: `[URL do pobrania] ${url}`, sourceUrl: url });
       setUrlInput("");
       setShowUrl(false);
     }
