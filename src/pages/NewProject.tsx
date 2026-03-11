@@ -158,6 +158,12 @@ export default function NewProject() {
     return parts.join("\n\n");
   };
 
+  const getSourceUrls = (): { url: string; title: string }[] => {
+    return materials
+      .filter((m) => m.sourceUrl)
+      .map((m) => ({ url: m.sourceUrl!, title: m.name.replace(/^🎬 /, "").replace(/^🔄.*$/, "") }));
+  };
+
   // Flatten suggestion into sections
   const flattenSuggestion = (sug: AISuggestion): FlatSection[] => {
     const flat: FlatSection[] = [];
