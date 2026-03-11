@@ -111,11 +111,43 @@ export default function NewProject() {
     setShowPaste(false);
   };
 
-  const addUrl = () => {
+  const isYouTubeUrl = (url: string) => /(?:youtube\.com\/(?:watch|shorts|embed|v\/)|youtu\.be\/)/.test(url);
+
+  const addUrl = async () => {
     if (!urlInput.trim()) return;
-    addMaterial({ type: "url", name: urlInput.trim(), content: `[URL do pobrania] ${urlInput.trim()}` });
-    setUrlInput("");
-    setShowUrl(false);
+    const url = urlInput.trim();
+    
+    if (isYouTubeUrl(url)) {
+      // YouTube — fetch transcript immediately
+      const tempId = crypto.randomUUID();
+      addMaterial({ type: "url", name: `🔄 Pobieram transkrypt z YouTube...`, content: "" });
+      setUrlInput("");
+      setShowUrl(false);
+      
+      try {
+        const { data, error } = await supabase.functions.invoke("generate-ebook", {
+          body: { action: "import-youtube", url },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        
+        setMaterials((prev) => {
+          const idx = prev.findIndex((m) => m.name.includes("Pobieram transkrypt"));
+          if (idx === -1) return prev;
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], name: `🎬 ${data.title || "Film YouTube"}`, content: data.text };
+          return updated;
+        });
+        toast({ title: "YouTube", description: "Transkrypt pobrany pomyślnie!" });
+      } catch (err: any) {
+        setMaterials((prev) => prev.filter((m) => !m.name.includes("Pobieram transkrypt")));
+        toast({ title: "Błąd YouTube", description: err.message || "Nie udało się pobrać transkryptu", variant: "destructive" });
+      }
+    } else {
+      addMaterial({ type: "url", name: url, content: `[URL do pobrania] ${url}` });
+      setUrlInput("");
+      setShowUrl(false);
+    }
   };
 
   const allContent = () => {
@@ -432,7 +464,7 @@ export default function NewProject() {
 
               {showUrl && (
                 <div className="bg-card rounded-xl border border-border/50 p-4 mb-4 space-y-3">
-                  <Input placeholder="https://example.com/artykul" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} className="bg-secondary border-border" />
+                  <Input placeholder="https://youtube.com/watch?v=... lub https://artykul.pl/..." value={urlInput} onChange={(e) => setUrlInput(e.target.value)} className="bg-secondary border-border" />
                   <div className="flex gap-2">
                     <Button size="sm" onClick={addUrl} className="bg-gradient-gold text-primary-foreground">Dodaj link</Button>
                     <Button size="sm" variant="ghost" onClick={() => { setShowUrl(false); setUrlInput(""); }}>Anuluj</Button>
