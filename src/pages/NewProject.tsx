@@ -136,7 +136,7 @@ export default function NewProject() {
           const idx = prev.findIndex((m) => m.name.includes("Pobieram transkrypt"));
           if (idx === -1) return prev;
           const updated = [...prev];
-          updated[idx] = { ...updated[idx], name: `🎬 ${data.title || "Film YouTube"}`, content: data.text };
+          updated[idx] = { ...updated[idx], name: `🎬 ${data.title || "Film YouTube"}`, content: data.text, sourceUrl: url };
           return updated;
         });
         toast({ title: "YouTube", description: "Transkrypt pobrany pomyślnie!" });
