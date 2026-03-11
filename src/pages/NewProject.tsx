@@ -19,6 +19,7 @@ type Material = {
   type: "file" | "text" | "url" | "prompt";
   name: string;
   content: string;
+  sourceUrl?: string; // original URL for citations
 };
 
 type StructureConfig = {
