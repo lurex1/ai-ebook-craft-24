@@ -163,6 +163,19 @@ const translations = {
   "newProject.generatedAll": { pl: "Wygenerowano treść dla wszystkich sekcji!", en: "Generated content for all sections!" },
   "newProject.generateError": { pl: "Błąd generowania", en: "Generation error" },
   "newProject.analysisError": { pl: "Błąd analizy", en: "Analysis error" },
+
+  // ─── Cookies Banner ───
+  "cookies.message": { pl: "Używamy plików cookies, aby zapewnić Ci najlepsze doświadczenia. Niezbędne cookies są wymagane do działania aplikacji.", en: "We use cookies to provide you with the best experience. Essential cookies are required for the app to work." },
+  "cookies.accept": { pl: "Akceptuję", en: "Accept" },
+  "cookies.settings": { pl: "Ustawienia", en: "Settings" },
+  "cookies.privacy": { pl: "Polityka prywatności", en: "Privacy policy" },
+  "cookies.necessary": { pl: "Niezbędne", en: "Necessary" },
+  "cookies.analytics": { pl: "Analityczne", en: "Analytics" },
+  "cookies.functional": { pl: "Funkcjonalne", en: "Functional" },
+  "cookies.necessaryDesc": { pl: "Wymagane do działania aplikacji — nie można wyłączyć", en: "Required for the app to function — cannot be disabled" },
+  "cookies.analyticsDesc": { pl: "Pomagają nam zrozumieć, jak użytkownicy korzystają z aplikacji", en: "Help us understand how users interact with the app" },
+  "cookies.functionalDesc": { pl: "Zapamiętują Twoje preferencje (np. język, motyw)", en: "Remember your preferences (e.g. language, theme)" },
+  "cookies.save": { pl: "Zapisz preferencje", en: "Save preferences" },
 } as const;
 
 type TranslationKey = keyof typeof translations;

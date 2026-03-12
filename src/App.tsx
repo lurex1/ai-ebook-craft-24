@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { I18nProvider } from "@/lib/i18n";
+import { CookiesBanner } from "@/components/CookiesBanner";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NewProject from "./pages/NewProject";
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/cookies" element={<Legal />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <CookiesBanner />
         </BrowserRouter>
       </TooltipProvider>
     </I18nProvider>
