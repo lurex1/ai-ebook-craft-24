@@ -162,8 +162,8 @@ export function CookiesBanner() {
             {/* Functional */}
             <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-background border border-border/30">
               <div className="flex items-start gap-3">
-                <div className="h-8 w-8 rounded-md bg-blue-500/10 flex items-center justify-center shrink-0">
-                  <Settings2 className="h-4 w-4 text-blue-400" />
+                <div className="h-8 w-8 rounded-md bg-secondary flex items-center justify-center shrink-0">
+                  <Settings2 className="h-4 w-4 text-secondary-foreground" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">
