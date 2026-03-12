@@ -139,8 +139,8 @@ export function CookiesBanner() {
             {/* Analytics */}
             <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-background border border-border/30">
               <div className="flex items-start gap-3">
-                <div className="h-8 w-8 rounded-md bg-purple-500/10 flex items-center justify-center shrink-0">
-                  <BarChart3 className="h-4 w-4 text-purple-400" />
+                <div className="h-8 w-8 rounded-md bg-accent/10 flex items-center justify-center shrink-0">
+                  <BarChart3 className="h-4 w-4 text-accent" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">
