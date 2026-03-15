@@ -680,6 +680,7 @@ export function CenterCanvas({
                     position: "absolute",
                     left: block.posX ?? 0,
                     top: block.posY ?? 0,
+                    width: draggedBlockId === block.id && draggedBlockWidth != null ? draggedBlockWidth : undefined,
                     maxWidth: "100%",
                     overflow: "visible",
                     zIndex: selectedBlockId === block.id ? 10 : 5,
