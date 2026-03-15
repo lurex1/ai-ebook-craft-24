@@ -412,13 +412,14 @@ export function CenterCanvas({
     >
       {/* Drag handle — inside the block padding */}
       <div
-        className="absolute left-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing transition-opacity z-10"
-        style={{ width: 16 }}
+        className="absolute left-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing transition-opacity z-30"
+        style={{ width: 20, height: "100%", display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "auto" }}
         onMouseDown={(e) => handleGripMouseDown(e, block.id)}
       >
         <GripVertical className="h-4 w-4 text-muted-foreground" />
       </div>
 
+      <div className="relative" style={{ zIndex: 1 }}>
       <BlockRenderer
         block={block}
         template={template}
@@ -432,10 +433,11 @@ export function CenterCanvas({
           inlineFileRef.current?.click();
         }}
       />
+      </div>
 
       {selectedBlockId === block.id && (
         <>
-          <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
+          <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex flex-col gap-0.5 z-30">
             <button
               onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, -1); }}
               className="p-0.5 rounded bg-card border border-border text-muted-foreground hover:text-foreground shadow-sm"
@@ -468,7 +470,7 @@ export function CenterCanvas({
 
           {/* Resize handle - right edge */}
           <div
-            className="absolute top-0 -right-1 w-2 h-full cursor-ew-resize hover:bg-primary/30 transition-colors z-10"
+            className="absolute top-0 -right-1 w-2 h-full cursor-ew-resize hover:bg-primary/30 transition-colors z-30"
             onMouseDown={(e) => {
               e.stopPropagation(); e.preventDefault();
               const startX = e.clientX;
@@ -487,7 +489,7 @@ export function CenterCanvas({
 
           {/* Resize handle - bottom edge */}
           <div
-            className="absolute -bottom-1 left-0 w-full h-2 cursor-ns-resize hover:bg-primary/30 transition-colors z-10"
+            className="absolute -bottom-1 left-0 w-full h-2 cursor-ns-resize hover:bg-primary/30 transition-colors z-30"
             onMouseDown={(e) => {
               e.stopPropagation(); e.preventDefault();
               const startY = e.clientY;
@@ -505,7 +507,7 @@ export function CenterCanvas({
 
           {/* Resize handle - corner */}
           <div
-            className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-primary border border-background rounded-sm cursor-nwse-resize z-20 shadow-sm"
+            className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-primary border border-background rounded-sm cursor-nwse-resize z-30 shadow-sm"
             onMouseDown={(e) => {
               e.stopPropagation(); e.preventDefault();
               const startX = e.clientX;
