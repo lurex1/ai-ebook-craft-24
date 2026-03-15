@@ -507,7 +507,7 @@ export function CenterCanvas({
 
           {/* Resize handle - corner */}
           <div
-            className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-primary border border-background rounded-sm cursor-nwse-resize z-20 shadow-sm"
+            className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-primary border border-background rounded-sm cursor-nwse-resize z-30 shadow-sm"
             onMouseDown={(e) => {
               e.stopPropagation(); e.preventDefault();
               const startX = e.clientX;
