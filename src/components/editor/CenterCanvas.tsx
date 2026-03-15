@@ -489,7 +489,7 @@ export function CenterCanvas({
 
           {/* Resize handle - bottom edge */}
           <div
-            className="absolute -bottom-1 left-0 w-full h-2 cursor-ns-resize hover:bg-primary/30 transition-colors z-10"
+            className="absolute -bottom-1 left-0 w-full h-2 cursor-ns-resize hover:bg-primary/30 transition-colors z-30"
             onMouseDown={(e) => {
               e.stopPropagation(); e.preventDefault();
               const startY = e.clientY;
