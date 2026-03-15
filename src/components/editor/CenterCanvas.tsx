@@ -433,6 +433,7 @@ export function CenterCanvas({
           inlineFileRef.current?.click();
         }}
       />
+      </div>
 
       {selectedBlockId === block.id && (
         <>
