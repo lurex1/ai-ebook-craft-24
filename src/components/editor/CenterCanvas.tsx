@@ -213,6 +213,7 @@ export function CenterCanvas({
 
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [dragGhost, setDragGhost] = useState<{ x: number; y: number } | null>(null);
+  const [draggedBlockWidth, setDraggedBlockWidth] = useState<number | null>(null);
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   // Free-form drag via mousedown on grip handle
@@ -225,15 +226,19 @@ export function CenterCanvas({
       const startY = e.clientY;
 
       // Find which page content area this block is in
-      const blockEl = (e.currentTarget as HTMLElement).closest("[data-block-id]");
+      const blockEl = (e.currentTarget as HTMLElement).closest("[data-block-id]") as HTMLElement | null;
       const pageContentEl = blockEl?.closest("[data-page-content]") as HTMLElement | null;
-      if (!pageContentEl) return;
+      if (!pageContentEl || !blockEl) return;
 
       const block = chapter?.blocks.find((b) => b.id === blockId);
       if (!block) return;
 
+      // Capture rendered width so shape doesn't change during drag
+      const blockRect = blockEl.getBoundingClientRect();
+      const capturedWidth = blockRect.width;
+      setDraggedBlockWidth(capturedWidth);
+
       const contentRect = pageContentEl.getBoundingClientRect();
-      const blockRect = blockEl!.getBoundingClientRect();
 
       // Starting position (either existing posX/posY or current rendered position)
       const startPosX = block.posX ?? (blockRect.left - contentRect.left);
@@ -256,6 +261,7 @@ export function CenterCanvas({
         document.removeEventListener("mouseup", onUp);
         setDraggedBlockId(null);
         setDragGhost(null);
+        setDraggedBlockWidth(null);
       };
 
       document.addEventListener("mousemove", onMove);
@@ -674,6 +680,7 @@ export function CenterCanvas({
                     position: "absolute",
                     left: block.posX ?? 0,
                     top: block.posY ?? 0,
+                    width: draggedBlockId === block.id && draggedBlockWidth != null ? draggedBlockWidth : undefined,
                     maxWidth: "100%",
                     overflow: "visible",
                     zIndex: selectedBlockId === block.id ? 10 : 5,
