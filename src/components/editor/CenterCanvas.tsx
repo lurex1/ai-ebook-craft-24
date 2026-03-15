@@ -412,13 +412,14 @@ export function CenterCanvas({
     >
       {/* Drag handle — inside the block padding */}
       <div
-        className="absolute left-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing transition-opacity z-10"
-        style={{ width: 16 }}
+        className="absolute left-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing transition-opacity z-30"
+        style={{ width: 20, height: "100%", display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "auto" }}
         onMouseDown={(e) => handleGripMouseDown(e, block.id)}
       >
         <GripVertical className="h-4 w-4 text-muted-foreground" />
       </div>
 
+      <div className="relative" style={{ zIndex: 1 }}>
       <BlockRenderer
         block={block}
         template={template}
