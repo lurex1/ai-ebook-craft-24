@@ -437,7 +437,7 @@ export function CenterCanvas({
 
       {selectedBlockId === block.id && (
         <>
-          <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
+          <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex flex-col gap-0.5 z-30">
             <button
               onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, -1); }}
               className="p-0.5 rounded bg-card border border-border text-muted-foreground hover:text-foreground shadow-sm"
