@@ -226,15 +226,19 @@ export function CenterCanvas({
       const startY = e.clientY;
 
       // Find which page content area this block is in
-      const blockEl = (e.currentTarget as HTMLElement).closest("[data-block-id]");
+      const blockEl = (e.currentTarget as HTMLElement).closest("[data-block-id]") as HTMLElement | null;
       const pageContentEl = blockEl?.closest("[data-page-content]") as HTMLElement | null;
-      if (!pageContentEl) return;
+      if (!pageContentEl || !blockEl) return;
 
       const block = chapter?.blocks.find((b) => b.id === blockId);
       if (!block) return;
 
+      // Capture rendered width so shape doesn't change during drag
+      const blockRect = blockEl.getBoundingClientRect();
+      const capturedWidth = blockRect.width;
+      setDraggedBlockWidth(capturedWidth);
+
       const contentRect = pageContentEl.getBoundingClientRect();
-      const blockRect = blockEl!.getBoundingClientRect();
 
       // Starting position (either existing posX/posY or current rendered position)
       const startPosX = block.posX ?? (blockRect.left - contentRect.left);
@@ -257,6 +261,7 @@ export function CenterCanvas({
         document.removeEventListener("mouseup", onUp);
         setDraggedBlockId(null);
         setDragGhost(null);
+        setDraggedBlockWidth(null);
       };
 
       document.addEventListener("mousemove", onMove);
