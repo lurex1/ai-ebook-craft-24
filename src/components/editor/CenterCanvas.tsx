@@ -31,6 +31,7 @@ interface Props {
   onDeleteBlock: (id: string) => void;
   onMoveBlock: (id: string, dir: -1 | 1) => void;
   onReorderBlocks?: (fromIndex: number, toIndex: number) => void;
+  onDuplicateBlock?: (id: string) => void;
   pageSize: string;
   onGenerateContent?: () => void;
   isGenerating?: boolean;
