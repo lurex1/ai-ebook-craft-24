@@ -467,6 +467,9 @@ export function CenterCanvas({
     return result;
   }, [chapter?.blocks, template, contentWidth, usableHeight]);
 
+  // Keep ref in sync for use inside drag handlers
+  pagesRef.current = pages;
+
   // Shared block rendering logic for both flow and positioned blocks
   const renderBlockInner = useCallback((block: Block, _pageIndex: number) => (
     <div
