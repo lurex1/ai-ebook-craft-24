@@ -22,9 +22,9 @@ const EBOOK_STYL_TRIGGERS = [
   "podświadom", "podswiadom", "intuic", "wewnętrzn", "wewnetrzn",
 ];
 
-function shouldUseEbookStyl(...texts: (string | undefined | null)[]): boolean {
-  const blob = texts.filter(Boolean).join(" ").toLowerCase();
-  return EBOOK_STYL_TRIGGERS.some((kw) => blob.includes(kw));
+function shouldUseEbookStyl(..._texts: (string | undefined | null)[]): boolean {
+  // Universal Ebook Architect v2.0 — stosowany ZAWSZE, niezależnie od tematu.
+  return true;
 }
 
 const EBOOK_STYL_PROMPT = `
