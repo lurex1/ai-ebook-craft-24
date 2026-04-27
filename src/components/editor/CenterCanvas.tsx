@@ -536,9 +536,19 @@ export function CenterCanvas({
             >
               <ChevronDown className="h-3 w-3" />
             </button>
+            {onDuplicateBlock && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDuplicateBlock(block.id); }}
+                className="p-0.5 rounded bg-card border border-border text-muted-foreground hover:text-primary shadow-sm"
+                title="Duplikuj blok"
+              >
+                <Copy className="h-3 w-3" />
+              </button>
+            )}
             <button
               onClick={(e) => { e.stopPropagation(); onDeleteBlock(block.id); }}
               className="p-0.5 rounded bg-card border border-border text-muted-foreground hover:text-destructive shadow-sm"
+              title="Usuń blok"
             >
               <Trash2 className="h-3 w-3" />
             </button>
