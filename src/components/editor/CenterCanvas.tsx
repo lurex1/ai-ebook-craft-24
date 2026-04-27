@@ -14,6 +14,7 @@ import {
   Plus,
   GripVertical,
   RotateCcw,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Block, BlockType, ChapterData } from "@/lib/blocks";
