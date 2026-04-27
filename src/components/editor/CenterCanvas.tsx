@@ -215,6 +215,7 @@ export function CenterCanvas({
   const [dragGhost, setDragGhost] = useState<{ x: number; y: number } | null>(null);
   const [draggedBlockWidth, setDraggedBlockWidth] = useState<number | null>(null);
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const pagesRef = useRef<Block[][]>([]);
 
   // Free-form drag via mousedown on grip handle
   const handleGripMouseDown = useCallback(
