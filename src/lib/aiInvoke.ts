@@ -24,17 +24,18 @@ export async function invokeGenerateEbook<T = any>(body: Record<string, any>) {
 
     if (payload?.error === "PRO_REQUIRED") {
       toast({
-        title: "Funkcja dostępna w planie Pro",
-        description: payload.message || "Przejdź na plan Pro, aby odblokować generowanie AI.",
+        title: "🔒 Funkcja dostępna w planie Pro",
+        description:
+          (payload.message || "Generowanie AI jest dostępne tylko w planie Pro.") +
+          " Kliknij, aby zobaczyć plany.",
         variant: "destructive",
-        action: undefined,
       });
-      // Soft redirect cue
+      // Auto-redirect after a short delay so user can read the message
       setTimeout(() => {
-        if (confirm("Otworzyć stronę z planami?")) {
+        if (window.location.pathname !== "/pricing") {
           window.location.href = "/pricing";
         }
-      }, 50);
+      }, 1800);
       throw new Error("PRO_REQUIRED");
     }
     if (payload?.error === "AUTH_REQUIRED") {
