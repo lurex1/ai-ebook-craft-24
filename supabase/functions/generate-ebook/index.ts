@@ -281,10 +281,13 @@ ${materials ? `\nMateriały źródłowe:\n${materials.slice(0, 8000)}` : "\nBrak
           ? "To jest końcowa część — podsumuj i daj wnioski."
           : "To jest środkowa część — rozwijaj temat z przykładami.";
 
+        const useEbookStyl = shouldUseEbookStyl(bookTitle, sec.title, prevTitle, nextTitle);
+        const stylePrefix = useEbookStyl ? `${EBOOK_STYL_PROMPT}\n\n` : "";
+
         const data = await callAI([
           {
             role: "system",
-            content: `Autor e-booka "${bookTitle}". Sekcja ${i + 1}/${total}. ${positionDesc}
+            content: `${stylePrefix}Autor e-booka "${bookTitle}". Sekcja ${i + 1}/${total}. ${positionDesc}
 Pisz 400-800 słów po polsku, profesjonalnie z akapitami.
 
 KLUCZOWE: Pisz czystym HTML (tagi <p>, <strong>, <em>, <ul>, <ol>, <li>, <h3>, <blockquote>, <table>).
