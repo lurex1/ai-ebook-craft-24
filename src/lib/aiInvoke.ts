@@ -27,16 +27,16 @@ export async function invokeGenerateEbook<T = any>(body: Record<string, any>) {
         title: "🔒 Funkcja dostępna w planie Pro",
         description:
           (payload.message || "Generowanie AI jest dostępne tylko w planie Pro.") +
-          " Kliknij, aby zobaczyć plany.",
+          " Za chwilę przekierujemy Cię do planów…",
         variant: "destructive",
       });
-      // Auto-redirect after a short delay so user can read the message
       setTimeout(() => {
         if (window.location.pathname !== "/pricing") {
           window.location.href = "/pricing";
         }
       }, 1800);
-      throw new Error("PRO_REQUIRED");
+      // Replace the cryptic FunctionsHttpError with a clean message
+      return { data: null, error: new Error(payload.message || "PRO_REQUIRED") } as any;
     }
     if (payload?.error === "AUTH_REQUIRED") {
       toast({
@@ -44,7 +44,7 @@ export async function invokeGenerateEbook<T = any>(body: Record<string, any>) {
         description: payload.message || "Zaloguj się, aby kontynuować.",
         variant: "destructive",
       });
-      throw new Error("AUTH_REQUIRED");
+      return { data: null, error: new Error(payload.message || "AUTH_REQUIRED") } as any;
     }
   }
 
