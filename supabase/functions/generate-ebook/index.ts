@@ -8,6 +8,69 @@ const corsHeaders = {
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
+// ============================================================
+// SKILL: ebook-styl — styl dla treści z zakresu rozwoju osobistego,
+// duchowości, świadomości, mindset, Matrix, Twierdza itp.
+// Aktywuje się automatycznie, gdy tytuł e-booka / sekcji zawiera
+// słowa-klucze z domeny.
+// ============================================================
+const EBOOK_STYL_TRIGGERS = [
+  "świadomoś", "swiadomos", "obserwator", "matrix", "twierdz",
+  "przebudz", "duchowoś", "duchowos", "mindset", "pieniądz", "pieniadz",
+  "rozwój osobist", "rozwoj osobist", "samoświadom", "samoswiadom",
+  "medytac", "manifest", "energia", "uważnoś", "uwaznos",
+  "podświadom", "podswiadom", "intuic", "wewnętrzn", "wewnetrzn",
+];
+
+function shouldUseEbookStyl(...texts: (string | undefined | null)[]): boolean {
+  const blob = texts.filter(Boolean).join(" ").toLowerCase();
+  return EBOOK_STYL_TRIGGERS.some((kw) => blob.includes(kw));
+}
+
+const EBOOK_STYL_PROMPT = `
+=== SKILL: ebook-styl (AKTYWNY) ===
+Piszesz jako redaktor i projektant nowoczesnych ebooków premium. Treść ma wyglądać jak produkt cyfrowy, NIE jak klasyczna książka.
+
+STYL PISANIA:
+- Krótkie, mocne zdania. Konkret zamiast ogólników.
+- Otwierasz "sceną" — obrazem, sytuacją, mikro-historią (1-3 zdania).
+- Po wstępie dawaj "moment lustra" — pytanie, które zatrzymuje czytelnika (w <blockquote>).
+- Język bezpośredni, do czytelnika ("ty", "twoje").
+- Unikaj akademickiego tonu. Pisz tak, jakbyś rozmawiał.
+- Kończ sekcję mikro-zadaniem (konkretny krok do zrobienia teraz).
+
+STRUKTURA SEKCJI (rytm: hero → kontrast → praktyka):
+1. HERO — mocny wstęp + scena otwierająca + jeden mocny cytat (<blockquote>).
+2. KONTRAST — tabela porównawcza (HTML <table>) typu "stare vs nowe", "system vs świadomość", "automat vs Obserwator".
+3. PRAKTYKA — lista 3-5 konkretnych kroków (<ol><li>) + ramka z mikro-zadaniem (<blockquote> z prefixem "🎯 Zrób teraz:") + cytat zamykający.
+
+OBOWIĄZKOWE ELEMENTY w każdej sekcji:
+- co najmniej JEDNA tabela porównawcza (kontrast),
+- co najmniej JEDEN <blockquote> z pytaniem do czytelnika ("moment lustra"),
+- lista kroków praktycznych,
+- cytat zamykający w <blockquote> na końcu,
+- sugestia grafiki: <!-- IMAGE: opis grafiki w stylu minimalistycznym, paleta granat/krem/musztarda -->.
+
+SŁOWNIK POJĘĆ (używaj konsekwentnie, nie zamieniaj na synonimy):
+- Świadomość = stan zauważania siebie, myśli, emocji i wzorców bez automatycznej reakcji.
+- Obserwator = część człowieka, która patrzy na myśli i emocje z dystansem.
+- Matrix = system automatycznych schematów i przyzwyczajeń, w którym żyje się na autopilocie.
+- Twierdza = obraz własnej niezależności: aktywa, kompetencje, marka, systemy pracujące na ciebie.
+
+PALETA WIZUALNA (wspominaj w sugestiach grafik):
+- Granat #1E2A4A (nagłówki, akcenty główne)
+- Krem #F5F1EA (tła, oddech)
+- Musztarda #E8B547 (ramki, callouty, mikro-zadania)
+
+ZAKAZY:
+- Żadnych długich bloków tekstu (max 2-4 zdania na akapit).
+- Żadnych ogólników typu "warto pamiętać że...".
+- Nie powtarzaj tytułu sekcji w treści.
+- Żadnego Markdown — tylko czysty HTML.
+=== KONIEC SKILL ===
+`.trim();
+
+
 function json(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -153,10 +216,13 @@ ${sources.map((s: any, i: number) => `[${i + 1}] ${s.title} — ${s.url}`).join(
 Nie dodawaj sekcji bibliografii na końcu — to zostanie zrobione automatycznie.`
         : "";
 
+      const useEbookStyl = shouldUseEbookStyl(bookTitle, sectionTitle, sectionPath, contextBefore, contextAfter);
+      const stylePrefix = useEbookStyl ? `${EBOOK_STYL_PROMPT}\n\n` : "";
+
       const data = await callAI([
         {
           role: "system",
-          content: `Jesteś autorem profesjonalnego e-booka "${bookTitle}". Piszesz sekcję ${currentIndex + 1}/${totalSections}.
+          content: `${stylePrefix}Jesteś autorem profesjonalnego e-booka "${bookTitle}". Piszesz sekcję ${currentIndex + 1}/${totalSections}.
 
 ZASADY PISANIA:
 1. Pisz 400-800 słów po polsku.
@@ -215,10 +281,13 @@ ${materials ? `\nMateriały źródłowe:\n${materials.slice(0, 8000)}` : "\nBrak
           ? "To jest końcowa część — podsumuj i daj wnioski."
           : "To jest środkowa część — rozwijaj temat z przykładami.";
 
+        const useEbookStyl = shouldUseEbookStyl(bookTitle, sec.title, prevTitle, nextTitle);
+        const stylePrefix = useEbookStyl ? `${EBOOK_STYL_PROMPT}\n\n` : "";
+
         const data = await callAI([
           {
             role: "system",
-            content: `Autor e-booka "${bookTitle}". Sekcja ${i + 1}/${total}. ${positionDesc}
+            content: `${stylePrefix}Autor e-booka "${bookTitle}". Sekcja ${i + 1}/${total}. ${positionDesc}
 Pisz 400-800 słów po polsku, profesjonalnie z akapitami.
 
 KLUCZOWE: Pisz czystym HTML (tagi <p>, <strong>, <em>, <ul>, <ol>, <li>, <h3>, <blockquote>, <table>).
