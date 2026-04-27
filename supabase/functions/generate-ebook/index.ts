@@ -133,7 +133,7 @@ async function requireProPlan(req: Request): Promise<{ ok: true } | { ok: false;
   if (!authHeader) {
     return {
       ok: false,
-      response: jsonResponse({ error: "AUTH_REQUIRED", message: "Zaloguj się, aby korzystać z generowania AI." }, 401),
+      response: json({ error: "AUTH_REQUIRED", message: "Zaloguj się, aby korzystać z generowania AI." }, 401),
     };
   }
   const token = authHeader.replace("Bearer ", "");
@@ -146,7 +146,7 @@ async function requireProPlan(req: Request): Promise<{ ok: true } | { ok: false;
   if (userErr || !userData.user) {
     return {
       ok: false,
-      response: jsonResponse({ error: "AUTH_REQUIRED", message: "Sesja wygasła. Zaloguj się ponownie." }, 401),
+      response: json({ error: "AUTH_REQUIRED", message: "Sesja wygasła. Zaloguj się ponownie." }, 401),
     };
   }
   const { data: credits } = await supabaseAdmin
@@ -157,7 +157,7 @@ async function requireProPlan(req: Request): Promise<{ ok: true } | { ok: false;
   if (credits?.plan !== "pro") {
     return {
       ok: false,
-      response: jsonResponse(
+      response: json(
         {
           error: "PRO_REQUIRED",
           message: "Generowanie AI jest dostępne tylko w planie Pro. Przejdź na Pro, aby odblokować nielimitowane generowanie treści, ilustracji i eksport PDF/EPUB.",
@@ -169,12 +169,6 @@ async function requireProPlan(req: Request): Promise<{ ok: true } | { ok: false;
   return { ok: true };
 }
 
-function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
