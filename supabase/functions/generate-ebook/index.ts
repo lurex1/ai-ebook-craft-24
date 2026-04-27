@@ -216,10 +216,13 @@ ${sources.map((s: any, i: number) => `[${i + 1}] ${s.title} — ${s.url}`).join(
 Nie dodawaj sekcji bibliografii na końcu — to zostanie zrobione automatycznie.`
         : "";
 
+      const useEbookStyl = shouldUseEbookStyl(bookTitle, sectionTitle, sectionPath, contextBefore, contextAfter);
+      const stylePrefix = useEbookStyl ? `${EBOOK_STYL_PROMPT}\n\n` : "";
+
       const data = await callAI([
         {
           role: "system",
-          content: `Jesteś autorem profesjonalnego e-booka "${bookTitle}". Piszesz sekcję ${currentIndex + 1}/${totalSections}.
+          content: `${stylePrefix}Jesteś autorem profesjonalnego e-booka "${bookTitle}". Piszesz sekcję ${currentIndex + 1}/${totalSections}.
 
 ZASADY PISANIA:
 1. Pisz 400-800 słów po polsku.
