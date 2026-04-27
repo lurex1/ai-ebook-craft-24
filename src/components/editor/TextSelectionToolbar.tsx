@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Palette, Paintbrush, Sparkles, Table, List, Replace, Brain, Loader2, ChevronDown, SplitSquareHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeGenerateEbook } from "@/lib/aiInvoke";
 
 interface Props {
   containerRef: React.RefObject<HTMLElement>;
@@ -78,13 +79,11 @@ export function TextSelectionToolbar({ containerRef, onApplyInlineStyle, onGener
     if (!selectedHtml && !selectedText) return;
     setAiLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-ebook", {
-        body: {
+      const { data, error } = await invokeGenerateEbook({
           action: "transform-text",
           selectedText: selectedHtml || selectedText,
           transformType,
-        },
-      });
+        });
       if (error) {
         // Try to parse error body for user-friendly message
         try {

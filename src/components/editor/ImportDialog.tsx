@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Sparkles, Link as LinkIcon, Type } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Block } from "@/lib/blocks";
+import { invokeGenerateEbook } from "@/lib/aiInvoke";
 
 interface Props {
   open: boolean;
@@ -49,9 +50,7 @@ export function ImportDialog({ open, onOpenChange, onImport, projectTitle }: Pro
     if (!url.trim()) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-ebook", {
-        body: { action: "import-url", url },
-      });
+      const { data, error } = await invokeGenerateEbook({ action: "import-url", url });
       if (error) throw error;
       onImport(textToBlocks(data.text));
       setUrl("");
@@ -66,14 +65,12 @@ export function ImportDialog({ open, onOpenChange, onImport, projectTitle }: Pro
     if (!prompt.trim()) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-ebook", {
-        body: {
+      const { data, error } = await invokeGenerateEbook({
           action: "structure",
           materials: prompt,
           chaptersCount: 5,
           pointsPerChapter: 3,
-        },
-      });
+        });
       if (error) throw error;
       const blocks: Block[] = [];
       blocks.push({ id: crypto.randomUUID(), type: "heading", content: data.title, level: 1 });

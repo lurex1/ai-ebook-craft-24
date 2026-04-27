@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import {
+import { invokeGenerateEbook } from "@/lib/aiInvoke";
   BookOpen, Upload, Link2, FileText, Sparkles, ArrowLeft,
   X, Loader2, Check, RefreshCw, Globe, ChevronDown, ChevronRight,
   Pencil, Wand2, CheckCircle2, Circle,
@@ -126,9 +127,7 @@ export default function NewProject() {
       setShowUrl(false);
       
       try {
-        const { data, error } = await supabase.functions.invoke("generate-ebook", {
-          body: { action: "import-youtube", url },
-        });
+        const { data, error } = await invokeGenerateEbook({ action: "import-youtube", url });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
         
@@ -216,17 +215,13 @@ export default function NewProject() {
       for (const um of urlMats) {
         const urlStr = um.content.replace("[URL do pobrania] ", "");
         try {
-          const { data } = await supabase.functions.invoke("generate-ebook", {
-            body: { action: "import-url", url: urlStr },
-          });
+          const { data } = await invokeGenerateEbook({ action: "import-url", url: urlStr });
           if (data?.text) { um.content = data.text; um.name = `Treść z: ${urlStr}`; }
         } catch { /* keep original */ }
       }
       setMaterials([...materials]);
 
-      const { data, error } = await supabase.functions.invoke("generate-ebook", {
-        body: { action: "analyze", materials: allContent(), structure: structureConfig },
-      });
+      const { data, error } = await invokeGenerateEbook({ action: "analyze", materials: allContent(), structure: structureConfig });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
@@ -251,8 +246,7 @@ export default function NewProject() {
 
     try {
       const sec = sections[idx];
-      const { data, error } = await supabase.functions.invoke("generate-ebook", {
-        body: {
+      const { data, error } = await invokeGenerateEbook({
           action: "generate-section",
           bookTitle: editedTitle || suggestion?.title,
           materials: allContent().slice(0, 8000),
@@ -262,8 +256,7 @@ export default function NewProject() {
           contextAfter: idx < sections.length - 1 ? sections[idx + 1].title : "",
           totalSections: sections.length,
           currentIndex: idx,
-        },
-      });
+        });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
@@ -293,8 +286,7 @@ export default function NewProject() {
         // Mark as generating
         setSections((prev) => prev.map((s) => s.id === sec.id ? { ...s, generating: true } : s));
 
-        const { data, error } = await supabase.functions.invoke("generate-ebook", {
-          body: {
+        const { data, error } = await invokeGenerateEbook({
             action: "generate-section",
             bookTitle: editedTitle || suggestion?.title,
             materials: allContent().slice(0, 8000),
@@ -305,8 +297,7 @@ export default function NewProject() {
             totalSections: sections.length,
             currentIndex: idx,
             sources: getSourceUrls(),
-          },
-        });
+          });
 
         if (error) throw error;
         if (data?.error) throw new Error(data.error);

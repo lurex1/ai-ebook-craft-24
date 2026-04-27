@@ -7,6 +7,7 @@ import { Loader2, Sparkles, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { ProjectData } from "@/lib/blocks";
+import { invokeGenerateEbook } from "@/lib/aiInvoke";
 
 interface Props {
   open: boolean;
@@ -24,14 +25,12 @@ export function CoverGenerator({ open, onOpenChange, project, onUpdateProject }:
   const generate = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-ebook", {
-        body: {
+      const { data, error } = await invokeGenerateEbook({
           action: "cover",
           title: project.title,
           subtitle: project.subtitle,
           style,
-        },
-      });
+        });
       if (error) throw error;
       if (data.coverUrl) {
         setPreview(data.coverUrl);

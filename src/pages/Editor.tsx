@@ -21,6 +21,7 @@ import { ExportDialog } from "@/components/editor/ExportDialog";
 import { CoverGenerator } from "@/components/editor/CoverGenerator";
 import { Progress } from "@/components/ui/progress";
 import { useI18n, LanguageSwitcher } from "@/lib/i18n";
+import { invokeGenerateEbook } from "@/lib/aiInvoke";
 
 export default function Editor() {
   const { id } = useParams<{ id: string }>();
@@ -283,13 +284,11 @@ export default function Editor() {
 
     toast({ title: "Generuję ilustrację AI..." });
     try {
-      const { data, error } = await supabase.functions.invoke("generate-ebook", {
-        body: {
+      const { data, error } = await invokeGenerateEbook({
           action: "generate-illustration",
           contextText: finalContext,
           bookTitle: project.title,
-        },
-      });
+        });
       if (error || !data?.imageUrl) throw new Error(data?.error || "Błąd generowania");
 
       // Add image block after the selected block (or at the end if nothing selected)
@@ -340,8 +339,7 @@ export default function Editor() {
         }
 
         try {
-          const { data, error } = await supabase.functions.invoke("generate-ebook", {
-            body: {
+          const { data, error } = await invokeGenerateEbook({
               action: "generate-section",
               bookTitle: project.title,
               materials: "",
@@ -351,8 +349,7 @@ export default function Editor() {
               contextAfter: i < ch.blocks.length - 1 ? ch.blocks[i + 1]?.content || "" : "",
               totalSections: headings.length,
               currentIndex: headings.indexOf(block),
-            },
-          });
+            });
           if (!error && data?.content) {
             // Split AI content into multiple well-structured blocks
             const contentBlocks = splitContentIntoBlocks(data.content);

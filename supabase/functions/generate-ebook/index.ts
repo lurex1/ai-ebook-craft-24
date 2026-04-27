@@ -116,11 +116,70 @@ async function callAI(messages: { role: string; content: string }[], tools?: any
   return await response.json();
 }
 
+// Akcje wymagające planu Pro (wszystkie używają AI / kredytów)
+const PRO_ACTIONS = new Set([
+  "analyze",
+  "generate-section",
+  "generate-all-content",
+  "import-url",
+  "import-youtube",
+  "cover",
+  "generate-illustration",
+  "transform-text",
+]);
+
+async function requireProPlan(req: Request): Promise<{ ok: true } | { ok: false; response: Response }> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return {
+      ok: false,
+      response: json({ error: "AUTH_REQUIRED", message: "Zaloguj się, aby korzystać z generowania AI." }, 401),
+    };
+  }
+  const token = authHeader.replace("Bearer ", "");
+  const supabaseAdmin = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } },
+  );
+  const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
+  if (userErr || !userData.user) {
+    return {
+      ok: false,
+      response: json({ error: "AUTH_REQUIRED", message: "Sesja wygasła. Zaloguj się ponownie." }, 401),
+    };
+  }
+  const { data: credits } = await supabaseAdmin
+    .from("user_credits")
+    .select("plan")
+    .eq("user_id", userData.user.id)
+    .maybeSingle();
+  if (credits?.plan !== "pro") {
+    return {
+      ok: false,
+      response: json(
+        {
+          error: "PRO_REQUIRED",
+          message: "Generowanie AI jest dostępne tylko w planie Pro. Przejdź na Pro, aby odblokować nielimitowane generowanie treści, ilustracji i eksport PDF/EPUB.",
+        },
+        403,
+      ),
+    };
+  }
+  return { ok: true };
+}
+
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { action, ...params } = await req.json();
+
+    if (PRO_ACTIONS.has(action)) {
+      const gate = await requireProPlan(req);
+      if (!gate.ok) return gate.response;
+    }
 
     // ====== ANALYZE — returns structure proposal ======
     if (action === "analyze") {
