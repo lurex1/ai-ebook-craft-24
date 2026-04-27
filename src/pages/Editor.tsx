@@ -520,6 +520,7 @@ export default function Editor() {
           onDeleteBlock={deleteBlock}
           onMoveBlock={moveBlock}
           onReorderBlocks={reorderBlocks}
+          onDuplicateBlock={duplicateBlock}
           pageSize={project.page_size}
           onGenerateContent={generateCurrentChapterContent}
           isGenerating={aiGenerating}
