@@ -173,6 +173,26 @@ export default function Editor() {
     [currentChapter, updateBlocks]
   );
 
+  const duplicateBlock = useCallback(
+    (blockId: string) => {
+      if (!currentChapter) return;
+      const blocks = [...currentChapter.blocks];
+      const idx = blocks.findIndex((b) => b.id === blockId);
+      if (idx === -1) return;
+      const original = blocks[idx];
+      const copy: Block = {
+        ...original,
+        id: crypto.randomUUID(),
+        ...(original.posX != null ? { posX: (original.posX || 0) + 16 } : {}),
+        ...(original.posY != null ? { posY: (original.posY || 0) + 16 } : {}),
+      };
+      blocks.splice(idx + 1, 0, copy);
+      updateBlocks(blocks);
+      setSelectedBlockId(copy.id);
+    },
+    [currentChapter, updateBlocks]
+  );
+
   const extractToBlock = useCallback(
     (sourceBlockId: string, html: string) => {
       if (!currentChapter) return;
@@ -500,6 +520,7 @@ export default function Editor() {
           onDeleteBlock={deleteBlock}
           onMoveBlock={moveBlock}
           onReorderBlocks={reorderBlocks}
+          onDuplicateBlock={duplicateBlock}
           pageSize={project.page_size}
           onGenerateContent={generateCurrentChapterContent}
           isGenerating={aiGenerating}

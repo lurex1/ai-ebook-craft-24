@@ -14,6 +14,7 @@ import {
   Plus,
   GripVertical,
   RotateCcw,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Block, BlockType, ChapterData } from "@/lib/blocks";
@@ -31,6 +32,7 @@ interface Props {
   onDeleteBlock: (id: string) => void;
   onMoveBlock: (id: string, dir: -1 | 1) => void;
   onReorderBlocks?: (fromIndex: number, toIndex: number) => void;
+  onDuplicateBlock?: (id: string) => void;
   pageSize: string;
   onGenerateContent?: () => void;
   isGenerating?: boolean;
@@ -157,6 +159,7 @@ export function CenterCanvas({
   onDeleteBlock,
   onMoveBlock,
   onReorderBlocks,
+  onDuplicateBlock,
   pageSize,
   onGenerateContent,
   isGenerating,
@@ -533,9 +536,19 @@ export function CenterCanvas({
             >
               <ChevronDown className="h-3 w-3" />
             </button>
+            {onDuplicateBlock && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDuplicateBlock(block.id); }}
+                className="p-0.5 rounded bg-card border border-border text-muted-foreground hover:text-primary shadow-sm"
+                title="Duplikuj blok"
+              >
+                <Copy className="h-3 w-3" />
+              </button>
+            )}
             <button
               onClick={(e) => { e.stopPropagation(); onDeleteBlock(block.id); }}
               className="p-0.5 rounded bg-card border border-border text-muted-foreground hover:text-destructive shadow-sm"
+              title="Usuń blok"
             >
               <Trash2 className="h-3 w-3" />
             </button>
@@ -613,7 +626,7 @@ export function CenterCanvas({
         </>
       )}
     </div>
-  ), [selectedBlockId, contentWidth, template, onSelectBlock, onUpdateBlock, onMoveBlock, onDeleteBlock, onGenerateImage, onExtractToBlock, handleGripMouseDown, resetBlockPosition, inlineFileRef]);
+  ), [selectedBlockId, contentWidth, template, onSelectBlock, onUpdateBlock, onMoveBlock, onDeleteBlock, onDuplicateBlock, onGenerateImage, onExtractToBlock, handleGripMouseDown, resetBlockPosition, inlineFileRef]);
 
   const totalPages = pages.length;
   const estimatedCost = pricePerPage ? (totalPages * pricePerPage).toFixed(2) : null;
