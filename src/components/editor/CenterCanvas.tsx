@@ -233,6 +233,12 @@ export function CenterCanvas({
       const block = chapter?.blocks.find((b) => b.id === blockId);
       if (!block) return;
 
+      // Source page index
+      let sourcePageIndex = -1;
+      pageRefs.current.forEach((el, idx) => {
+        if (el === pageContentEl) sourcePageIndex = idx;
+      });
+
       // Capture rendered width so shape doesn't change during drag
       const blockRect = blockEl.getBoundingClientRect();
       const capturedWidth = blockRect.width;
@@ -244,30 +250,103 @@ export function CenterCanvas({
       const startPosX = block.posX ?? (blockRect.left - contentRect.left);
       const startPosY = block.posY ?? (blockRect.top - contentRect.top);
 
+      let lastTargetPageIndex = sourcePageIndex;
+      let lastTargetRect: DOMRect = contentRect;
+
+      const findTargetPage = (clientX: number, clientY: number) => {
+        let found = -1;
+        let foundRect: DOMRect | null = null;
+        pageRefs.current.forEach((el, idx) => {
+          const r = el.getBoundingClientRect();
+          if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+            found = idx;
+            foundRect = r;
+          }
+        });
+        return { idx: found, rect: foundRect };
+      };
+
       const onMove = (ev: MouseEvent) => {
         const dx = ev.clientX - startX;
         const dy = ev.clientY - startY;
-        const newX = Math.max(0, Math.min(contentRect.width - 40, startPosX + dx));
-        const newY = Math.max(0, Math.min(contentRect.height - 20, startPosY + dy));
         setDragGhost({ x: ev.clientX, y: ev.clientY });
-        onUpdateBlock(blockId, {
-          posX: Math.round(newX),
-          posY: Math.round(newY),
-        });
+
+        const target = findTargetPage(ev.clientX, ev.clientY);
+        if (target.idx !== -1 && target.rect && target.idx !== sourcePageIndex) {
+          // Hovering over another page — track but don't update posX/posY yet
+          lastTargetPageIndex = target.idx;
+          lastTargetRect = target.rect;
+        } else {
+          lastTargetPageIndex = sourcePageIndex;
+          lastTargetRect = contentRect;
+          const newX = Math.max(0, Math.min(contentRect.width - 40, startPosX + dx));
+          const newY = Math.max(0, Math.min(contentRect.height - 20, startPosY + dy));
+          onUpdateBlock(blockId, {
+            posX: Math.round(newX),
+            posY: Math.round(newY),
+          });
+        }
       };
 
-      const onUp = () => {
+      const onUp = (ev: MouseEvent) => {
         document.removeEventListener("mousemove", onMove);
         document.removeEventListener("mouseup", onUp);
         setDraggedBlockId(null);
         setDragGhost(null);
         setDraggedBlockWidth(null);
+
+        // If dropped on a different page, reorder block in chapter.blocks
+        if (
+          lastTargetPageIndex !== -1 &&
+          lastTargetPageIndex !== sourcePageIndex &&
+          chapter &&
+          onReorderBlocks
+        ) {
+          const fromIndex = chapter.blocks.findIndex((b) => b.id === blockId);
+          if (fromIndex === -1) return;
+
+          // Compute new posX/posY relative to target page
+          const newX = Math.max(0, Math.min(lastTargetRect.width - 40, ev.clientX - lastTargetRect.left));
+          const newY = Math.max(0, Math.min(lastTargetRect.height - 20, ev.clientY - lastTargetRect.top));
+          onUpdateBlock(blockId, { posX: Math.round(newX), posY: Math.round(newY) });
+
+          // Find target index: place block at the start of target page's blocks
+          // Build flat list of (block, pageIdx) using `pages` snapshot
+          let targetIndex = 0;
+          if (lastTargetPageIndex < pages.length) {
+            const targetPageBlocks = pages[lastTargetPageIndex];
+            const firstBlockOnPage = targetPageBlocks.find((b) => b.id !== blockId);
+            if (firstBlockOnPage) {
+              const idx = chapter.blocks.findIndex((b) => b.id === firstBlockOnPage.id);
+              targetIndex = idx === -1 ? chapter.blocks.length : idx;
+            } else {
+              // Empty target page — put after last block of previous page
+              const prevPage = pages[lastTargetPageIndex - 1];
+              if (prevPage && prevPage.length > 0) {
+                const lastBlock = prevPage[prevPage.length - 1];
+                const idx = chapter.blocks.findIndex((b) => b.id === lastBlock.id);
+                targetIndex = idx === -1 ? chapter.blocks.length : idx + 1;
+              } else {
+                targetIndex = chapter.blocks.length;
+              }
+            }
+          } else {
+            targetIndex = chapter.blocks.length;
+          }
+
+          // Adjust target index when moving forward (removing earlier index shifts)
+          if (fromIndex < targetIndex) targetIndex -= 1;
+
+          if (fromIndex !== targetIndex) {
+            onReorderBlocks(fromIndex, targetIndex);
+          }
+        }
       };
 
       document.addEventListener("mousemove", onMove);
       document.addEventListener("mouseup", onUp);
     },
-    [chapter, onUpdateBlock],
+    [chapter, onUpdateBlock, onReorderBlocks, pages],
   );
 
   const resetBlockPosition = useCallback(
