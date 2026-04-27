@@ -159,6 +159,7 @@ export function CenterCanvas({
   onDeleteBlock,
   onMoveBlock,
   onReorderBlocks,
+  onDuplicateBlock,
   pageSize,
   onGenerateContent,
   isGenerating,
