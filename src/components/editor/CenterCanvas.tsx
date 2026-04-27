@@ -312,17 +312,17 @@ export function CenterCanvas({
           onUpdateBlock(blockId, { posX: Math.round(newX), posY: Math.round(newY) });
 
           // Find target index: place block at the start of target page's blocks
-          // Build flat list of (block, pageIdx) using `pages` snapshot
+          // Build flat list of (block, pageIdx) using `pagesRef` snapshot
+          const snapshot = pagesRef.current;
           let targetIndex = 0;
-          if (lastTargetPageIndex < pages.length) {
-            const targetPageBlocks = pages[lastTargetPageIndex];
+          if (lastTargetPageIndex < snapshot.length) {
+            const targetPageBlocks = snapshot[lastTargetPageIndex];
             const firstBlockOnPage = targetPageBlocks.find((b) => b.id !== blockId);
             if (firstBlockOnPage) {
               const idx = chapter.blocks.findIndex((b) => b.id === firstBlockOnPage.id);
               targetIndex = idx === -1 ? chapter.blocks.length : idx;
             } else {
-              // Empty target page — put after last block of previous page
-              const prevPage = pages[lastTargetPageIndex - 1];
+              const prevPage = snapshot[lastTargetPageIndex - 1];
               if (prevPage && prevPage.length > 0) {
                 const lastBlock = prevPage[prevPage.length - 1];
                 const idx = chapter.blocks.findIndex((b) => b.id === lastBlock.id);
@@ -347,7 +347,7 @@ export function CenterCanvas({
       document.addEventListener("mousemove", onMove);
       document.addEventListener("mouseup", onUp);
     },
-    [chapter, onUpdateBlock, onReorderBlocks, pages],
+    [chapter, onUpdateBlock, onReorderBlocks],
   );
 
   const resetBlockPosition = useCallback(
