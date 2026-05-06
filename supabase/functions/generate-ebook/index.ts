@@ -581,13 +581,43 @@ REQUIREMENTS:
     // ====== GENERATE ILLUSTRATION ======
     if (action === "generate-illustration") {
       const { contextText, bookTitle } = params;
-      const prompt = `Create a simple, elegant illustration for an ebook chapter. The illustration should relate to this content: "${contextText.slice(0, 500)}". Book: "${bookTitle}". Style: pastel colors, minimalist, clean lines, soft gradients, no text on the image, simple shapes. The image should look professional and complement ebook content. Square format.`;
+
+      // Step 1: art-direct the illustration based on the actual chapter content
+      let artDirection = "";
+      let mediumHint = "editorial photography";
+      try {
+        const ad = await callAI([
+          { role: "system", content: "You are a senior editorial art director for premium publications (NYT, Wired, Monocle). Read the chapter excerpt and propose a SHORT (max 70 words) English visual concept for a single illustration that matches the topic professionally. Choose the most appropriate medium for the subject from: cinematic editorial photography, refined 3D render, sophisticated vector illustration, isometric infographic, painterly digital art, risograph, photo-collage. Specify: concrete subject, palette (specific colors), lighting, composition, medium. AVOID: pastel, cute, flat-cartoon, generic stock-illustration, washed-out muted colors, childish styles — UNLESS the subject is explicitly children/wellness. Aim Behance / Awwwards top-tier." },
+          { role: "user", content: `Book: "${bookTitle}"\n\nChapter excerpt:\n${(contextText || "").slice(0, 800)}` },
+        ]);
+        artDirection = ad.choices?.[0]?.message?.content?.trim() || "";
+        const lower = artDirection.toLowerCase();
+        if (lower.includes("3d")) mediumHint = "high-end 3D render";
+        else if (lower.includes("vector") || lower.includes("isometric")) mediumHint = "premium vector illustration";
+        else if (lower.includes("painting") || lower.includes("painterly")) mediumHint = "digital painting";
+        else if (lower.includes("risograph") || lower.includes("collage")) mediumHint = "art print";
+        else mediumHint = "editorial photography";
+      } catch (_) { /* fallback */ }
+
+      const prompt = `Create a single, professional editorial illustration for a premium e-book chapter. Square format, magazine-quality, art-directed.
+
+BOOK: "${bookTitle}"
+
+ART DIRECTION:
+${artDirection || `A sophisticated visual that directly reflects the chapter topic. Medium: ${mediumHint}.`}
+
+HARD REQUIREMENTS:
+- Match the genre of the topic — corporate/finance → confident editorial; tech → cinematic; wellness → warm natural light; history → painterly; data → clean infographic.
+- Rich, intentional color palette with depth and contrast. NOT washed-out pastel, NOT generic flat cartoon, NOT childish, NOT muted stock-art.
+- Clear focal subject. Strong composition. Realistic proportions.
+- NO text, NO letters, NO logos in the image.
+- Ultra-high resolution, polished, print-ready.`;
 
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image",
+          model: "google/gemini-3-pro-image-preview",
           messages: [{ role: "user", content: prompt }],
           modalities: ["image", "text"],
         }),
