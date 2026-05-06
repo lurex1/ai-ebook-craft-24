@@ -514,13 +514,36 @@ ${nextTitle ? `Następna sekcja: "${nextTitle}"` : ""}`,
     // ====== COVER GENERATION ======
     if (action === "cover") {
       const { title, subtitle, style } = params;
-      const prompt = `Create a professional vertical book cover image for an ebook titled "${title}"${subtitle ? `, subtitle: "${subtitle}"` : ""}. Style: ${style}. The cover should be eye-catching, high quality, with the title text "${title}" prominently displayed. Vertical portrait orientation like a real book cover. Ultra high resolution.`;
+
+      // Step 1: Let AI act as art director — pick a visual direction tailored to the topic
+      let artDirection = "";
+      try {
+        const ad = await callAI([
+          { role: "system", content: "You are a senior book cover art director. Given a book title, output a SHORT (max 80 words) English art direction for a professional, modern, magazine-quality book cover. Match the visual genre to the topic (e.g. business → bold editorial typography + abstract data shapes; mindfulness → soft organic gradients + natural light; tech → cinematic 3D render + neon; history → painterly textures; finance → confident geometric composition). Specify: concrete subject matter, color palette (specific hex-like names), lighting, composition, art technique (e.g. editorial photography, 3D render, vector illustration, oil painting, risograph). NEVER use 'pastel', 'cute', 'flat cartoon' or generic stock-illustration look unless the topic clearly demands it. Aim for awwwards / Behance top-tier quality." },
+          { role: "user", content: `Title: "${title}"${subtitle ? `\nSubtitle: "${subtitle}"` : ""}\nUser style hint: ${style}` },
+        ]);
+        artDirection = ad.choices?.[0]?.message?.content?.trim() || "";
+      } catch (_) { /* fallback to generic */ }
+
+      const prompt = `Design an award-winning, professional vertical book cover (2:3 portrait, like Penguin / Phaidon / Apress quality).
+
+BOOK TITLE: "${title}"${subtitle ? `\nSUBTITLE: "${subtitle}"` : ""}
+
+ART DIRECTION:
+${artDirection || `A bold, editorial cover that visually matches the subject. Style hint from user: ${style}.`}
+
+REQUIREMENTS:
+- Cinematic depth, rich color, sophisticated composition — NOT flat pastel cartoon, NOT generic stock illustration, NOT muted/washed-out colors.
+- Strong focal subject directly tied to the topic of the book.
+- Typography: place the title "${title}" prominently and legibly using elegant modern typesetting that fits the genre${subtitle ? `, with subtitle smaller below` : ""}. Crisp, kerned, no spelling errors, no gibberish text.
+- High contrast, intentional palette, modern art direction.
+- Vertical portrait, ultra high resolution, print-ready.`;
 
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image",
+          model: "google/gemini-3-pro-image-preview",
           messages: [{ role: "user", content: prompt }],
           modalities: ["image", "text"],
         }),
@@ -558,13 +581,43 @@ ${nextTitle ? `Następna sekcja: "${nextTitle}"` : ""}`,
     // ====== GENERATE ILLUSTRATION ======
     if (action === "generate-illustration") {
       const { contextText, bookTitle } = params;
-      const prompt = `Create a simple, elegant illustration for an ebook chapter. The illustration should relate to this content: "${contextText.slice(0, 500)}". Book: "${bookTitle}". Style: pastel colors, minimalist, clean lines, soft gradients, no text on the image, simple shapes. The image should look professional and complement ebook content. Square format.`;
+
+      // Step 1: art-direct the illustration based on the actual chapter content
+      let artDirection = "";
+      let mediumHint = "editorial photography";
+      try {
+        const ad = await callAI([
+          { role: "system", content: "You are a senior editorial art director for premium publications (NYT, Wired, Monocle). Read the chapter excerpt and propose a SHORT (max 70 words) English visual concept for a single illustration that matches the topic professionally. Choose the most appropriate medium for the subject from: cinematic editorial photography, refined 3D render, sophisticated vector illustration, isometric infographic, painterly digital art, risograph, photo-collage. Specify: concrete subject, palette (specific colors), lighting, composition, medium. AVOID: pastel, cute, flat-cartoon, generic stock-illustration, washed-out muted colors, childish styles — UNLESS the subject is explicitly children/wellness. Aim Behance / Awwwards top-tier." },
+          { role: "user", content: `Book: "${bookTitle}"\n\nChapter excerpt:\n${(contextText || "").slice(0, 800)}` },
+        ]);
+        artDirection = ad.choices?.[0]?.message?.content?.trim() || "";
+        const lower = artDirection.toLowerCase();
+        if (lower.includes("3d")) mediumHint = "high-end 3D render";
+        else if (lower.includes("vector") || lower.includes("isometric")) mediumHint = "premium vector illustration";
+        else if (lower.includes("painting") || lower.includes("painterly")) mediumHint = "digital painting";
+        else if (lower.includes("risograph") || lower.includes("collage")) mediumHint = "art print";
+        else mediumHint = "editorial photography";
+      } catch (_) { /* fallback */ }
+
+      const prompt = `Create a single, professional editorial illustration for a premium e-book chapter. Square format, magazine-quality, art-directed.
+
+BOOK: "${bookTitle}"
+
+ART DIRECTION:
+${artDirection || `A sophisticated visual that directly reflects the chapter topic. Medium: ${mediumHint}.`}
+
+HARD REQUIREMENTS:
+- Match the genre of the topic — corporate/finance → confident editorial; tech → cinematic; wellness → warm natural light; history → painterly; data → clean infographic.
+- Rich, intentional color palette with depth and contrast. NOT washed-out pastel, NOT generic flat cartoon, NOT childish, NOT muted stock-art.
+- Clear focal subject. Strong composition. Realistic proportions.
+- NO text, NO letters, NO logos in the image.
+- Ultra-high resolution, polished, print-ready.`;
 
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image",
+          model: "google/gemini-3-pro-image-preview",
           messages: [{ role: "user", content: prompt }],
           modalities: ["image", "text"],
         }),
