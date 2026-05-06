@@ -2,51 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
-    --background: 220 20% 7%;
-    --foreground: 40 20% 92%;
+    /* Bright, joyful, professional — cream canvas with vivid indigo & coral */
+    --background: 40 60% 98%;
+    --foreground: 240 35% 14%;
 
-    --card: 220 18% 11%;
-    --card-foreground: 40 20% 92%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 35% 14%;
 
-    --popover: 220 18% 11%;
-    --popover-foreground: 40 20% 92%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 35% 14%;
 
-    --primary: 38 90% 55%;
-    --primary-foreground: 220 20% 7%;
+    --primary: 256 78% 58%;            /* electric indigo */
+    --primary-foreground: 40 60% 98%;
 
-    --secondary: 220 15% 16%;
-    --secondary-foreground: 40 15% 80%;
+    --secondary: 168 70% 45%;          /* fresh teal */
+    --secondary-foreground: 240 35% 14%;
 
-    --muted: 220 12% 18%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 240 25% 95%;
+    --muted-foreground: 240 12% 42%;
 
-    --accent: 30 80% 50%;
-    --accent-foreground: 220 20% 7%;
+    --accent: 14 92% 62%;              /* warm coral */
+    --accent-foreground: 40 60% 98%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 12% 20%;
-    --input: 220 12% 20%;
-    --ring: 38 90% 55%;
+    --border: 240 20% 90%;
+    --input: 240 20% 92%;
+    --ring: 256 78% 58%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    --sidebar-background: 220 18% 9%;
-    --sidebar-foreground: 40 15% 80%;
-    --sidebar-primary: 38 90% 55%;
-    --sidebar-primary-foreground: 220 20% 7%;
-    --sidebar-accent: 220 15% 14%;
-    --sidebar-accent-foreground: 40 15% 80%;
-    --sidebar-border: 220 12% 18%;
-    --sidebar-ring: 38 90% 55%;
+    --sidebar-background: 256 40% 98%;
+    --sidebar-foreground: 240 35% 18%;
+    --sidebar-primary: 256 78% 58%;
+    --sidebar-primary-foreground: 40 60% 98%;
+    --sidebar-accent: 256 60% 95%;
+    --sidebar-accent-foreground: 256 78% 35%;
+    --sidebar-border: 240 20% 90%;
+    --sidebar-ring: 256 78% 58%;
 
-    --gold-glow: 38 100% 65%;
-    --warm-white: 40 30% 95%;
+    --gold-glow: 45 100% 65%;
+    --warm-white: 40 60% 98%;
+
+    /* Joyful accent palette */
+    --joy-yellow: 45 96% 60%;
+    --joy-pink: 332 82% 66%;
+    --joy-mint: 168 70% 55%;
+    --joy-sky: 205 90% 62%;
+  }
+
+  .dark {
+    --background: 250 30% 8%;
+    --foreground: 40 30% 95%;
+    --card: 250 28% 12%;
+    --card-foreground: 40 30% 95%;
+    --popover: 250 28% 12%;
+    --popover-foreground: 40 30% 95%;
+    --primary: 256 88% 70%;
+    --primary-foreground: 250 30% 8%;
+    --secondary: 168 70% 50%;
+    --secondary-foreground: 250 30% 8%;
+    --muted: 250 20% 18%;
+    --muted-foreground: 240 12% 68%;
+    --accent: 14 92% 65%;
+    --accent-foreground: 250 30% 8%;
+    --border: 250 20% 20%;
+    --input: 250 20% 20%;
+    --ring: 256 88% 70%;
+    --sidebar-background: 250 28% 10%;
+    --sidebar-foreground: 40 20% 88%;
+    --sidebar-primary: 256 88% 70%;
+    --sidebar-primary-foreground: 250 30% 8%;
+    --sidebar-accent: 250 22% 16%;
+    --sidebar-accent-foreground: 40 20% 88%;
+    --sidebar-border: 250 20% 18%;
+    --sidebar-ring: 256 88% 70%;
   }
 }
 
@@ -57,11 +92,17 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Source Sans 3', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    background-image:
+      radial-gradient(at 8% 0%, hsl(var(--primary) / 0.10) 0px, transparent 45%),
+      radial-gradient(at 95% 5%, hsl(var(--accent) / 0.10) 0px, transparent 45%),
+      radial-gradient(at 60% 100%, hsl(var(--secondary) / 0.08) 0px, transparent 50%);
+    background-attachment: fixed;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Fraunces', 'Playfair Display', serif;
+    letter-spacing: -0.01em;
   }
 }
 
@@ -144,30 +185,39 @@
 @layer utilities {
   .text-gradient-gold {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(38 90% 55%), hsl(38 100% 70%), hsl(30 80% 50%));
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)) 55%, hsl(var(--joy-pink)));
+  }
+
+  .text-gradient-joy {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(120deg, hsl(var(--primary)), hsl(var(--joy-pink)) 45%, hsl(var(--accent)) 80%);
   }
 
   .bg-gradient-gold {
-    background-image: linear-gradient(135deg, hsl(38 90% 55%), hsl(30 80% 50%));
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+  }
+
+  .bg-gradient-joy {
+    background-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--joy-pink)) 50%, hsl(var(--accent)) 100%);
   }
 
   .bg-gradient-dark {
-    background-image: linear-gradient(180deg, hsl(220 20% 7%), hsl(220 18% 11%));
+    background-image: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)));
   }
 
   .shadow-gold {
-    box-shadow: 0 0 30px -5px hsl(38 90% 55% / 0.2);
+    box-shadow: 0 10px 30px -10px hsl(var(--primary) / 0.35), 0 4px 12px -4px hsl(var(--accent) / 0.2);
   }
 
   .glow-gold {
-    box-shadow: 0 0 20px hsl(38 90% 55% / 0.15), 0 0 60px hsl(38 90% 55% / 0.05);
+    box-shadow: 0 0 24px hsl(var(--primary) / 0.25), 0 0 80px hsl(var(--accent) / 0.12);
   }
 
   .font-display {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Fraunces', 'Playfair Display', serif;
   }
 
   .font-body {
-    font-family: 'Source Sans 3', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
 }
