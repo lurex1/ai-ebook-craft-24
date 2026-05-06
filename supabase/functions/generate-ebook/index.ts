@@ -514,13 +514,36 @@ ${nextTitle ? `Następna sekcja: "${nextTitle}"` : ""}`,
     // ====== COVER GENERATION ======
     if (action === "cover") {
       const { title, subtitle, style } = params;
-      const prompt = `Create a professional vertical book cover image for an ebook titled "${title}"${subtitle ? `, subtitle: "${subtitle}"` : ""}. Style: ${style}. The cover should be eye-catching, high quality, with the title text "${title}" prominently displayed. Vertical portrait orientation like a real book cover. Ultra high resolution.`;
+
+      // Step 1: Let AI act as art director — pick a visual direction tailored to the topic
+      let artDirection = "";
+      try {
+        const ad = await callAI([
+          { role: "system", content: "You are a senior book cover art director. Given a book title, output a SHORT (max 80 words) English art direction for a professional, modern, magazine-quality book cover. Match the visual genre to the topic (e.g. business → bold editorial typography + abstract data shapes; mindfulness → soft organic gradients + natural light; tech → cinematic 3D render + neon; history → painterly textures; finance → confident geometric composition). Specify: concrete subject matter, color palette (specific hex-like names), lighting, composition, art technique (e.g. editorial photography, 3D render, vector illustration, oil painting, risograph). NEVER use 'pastel', 'cute', 'flat cartoon' or generic stock-illustration look unless the topic clearly demands it. Aim for awwwards / Behance top-tier quality." },
+          { role: "user", content: `Title: "${title}"${subtitle ? `\nSubtitle: "${subtitle}"` : ""}\nUser style hint: ${style}` },
+        ]);
+        artDirection = ad.choices?.[0]?.message?.content?.trim() || "";
+      } catch (_) { /* fallback to generic */ }
+
+      const prompt = `Design an award-winning, professional vertical book cover (2:3 portrait, like Penguin / Phaidon / Apress quality).
+
+BOOK TITLE: "${title}"${subtitle ? `\nSUBTITLE: "${subtitle}"` : ""}
+
+ART DIRECTION:
+${artDirection || `A bold, editorial cover that visually matches the subject. Style hint from user: ${style}.`}
+
+REQUIREMENTS:
+- Cinematic depth, rich color, sophisticated composition — NOT flat pastel cartoon, NOT generic stock illustration, NOT muted/washed-out colors.
+- Strong focal subject directly tied to the topic of the book.
+- Typography: place the title "${title}" prominently and legibly using elegant modern typesetting that fits the genre${subtitle ? `, with subtitle smaller below` : ""}. Crisp, kerned, no spelling errors, no gibberish text.
+- High contrast, intentional palette, modern art direction.
+- Vertical portrait, ultra high resolution, print-ready.`;
 
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image",
+          model: "google/gemini-3-pro-image-preview",
           messages: [{ role: "user", content: prompt }],
           modalities: ["image", "text"],
         }),
