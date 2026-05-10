@@ -1,8 +1,9 @@
-import { useRef, useMemo, useCallback } from "react";
+import { useRef, useMemo, useCallback, useState } from "react";
 import type { Block } from "@/lib/blocks";
 import type { Template } from "@/lib/templates";
 import { TextSelectionToolbar } from "./TextSelectionToolbar";
 import { cleanMarkdownToHtml } from "@/lib/blockUtils";
+import { MediaLibraryPicker } from "./MediaLibraryPicker";
 
 function renderContent(text: string): string {
   return cleanMarkdownToHtml(text);
@@ -22,6 +23,7 @@ interface Props {
 export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerateImage, onReplaceSelection, onExtractToBlock, onUploadImage }: Props) {
   const editRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [libraryOpen, setLibraryOpen] = useState(false);
 
   const handleInput = useCallback(() => {
     if (editRef.current && (block.type === "heading" || block.type === "text")) {
@@ -163,28 +165,53 @@ export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerat
   if (block.type === "image") {
     if (!block.url) {
       return (
+        <>
         <div
           className="border-2 border-dashed rounded-lg flex flex-col items-center justify-center py-8 gap-3 cursor-pointer hover:bg-accent/5 transition-colors"
           style={{ borderColor: template.colors.accent, color: template.colors.accent }}
           onClick={(e) => {
             e.stopPropagation();
-            if (onUploadImage) onUploadImage();
+            setLibraryOpen(true);
           }}
         >
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">📁 Kliknij aby wybrać obraz</span>
+            <span className="text-sm font-medium">📁 Kliknij aby wybrać obraz z biblioteki</span>
           </div>
-          <span className="text-xs opacity-60">lub użyj panelu ustawień po prawej →</span>
-          {onGenerateImage && (
+          <span className="text-xs opacity-60">Wybierz z biblioteki, wgraj nowy lub wygeneruj AI</span>
+          <div className="flex items-center gap-2 mt-1 flex-wrap justify-center">
             <button
-              onClick={(e) => { e.stopPropagation(); onGenerateImage(""); }}
-              className="text-xs px-3 py-1.5 rounded-md transition-colors mt-1"
-              style={{ backgroundColor: template.colors.accent, color: template.colors.bg }}
+              onClick={(e) => { e.stopPropagation(); setLibraryOpen(true); }}
+              className="text-xs px-3 py-1.5 rounded-md transition-colors border"
+              style={{ borderColor: template.colors.accent, color: template.colors.accent, backgroundColor: "transparent" }}
             >
-              ✨ Generuj grafikę AI
+              🖼️ Z biblioteki
             </button>
-          )}
+            {onUploadImage && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onUploadImage(); }}
+                className="text-xs px-3 py-1.5 rounded-md transition-colors border"
+                style={{ borderColor: template.colors.accent, color: template.colors.accent, backgroundColor: "transparent" }}
+              >
+                ⬆️ Wgraj plik
+              </button>
+            )}
+            {onGenerateImage && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onGenerateImage(""); }}
+                className="text-xs px-3 py-1.5 rounded-md transition-colors"
+                style={{ backgroundColor: template.colors.accent, color: template.colors.bg }}
+              >
+                ✨ Generuj grafikę AI
+              </button>
+            )}
+          </div>
         </div>
+        <MediaLibraryPicker
+          open={libraryOpen}
+          onOpenChange={setLibraryOpen}
+          onSelect={(url) => onUpdate({ url })}
+        />
+        </>
       );
     }
     return (
