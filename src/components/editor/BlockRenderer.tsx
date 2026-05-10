@@ -23,6 +23,7 @@ interface Props {
 export function BlockRenderer({ block, template, onUpdate, isSelected, onGenerateImage, onReplaceSelection, onExtractToBlock, onUploadImage }: Props) {
   const editRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [libraryOpen, setLibraryOpen] = useState(false);
 
   const handleInput = useCallback(() => {
     if (editRef.current && (block.type === "heading" || block.type === "text")) {
