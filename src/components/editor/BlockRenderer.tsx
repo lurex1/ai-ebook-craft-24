@@ -1,8 +1,9 @@
-import { useRef, useMemo, useCallback } from "react";
+import { useRef, useMemo, useCallback, useState } from "react";
 import type { Block } from "@/lib/blocks";
 import type { Template } from "@/lib/templates";
 import { TextSelectionToolbar } from "./TextSelectionToolbar";
 import { cleanMarkdownToHtml } from "@/lib/blockUtils";
+import { MediaLibraryPicker } from "./MediaLibraryPicker";
 
 function renderContent(text: string): string {
   return cleanMarkdownToHtml(text);
