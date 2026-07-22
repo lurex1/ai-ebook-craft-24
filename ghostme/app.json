@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "GhostTalk",
+    "slug": "ghostme",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "ghostme",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "backgroundColor": "#1B0B2E",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.ghosttalk.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#1B0B2E"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#1B0B2E",
+          "image": "./assets/images/icon.png",
+          "imageWidth": 160
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "GhostTalk potrzebuje dostępu do galerii, aby przeanalizować screenshot rozmowy.",
+          "cameraPermission": "GhostTalk potrzebuje dostępu do aparatu, aby zrobić zdjęcie rozmowy."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
