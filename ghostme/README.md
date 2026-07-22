@@ -19,14 +19,14 @@ wysyła go do AI i pokazuje pełną analizę oraz trzy gotowe propozycje odpowie
 ## 🛠️ Technologie
 
 Expo SDK 53 · React Native · TypeScript (strict) · Expo Router · NativeWind (Tailwind) ·
-AsyncStorage · OpenAI API (model konfigurowalny w jednym miejscu)
+AsyncStorage · Anthropic API (Claude — model konfigurowalny w jednym miejscu)
 
 ## 🚀 Uruchomienie
 
 ```sh
 cd ghostme
 npm install
-cp .env.example .env   # opcjonalnie: wpisz swój klucz OpenAI
+cp .env.example .env   # opcjonalnie: wpisz swój klucz Anthropic (Claude)
 npm start              # potem: a (Android) / i (iOS) / w (web) lub skan QR w Expo Go
 ```
 
@@ -37,10 +37,9 @@ npm start              # potem: a (Android) / i (iOS) / w (web) lub skan QR w Ex
 
 Cała konfiguracja znajduje się w `src/services/config.ts`:
 
-- `model` — model do analizy rozmowy (domyślnie `gpt-4o-mini`)
-- `visionModel` — model wizyjny do OCR
-- `baseUrl` — endpoint zgodny z OpenAI (łatwa podmiana dostawcy)
-- klucz API: zmienna `EXPO_PUBLIC_OPENAI_API_KEY` w pliku `.env`
+- `model` — model do analizy rozmowy (domyślnie `claude-opus-4-8`; tańsze opcje: `claude-sonnet-5`, `claude-haiku-4-5`)
+- `visionModel` — model wizyjny do OCR (Claude czyta screenshot bezpośrednio)
+- klucz API: zmienna `EXPO_PUBLIC_ANTHROPIC_API_KEY` w pliku `.env` (z platform.claude.com)
 
 ## 📁 Struktura
 

@@ -1,6 +1,6 @@
 /**
  * Dane testowe (tryb DEMO).
- * Używane, gdy nie skonfigurowano klucza OpenAI API — dzięki temu
+ * Używane, gdy nie skonfigurowano klucza Anthropic API — dzięki temu
  * całą aplikację można przeklikać bez ponoszenia kosztów API.
  */
 

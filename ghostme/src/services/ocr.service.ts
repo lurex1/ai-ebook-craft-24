@@ -1,13 +1,13 @@
 /**
  * Serwis OCR — odczytuje tekst rozmowy ze screenshota.
- * Wykorzystuje model wizyjny OpenAI (obraz przesyłany jako base64).
+ * Wykorzystuje wizję modelu Claude (obraz przesyłany jako base64).
  * W trybie DEMO (brak klucza API) zwraca przykładową rozmowę.
  */
 
 import * as FileSystem from "expo-file-system";
 
 import { AI_CONFIG, isDemoMode } from "./config";
-import { AiError, chatCompletion } from "./openaiClient";
+import { AiError, askClaude } from "./anthropicClient";
 import { MOCK_OCR_TEXT, mockDelay } from "@/utils/mockData";
 
 const OCR_PROMPT = `Odczytaj tekst rozmowy z załączonego screenshota (Messenger, Instagram, WhatsApp lub SMS).
@@ -18,6 +18,14 @@ Zasady:
 - Zachowaj emotki i oryginalną pisownię.
 - Pomiń elementy interfejsu (godziny, statusy, nazwy przycisków).
 - Jeśli na obrazie nie ma rozmowy, zwróć dokładnie: BRAK_ROZMOWY`;
+
+/** Typ MIME obrazu na podstawie rozszerzenia pliku (screenshoty to zwykle PNG). */
+function mediaTypeFromUri(uri: string): "image/png" | "image/jpeg" | "image/webp" {
+  const lower = uri.toLowerCase();
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".webp")) return "image/webp";
+  return "image/jpeg";
+}
 
 /**
  * Odczytuje tekst rozmowy ze screenshota pod wskazanym URI.
@@ -30,7 +38,7 @@ export async function extractTextFromImage(imageUri: string): Promise<string> {
     return MOCK_OCR_TEXT;
   }
 
-  // Konwertujemy lokalny plik na base64, aby przesłać go do modelu wizyjnego
+  // Konwertujemy lokalny plik na base64, aby przesłać go do modelu
   let base64: string;
   try {
     base64 = await FileSystem.readAsStringAsync(imageUri, {
@@ -40,18 +48,17 @@ export async function extractTextFromImage(imageUri: string): Promise<string> {
     throw new AiError("Nie udało się odczytać pliku ze zdjęciem. Wybierz je ponownie.");
   }
 
-  const text = await chatCompletion(
+  const text = await askClaude(
     [
       {
-        role: "user",
-        content: [
-          { type: "text", text: OCR_PROMPT },
-          {
-            type: "image_url",
-            image_url: { url: `data:image/jpeg;base64,${base64}` },
-          },
-        ],
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: mediaTypeFromUri(imageUri),
+          data: base64,
+        },
       },
+      { type: "text", text: OCR_PROMPT },
     ],
     AI_CONFIG.visionModel
   );

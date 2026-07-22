@@ -1,17 +1,18 @@
 /**
- * Serwis analizy AI — wysyła tekst rozmowy do modelu i zwraca
+ * Serwis analizy AI — wysyła tekst rozmowy do Claude i zwraca
  * ustrukturyzowaną analizę oraz trzy propozycje odpowiedzi.
+ * Structured outputs wymuszają na modelu poprawny JSON zgodny ze schematem.
  * W trybie DEMO (brak klucza API) zwraca dane testowe.
  */
 
-import { isDemoMode } from "./config";
-import { AiError, chatCompletion } from "./openaiClient";
+import { AI_CONFIG, isDemoMode } from "./config";
+import { AiError, askClaude } from "./anthropicClient";
 import type { AiResponse } from "@/types/analysis";
 import { clampPercent, extractJson } from "@/utils/json";
 import { MOCK_AI_RESPONSE, mockDelay } from "@/utils/mockData";
 
-/** Instrukcja systemowa definiująca zadanie i format odpowiedzi AI. */
-const SYSTEM_PROMPT = `Jesteś ekspertem od komunikacji i relacji. Analizujesz rozmowy z komunikatorów (Messenger, Instagram, WhatsApp, SMS) i pomagasz użytkownikowi ("Ja") zrozumieć drugą osobę oraz dobrze odpowiedzieć.
+/** Instrukcja dla AI — analiza rozmowy i trzy propozycje odpowiedzi. */
+const ANALYSIS_PROMPT = `Jesteś ekspertem od komunikacji i relacji. Analizujesz rozmowy z komunikatorów (Messenger, Instagram, WhatsApp, SMS) i pomagasz użytkownikowi ("Ja") zrozumieć drugą osobę oraz dobrze odpowiedzieć.
 
 Przeanalizuj poniższą rozmowę.
 
@@ -29,26 +30,53 @@ Następnie wygeneruj trzy odpowiedzi:
 2. pewną siebie
 3. miłą
 
-Zwracaj odpowiedź wyłącznie jako poprawny JSON o dokładnie takiej strukturze (bez markdown, bez komentarzy):
-{
-  "analysis": {
-    "tone": "opis tonu rozmowy",
-    "interestLevel": "opis poziomu zainteresowania",
-    "replyChance": 75,
-    "redFlags": ["..."],
-    "greenFlags": ["..."],
-    "behaviorInsight": "co oznacza zachowanie drugiej osoby",
-    "worthContinuing": true,
-    "summary": "krótkie podsumowanie"
-  },
-  "replies": {
-    "funny": "zabawna odpowiedź",
-    "confident": "pewna siebie odpowiedź",
-    "kind": "miła odpowiedź"
-  }
-}
-
 Wszystkie teksty pisz po polsku. Odpowiedzi (replies) mają brzmieć naturalnie, jak wiadomość napisana przez człowieka.`;
+
+/** Schemat JSON wymuszany na modelu (structured outputs). */
+const RESPONSE_SCHEMA = {
+  type: "object",
+  properties: {
+    analysis: {
+      type: "object",
+      properties: {
+        tone: { type: "string", description: "Opis tonu rozmowy" },
+        interestLevel: { type: "string", description: "Opis poziomu zainteresowania" },
+        replyChance: { type: "integer", description: "Szansa na odpowiedź 0-100" },
+        redFlags: { type: "array", items: { type: "string" } },
+        greenFlags: { type: "array", items: { type: "string" } },
+        behaviorInsight: {
+          type: "string",
+          description: "Co oznacza zachowanie drugiej osoby",
+        },
+        worthContinuing: { type: "boolean" },
+        summary: { type: "string", description: "Krótkie podsumowanie" },
+      },
+      required: [
+        "tone",
+        "interestLevel",
+        "replyChance",
+        "redFlags",
+        "greenFlags",
+        "behaviorInsight",
+        "worthContinuing",
+        "summary",
+      ],
+      additionalProperties: false,
+    },
+    replies: {
+      type: "object",
+      properties: {
+        funny: { type: "string", description: "Zabawna odpowiedź" },
+        confident: { type: "string", description: "Pewna siebie odpowiedź" },
+        kind: { type: "string", description: "Miła odpowiedź" },
+      },
+      required: ["funny", "confident", "kind"],
+      additionalProperties: false,
+    },
+  },
+  required: ["analysis", "replies"],
+  additionalProperties: false,
+} as const;
 
 /**
  * Analizuje tekst rozmowy i zwraca pełny wynik (analiza + odpowiedzi).
@@ -61,10 +89,11 @@ export async function analyzeConversation(conversationText: string): Promise<AiR
     return MOCK_AI_RESPONSE;
   }
 
-  const raw = await chatCompletion([
-    { role: "system", content: SYSTEM_PROMPT },
-    { role: "user", content: `Rozmowa do analizy:\n\n${conversationText}` },
-  ]);
+  const raw = await askClaude(
+    [{ type: "text", text: `${ANALYSIS_PROMPT}\n\nRozmowa do analizy:\n\n${conversationText}` }],
+    AI_CONFIG.model,
+    RESPONSE_SCHEMA as unknown as Record<string, unknown>
+  );
 
   let parsed: AiResponse;
   try {

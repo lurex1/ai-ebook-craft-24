@@ -1,27 +1,21 @@
 /**
- * Centralna konfiguracja AI.
- * Model można łatwo podmienić w jednym miejscu — wystarczy zmienić
- * MODEL / VISION_MODEL albo BASE_URL (np. na inny endpoint zgodny z OpenAI).
+ * Centralna konfiguracja AI (Anthropic Claude).
+ * Model można łatwo podmienić w jednym miejscu — np. na "claude-haiku-4-5"
+ * (najtańszy) albo "claude-sonnet-5", jeśli chcesz obniżyć koszty.
  */
 
 export const AI_CONFIG = {
-  /** Klucz API — ustaw w pliku .env jako EXPO_PUBLIC_OPENAI_API_KEY */
-  apiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? "",
+  /** Klucz API — ustaw w pliku .env jako EXPO_PUBLIC_ANTHROPIC_API_KEY */
+  apiKey: process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? "",
 
-  /** Endpoint zgodny z OpenAI (można podmienić np. na proxy lub inny dostawca) */
-  baseUrl: "https://api.openai.com/v1",
-
-  /** Model do analizy tekstu rozmowy */
-  model: "gpt-4o-mini",
+  /** Model do analizy rozmowy */
+  model: "claude-opus-4-8",
 
   /** Model wizyjny do OCR (odczyt tekstu ze screenshota) */
-  visionModel: "gpt-4o-mini",
+  visionModel: "claude-opus-4-8",
 
   /** Maksymalna liczba tokenów odpowiedzi */
-  maxTokens: 1200,
-
-  /** Temperatura — wyższa daje bardziej kreatywne odpowiedzi */
-  temperature: 0.7,
+  maxTokens: 4096,
 } as const;
 
 /** Czy aplikacja działa w trybie DEMO (bez klucza API → dane testowe). */
