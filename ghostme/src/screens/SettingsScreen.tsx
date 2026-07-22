@@ -3,18 +3,21 @@
  */
 
 import Constants from "expo-constants";
-import { Alert, ScrollView, Switch, Text, View } from "react-native";
+import { Alert, Image, ScrollView, Switch, Text, View } from "react-native";
 
 import { GhostCard } from "@/components/GhostCard";
 import { GradientBackground } from "@/components/GradientBackground";
 import { GradientButton } from "@/components/GradientButton";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { useAppTheme } from "@/hooks/useAppTheme";
+import { useHistory } from "@/hooks/useHistory";
 import { AI_CONFIG, isDemoMode } from "@/services/config";
 import { clearHistory } from "@/services/storage.service";
+import { LOGO_DATA_URI } from "@/utils/logo";
 
 export function SettingsScreen() {
   const { darkMode, toggleDarkMode } = useAppTheme();
+  const { history } = useHistory();
 
   /** Czyszczenie historii z potwierdzeniem. */
   const confirmClearHistory = () => {
@@ -33,8 +36,32 @@ export function SettingsScreen() {
 
   return (
     <GradientBackground>
-      <ScreenHeader title="Profil i ustawienia" hideBack />
+      <ScreenHeader title="Profil" hideBack />
       <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 32 }}>
+        {/* Nagłówek profilu — awatar-duszek i licznik rozkmin */}
+        <View className="items-center mb-6 mt-2">
+          <View
+            className="rounded-full bg-ghost-card border-2 border-ghost-pink items-center justify-center"
+            style={{
+              width: 110,
+              height: 110,
+              shadowColor: "#FF2D8D",
+              shadowOpacity: 0.5,
+              shadowRadius: 18,
+              shadowOffset: { width: 0, height: 0 },
+              elevation: 8,
+            }}
+          >
+            <Image source={{ uri: LOGO_DATA_URI }} style={{ width: 72, height: 72 }} />
+          </View>
+          <Text className="text-ghost-text text-xl font-bold mt-4">Ghost 👻</Text>
+          <View className="bg-ghost-pink/20 rounded-full px-4 py-1 mt-2">
+            <Text className="text-ghost-pink text-sm font-bold">
+              {history.length} {history.length === 1 ? "rozkmina" : "rozkmin"} 🔮
+            </Text>
+          </View>
+        </View>
+
         {/* Wygląd */}
         <GhostCard icon="🎨" title="Wygląd">
           <View className="flex-row items-center justify-between">

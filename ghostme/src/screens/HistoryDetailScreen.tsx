@@ -11,6 +11,7 @@ import { AnalysisReport } from "@/components/AnalysisReport";
 import { GhostCard } from "@/components/GhostCard";
 import { GradientBackground } from "@/components/GradientBackground";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
+import { MatchSummary } from "@/components/MatchSummary";
 import { RepliesList } from "@/components/RepliesList";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { getRecord } from "@/services/storage.service";
@@ -58,19 +59,23 @@ export function HistoryDetailScreen() {
 
   return (
     <GradientBackground>
-      <ScreenHeader title="Raport z analizy" />
+      <ScreenHeader title="Vibe Check" />
       <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 32 }}>
-        <Text className="text-ghost-muted text-sm mb-4">{formatDate(record.createdAt)}</Text>
+        <Text className="text-ghost-muted text-xs mb-4">{formatDate(record.createdAt)}</Text>
+
+        {/* Pasek dopasowania + duszek z podsumowaniem */}
+        <MatchSummary percent={record.analysis.replyChance} summary={record.analysis.summary} />
+
+        {/* Proponowane odpowiedzi */}
+        <RepliesList replies={record.replies} />
+
+        {/* Pełny raport */}
+        <Text className="text-ghost-text text-lg font-bold mb-4 mt-4">🔍 Pełny raport</Text>
+        <AnalysisReport analysis={record.analysis} hideChance />
 
         <GhostCard icon="💬" title="Analizowana rozmowa">
           <Text className="text-ghost-muted text-sm leading-6">{record.conversationText}</Text>
         </GhostCard>
-
-        <AnalysisReport analysis={record.analysis} />
-
-        <View className="mt-2">
-          <RepliesList replies={record.replies} />
-        </View>
       </ScrollView>
     </GradientBackground>
   );
