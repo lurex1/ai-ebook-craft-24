@@ -1,4 +1,4 @@
-# 👻 GhostMe
+# 👻 GhostTalk
 
 Aplikacja mobilna (Expo + React Native + TypeScript), która analizuje screenshoty rozmów
 z Messengera, Instagrama, WhatsAppa i SMS. Odczytuje tekst (OCR przez model wizyjny),

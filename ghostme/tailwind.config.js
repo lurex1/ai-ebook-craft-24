@@ -6,13 +6,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Paleta GhostMe "grape soda" — śliwkowa noc z cukierkowym różem i fioletem
+        // Paleta GhostTalk "grape soda" — śliwkowa noc z cukierkowym różem i fioletem
         ghost: {
           bg: "#1B0B2E", // tło aplikacji
           card: "#2A1445", // tło kart
           cardLight: "#3A1D5E", // jaśniejsza wersja karty (np. pola input)
           border: "#4A2A75", // obramowania kart
-          pink: "#FF6EC7", // główny róż (akcent)
+          pink: "#FF2D8D", // główny róż (akcent)
           purple: "#A855F7", // główny fiolet
           text: "#FDF4FF", // tekst podstawowy
           muted: "#C9A8E8", // tekst drugorzędny

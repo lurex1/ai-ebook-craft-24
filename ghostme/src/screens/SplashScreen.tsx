@@ -1,5 +1,5 @@
 /**
- * Splash Screen — logo GhostMe z animacją (fade + scale),
+ * Splash Screen — logo GhostTalk z animacją (fade + scale),
  * po ~2 sekundach automatyczne przejście do Home.
  */
 
@@ -36,7 +36,7 @@ export function SplashScreen() {
             source={{ uri: LOGO_DATA_URI }}
             style={{ width: 170, height: 170, marginBottom: 20 }}
           />
-          <Text className="text-ghost-text text-4xl font-bold">GhostMe</Text>
+          <Text className="text-ghost-text text-4xl font-bold">GhostTalk</Text>
           <Text className="text-ghost-muted text-base mt-2">Rozkminimy każdą rozmowę ✨</Text>
         </Animated.View>
       </View>

@@ -1,5 +1,5 @@
 /**
- * Logo GhostMe osadzone jako data URI — dzieki temu wyswietla sie
+ * Logo GhostTalk osadzone jako data URI — dzieki temu wyswietla sie
  * wszedzie (natywnie i w podgladzie web) bez ladowania zewnetrznego pliku.
  */
 

@@ -35,7 +35,7 @@ export function ChanceBar({ percent }: ChanceBarProps) {
       <View className="h-4 bg-ghost-cardLight rounded-full overflow-hidden">
         <Animated.View style={{ width }} className="h-full">
           <LinearGradient
-            colors={["#FF6EC7", "#A855F7"]}
+            colors={["#FF2D8D", "#A855F7"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={{ flex: 1, borderRadius: 999 }}

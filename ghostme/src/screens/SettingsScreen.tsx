@@ -41,13 +41,13 @@ export function SettingsScreen() {
             <View className="flex-1 pr-4">
               <Text className="text-ghost-text text-base font-bold">Tryb ciemny</Text>
               <Text className="text-ghost-muted text-sm mt-1">
-                GhostMe został zaprojektowany z myślą o ciemnym motywie.
+                GhostTalk został zaprojektowany z myślą o ciemnym motywie.
               </Text>
             </View>
             <Switch
               value={darkMode}
               onValueChange={toggleDarkMode}
-              trackColor={{ false: "#4A2A75", true: "#FF6EC7" }}
+              trackColor={{ false: "#4A2A75", true: "#FF2D8D" }}
               thumbColor="#F4F1FF"
             />
           </View>
@@ -69,12 +69,12 @@ export function SettingsScreen() {
         {/* Informacje o aplikacji */}
         <GhostCard icon="👻" title="O aplikacji">
           <View className="gap-2">
-            <InfoRow label="Nazwa" value="GhostMe" />
+            <InfoRow label="Nazwa" value="GhostTalk" />
             <InfoRow label="Wersja" value={Constants.expoConfig?.version ?? "1.0.0"} />
             <InfoRow label="Model AI" value={isDemoMode() ? "Tryb demo (dane testowe)" : AI_CONFIG.model} />
           </View>
           <Text className="text-ghost-muted text-sm mt-4 leading-6">
-            GhostMe analizuje screenshoty rozmów z komunikatorów i podpowiada, co odpisać. Analiza
+            GhostTalk analizuje screenshoty rozmów z komunikatorów i podpowiada, co odpisać. Analiza
             AI ma charakter pomocniczy — ostateczna decyzja zawsze należy do Ciebie 💜
           </Text>
         </GhostCard>

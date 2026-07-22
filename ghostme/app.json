@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "GhostMe",
+    "name": "GhostTalk",
     "slug": "ghostme",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -36,8 +36,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "GhostMe potrzebuje dostępu do galerii, aby przeanalizować screenshot rozmowy.",
-          "cameraPermission": "GhostMe potrzebuje dostępu do aparatu, aby zrobić zdjęcie rozmowy."
+          "photosPermission": "GhostTalk potrzebuje dostępu do galerii, aby przeanalizować screenshot rozmowy.",
+          "cameraPermission": "GhostTalk potrzebuje dostępu do aparatu, aby zrobić zdjęcie rozmowy."
         }
       ]
     ],

@@ -1,5 +1,5 @@
 /**
- * Typy domenowe GhostMe — wynik analizy AI, propozycje odpowiedzi
+ * Typy domenowe GhostTalk — wynik analizy AI, propozycje odpowiedzi
  * oraz rekord zapisywany w historii (AsyncStorage).
  */
 

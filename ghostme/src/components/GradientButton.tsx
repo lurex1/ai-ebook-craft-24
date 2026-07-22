@@ -64,19 +64,19 @@ export function GradientButton({
       // Różowa poświata pod głównym przyciskiem (iOS: shadow, Android: elevation).
       // borderRadius na kontenerze cienia, żeby poświata miała kształt przycisku.
       style={{
-        borderRadius: 24,
-        shadowColor: "#FF6EC7",
-        shadowOpacity: 0.35,
+        borderRadius: 999,
+        shadowColor: "#FF2D8D",
+        shadowOpacity: 0.4,
         shadowRadius: 16,
         shadowOffset: { width: 0, height: 4 },
         elevation: 8,
       }}
     >
       <LinearGradient
-        colors={["#FF6EC7", "#A855F7"]}
+        colors={["#FF4FA0", "#FF2D8D"]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={{ borderRadius: 24 }}
+        end={{ x: 1, y: 1 }}
+        style={{ borderRadius: 999 }}
       >
         {content}
       </LinearGradient>
