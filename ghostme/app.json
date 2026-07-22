@@ -8,14 +8,14 @@
     "scheme": "ghostme",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
-    "backgroundColor": "#0B0716",
+    "backgroundColor": "#1B0B2E",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#0B0716"
+        "backgroundColor": "#1B0B2E"
       },
       "edgeToEdgeEnabled": true
     },
@@ -28,7 +28,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0B0716",
+          "backgroundColor": "#1B0B2E",
           "image": "./assets/images/icon.png",
           "imageWidth": 160
         }

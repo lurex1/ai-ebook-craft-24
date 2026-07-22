@@ -58,10 +58,10 @@ export function UploadScreen() {
 
   return (
     <GradientBackground>
-      <ScreenHeader title="Dodaj screenshot" />
+      <ScreenHeader title="Wrzuć screena" />
       <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 32 }}>
         <Text className="text-ghost-muted text-base mb-6">
-          Dodaj screenshot rozmowy z Messengera, Instagrama, WhatsAppa lub SMS.
+          Screenshot rozmowy z Messengera, Insta, WhatsAppa albo SMS — wrzucaj śmiało 💌
         </Text>
 
         {/* Podgląd wybranego zdjęcia lub placeholder */}

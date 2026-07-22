@@ -47,7 +47,7 @@ export function SettingsScreen() {
             <Switch
               value={darkMode}
               onValueChange={toggleDarkMode}
-              trackColor={{ false: "#2C2354", true: "#8B5CF6" }}
+              trackColor={{ false: "#4A2A75", true: "#FF6EC7" }}
               thumbColor="#F4F1FF"
             />
           </View>

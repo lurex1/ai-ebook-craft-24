@@ -41,7 +41,7 @@ export function RepliesScreen() {
       <ScreenHeader title="Propozycje odpowiedzi" />
       <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 32 }}>
         <Text className="text-ghost-muted text-base mb-5">
-          Wybierz styl, który najlepiej do Ciebie pasuje, i skopiuj gotową odpowiedź.
+          Wybierz vibe, który czujesz, i skopiuj gotową odpowiedź 💬
         </Text>
 
         <ReplyCard icon="😂" label="Zabawna" text={record.replies.funny} />

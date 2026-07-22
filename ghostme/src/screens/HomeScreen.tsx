@@ -54,31 +54,31 @@ export function HomeScreen() {
         ) : null}
 
         {/* Główna akcja */}
-        <View className="bg-ghost-card border border-ghost-border rounded-3xl p-6 mb-8 items-center">
+        <View className="bg-ghost-card border border-ghost-border rounded-[32px] p-6 mb-8 items-center">
           <Text className="text-5xl mb-3">💬</Text>
-          <Text className="text-ghost-text text-lg font-bold text-center mb-1">
-            Nie wiesz, co odpisać?
+          <Text className="text-ghost-text text-xl font-bold text-center mb-1">
+            Nie wiesz, co odpisać? 👀
           </Text>
           <Text className="text-ghost-muted text-sm text-center mb-5">
-            Dodaj screenshot rozmowy, a AI przeanalizuje ją i podpowie najlepszą odpowiedź.
+            Wrzuć screena rozmowy — AI rozkmini vibe i podpowie idealną odpowiedź ✨
           </Text>
-          <GradientButton label="Przeanalizuj rozmowę" icon="🔍" onPress={startAnalysis} />
+          <GradientButton label="Przeanalizuj rozmowę" icon="🔮" onPress={startAnalysis} />
         </View>
 
         {/* Ostatnie analizy */}
         <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-ghost-text text-lg font-bold">Ostatnie analizy</Text>
+          <Text className="text-ghost-text text-lg font-bold">Ostatnie rozkminy</Text>
           {history.length > 0 ? (
             <Pressable onPress={() => router.push("/history")} hitSlop={8} className="active:opacity-70">
-              <Text className="text-ghost-purple text-sm font-bold">Zobacz wszystkie →</Text>
+              <Text className="text-ghost-pink text-sm font-bold">Zobacz wszystkie →</Text>
             </Pressable>
           ) : null}
         </View>
 
         {recent.length === 0 ? (
-          <View className="bg-ghost-card border border-ghost-border rounded-3xl p-6 items-center">
+          <View className="bg-ghost-card border border-ghost-border rounded-[32px] p-6 items-center">
             <Text className="text-ghost-muted text-sm text-center">
-              Brak analiz. Zacznij od przycisku powyżej 👆
+              Jeszcze pusto. Wrzuć pierwszego screena 👆💜
             </Text>
           </View>
         ) : (

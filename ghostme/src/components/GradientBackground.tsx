@@ -1,5 +1,5 @@
 /**
- * Tło ekranu — subtelny fioletowo-niebieski gradient na ciemnym tle
+ * Tło ekranu — śliwkowa noc z delikatnym różowym poblaskiem
  * + bezpieczne marginesy (notch, pasek systemowy).
  */
 
@@ -13,7 +13,7 @@ interface GradientBackgroundProps {
 export function GradientBackground({ children }: GradientBackgroundProps) {
   return (
     <LinearGradient
-      colors={["#1B1038", "#0B0716", "#0A1024"]}
+      colors={["#33104F", "#1B0B2E", "#2E0F3D"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       className="flex-1"

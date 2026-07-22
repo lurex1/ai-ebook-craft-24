@@ -47,10 +47,10 @@ export function HistoryScreen() {
         ListEmptyComponent={
           !loading ? (
             <View className="flex-1 items-center justify-center px-8">
-              <Text className="text-5xl mb-4">🗂️</Text>
-              <Text className="text-ghost-text text-lg font-bold mb-2">Brak historii</Text>
+              <Text className="text-5xl mb-4">👻</Text>
+              <Text className="text-ghost-text text-lg font-bold mb-2">Jeszcze pusto</Text>
               <Text className="text-ghost-muted text-base text-center">
-                Twoje przeanalizowane rozmowy pojawią się tutaj.
+                Twoje rozkminy pojawią się tutaj 💜
               </Text>
             </View>
           ) : null

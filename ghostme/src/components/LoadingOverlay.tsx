@@ -31,9 +31,9 @@ export function LoadingOverlay({ message, hint }: LoadingOverlayProps) {
   return (
     <View className="flex-1 items-center justify-center px-8">
       <Animated.Text style={{ transform: [{ translateY: float }] }} className="text-6xl mb-6">
-        👻
+        👻✨
       </Animated.Text>
-      <ActivityIndicator size="large" color="#8B5CF6" />
+      <ActivityIndicator size="large" color="#FF6EC7" />
       <Text className="text-ghost-text text-lg font-bold mt-6 text-center">{message}</Text>
       {hint ? <Text className="text-ghost-muted text-sm mt-2 text-center">{hint}</Text> : null}
     </View>

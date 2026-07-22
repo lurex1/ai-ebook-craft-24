@@ -46,7 +46,7 @@ export function OcrScreen() {
   if (loading) {
     return (
       <GradientBackground>
-        <LoadingOverlay message="Odczytuję tekst ze screenshota..." hint="To potrwa kilka sekund" />
+        <LoadingOverlay message="Czytam Waszą rozmowę..." hint="Sekundka, AI odczytuje screena 👀" />
       </GradientBackground>
     );
   }
@@ -66,10 +66,10 @@ export function OcrScreen() {
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <ScreenHeader title="Odczyt tekstu" />
+        <ScreenHeader title="Sprawdź tekst" />
         <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 32 }}>
           <Text className="text-ghost-muted text-base mb-4">
-            Sprawdź odczytany tekst i popraw go, jeśli coś się nie zgadza.
+            Zerknij, czy AI dobrze odczytało rozmowę — możesz poprawić ✏️
           </Text>
 
           {/* Edytowalny wynik OCR */}

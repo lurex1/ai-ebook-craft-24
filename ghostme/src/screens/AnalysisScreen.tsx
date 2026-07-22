@@ -47,7 +47,7 @@ export function AnalysisScreen() {
   if (loading) {
     return (
       <GradientBackground>
-        <LoadingOverlay message="Analizuję rozmowę..." hint="AI ocenia ton, sygnały i szanse na odpowiedź" />
+        <LoadingOverlay message="Rozkminiam Waszą rozmowę..." hint="Sprawdzam vibe, sygnały i szanse na odpowiedź 🔮" />
       </GradientBackground>
     );
   }

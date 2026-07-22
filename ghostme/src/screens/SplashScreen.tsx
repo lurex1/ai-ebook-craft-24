@@ -32,7 +32,7 @@ export function SplashScreen() {
         <Animated.View style={{ opacity, transform: [{ scale }] }} className="items-center">
           <Text className="text-8xl mb-4">👻</Text>
           <Text className="text-ghost-text text-4xl font-bold">GhostMe</Text>
-          <Text className="text-ghost-muted text-base mt-2">Zrozum swoje rozmowy</Text>
+          <Text className="text-ghost-muted text-base mt-2">Rozkminimy każdą rozmowę ✨</Text>
         </Animated.View>
       </View>
     </GradientBackground>

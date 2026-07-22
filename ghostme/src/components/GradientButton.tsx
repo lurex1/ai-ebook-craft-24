@@ -1,6 +1,7 @@
 /**
- * Główny przycisk akcji — duży, zaokrąglony, z gradientem fiolet → niebieski.
- * Obsługuje stan ładowania oraz wariant drugorzędny (obrys zamiast gradientu).
+ * Główny przycisk akcji — duży, mocno zaokrąglony, z gradientem róż → fiolet
+ * i delikatną różową poświatą. Obsługuje stan ładowania oraz wariant
+ * drugorzędny (obrys zamiast gradientu).
  */
 
 import { LinearGradient } from "expo-linear-gradient";
@@ -46,7 +47,7 @@ export function GradientButton({
       <Pressable
         onPress={onPress}
         disabled={isBlocked}
-        className={`rounded-2xl border-2 border-ghost-border bg-ghost-card active:opacity-80 ${
+        className={`rounded-3xl border-2 border-ghost-border bg-ghost-card active:opacity-80 ${
           isBlocked ? "opacity-50" : ""
         }`}
       >
@@ -56,13 +57,26 @@ export function GradientButton({
   }
 
   return (
-    <Pressable onPress={onPress} disabled={isBlocked} className={`active:opacity-80 ${isBlocked ? "opacity-60" : ""}`}>
+    <Pressable
+      onPress={onPress}
+      disabled={isBlocked}
+      className={`active:opacity-80 ${isBlocked ? "opacity-60" : ""}`}
+      // Różowa poświata pod głównym przyciskiem (iOS: shadow, Android: elevation).
+      // borderRadius na kontenerze cienia, żeby poświata miała kształt przycisku.
+      style={{
+        borderRadius: 24,
+        shadowColor: "#FF6EC7",
+        shadowOpacity: 0.35,
+        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 8,
+      }}
+    >
       <LinearGradient
-        colors={["#8B5CF6", "#3B82F6"]}
+        colors={["#FF6EC7", "#A855F7"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        className="rounded-2xl"
-        style={{ borderRadius: 16 }}
+        style={{ borderRadius: 24 }}
       >
         {content}
       </LinearGradient>
