@@ -9,10 +9,10 @@ export const AI_CONFIG = {
   apiKey: process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? "",
 
   /** Model do analizy rozmowy */
-  model: "claude-opus-4-8",
+  model: "claude-sonnet-5",
 
   /** Model wizyjny do OCR (odczyt tekstu ze screenshota) */
-  visionModel: "claude-opus-4-8",
+  visionModel: "claude-sonnet-5",
 
   /** Maksymalna liczba tokenów odpowiedzi */
   maxTokens: 4096,

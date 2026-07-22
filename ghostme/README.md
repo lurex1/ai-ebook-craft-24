@@ -37,7 +37,7 @@ npm start              # potem: a (Android) / i (iOS) / w (web) lub skan QR w Ex
 
 Cała konfiguracja znajduje się w `src/services/config.ts`:
 
-- `model` — model do analizy rozmowy (domyślnie `claude-opus-4-8`; tańsze opcje: `claude-sonnet-5`, `claude-haiku-4-5`)
+- `model` — model do analizy rozmowy (domyślnie `claude-sonnet-5`; najtańszy: `claude-haiku-4-5`, najmocniejszy: `claude-opus-4-8`)
 - `visionModel` — model wizyjny do OCR (Claude czyta screenshot bezpośrednio)
 - klucz API: zmienna `EXPO_PUBLIC_ANTHROPIC_API_KEY` w pliku `.env` (z platform.claude.com)
 
