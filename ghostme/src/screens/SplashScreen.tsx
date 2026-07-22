@@ -5,9 +5,10 @@
 
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
-import { Animated, Text, View } from "react-native";
+import { Animated, Image, Text, View } from "react-native";
 
 import { GradientBackground } from "@/components/GradientBackground";
+import { LOGO_DATA_URI } from "@/utils/logo";
 
 export function SplashScreen() {
   const router = useRouter();
@@ -30,7 +31,11 @@ export function SplashScreen() {
     <GradientBackground>
       <View className="flex-1 items-center justify-center">
         <Animated.View style={{ opacity, transform: [{ scale }] }} className="items-center">
-          <Text className="text-8xl mb-4">👻</Text>
+          {/* Logo aplikacji */}
+          <Image
+            source={{ uri: LOGO_DATA_URI }}
+            style={{ width: 170, height: 170, marginBottom: 20 }}
+          />
           <Text className="text-ghost-text text-4xl font-bold">GhostMe</Text>
           <Text className="text-ghost-muted text-base mt-2">Rozkminimy każdą rozmowę ✨</Text>
         </Animated.View>

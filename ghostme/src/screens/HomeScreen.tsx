@@ -4,7 +4,7 @@
  */
 
 import { useRouter } from "expo-router";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
 
 import { GradientBackground } from "@/components/GradientBackground";
 import { GradientButton } from "@/components/GradientButton";
@@ -12,6 +12,7 @@ import { HistoryItem } from "@/components/HistoryItem";
 import { useAnalysisFlow } from "@/hooks/useAnalysisFlow";
 import { useHistory } from "@/hooks/useHistory";
 import { isDemoMode } from "@/services/config";
+import { LOGO_DATA_URI } from "@/utils/logo";
 
 export function HomeScreen() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export function HomeScreen() {
         {/* Nagłówek z logo i przyciskiem ustawień */}
         <View className="flex-row items-center justify-between py-6">
           <View className="flex-row items-center gap-2">
-            <Text className="text-3xl">👻</Text>
+            <Image source={{ uri: LOGO_DATA_URI }} style={{ width: 38, height: 38 }} />
             <Text className="text-ghost-text text-2xl font-bold">GhostMe</Text>
           </View>
           <Pressable
