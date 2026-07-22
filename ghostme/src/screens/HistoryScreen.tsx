@@ -25,7 +25,7 @@ export function HistoryScreen() {
 
   return (
     <GradientBackground>
-      <ScreenHeader title="Historia analiz" />
+      <ScreenHeader title="Historia rozkmin" hideBack />
       <FlatList
         data={history}
         keyExtractor={(record) => record.id}

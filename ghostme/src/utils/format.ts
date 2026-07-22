@@ -18,6 +18,20 @@ export function formatDate(timestamp: number): string {
   });
 }
 
+/** Formatuje timestamp jako względny czas, np. "2 min temu", "wczoraj". */
+export function formatRelative(timestamp: number): string {
+  const diffMs = Date.now() - timestamp;
+  const minutes = Math.floor(diffMs / 60_000);
+  if (minutes < 1) return "przed chwilą";
+  if (minutes < 60) return `${minutes} min temu`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} godz. temu`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "wczoraj";
+  if (days < 7) return `${days} dni temu`;
+  return formatDate(timestamp);
+}
+
 /** Skraca tekst do podanej długości, dodając wielokropek. */
 export function truncate(text: string, maxLength = 80): string {
   const clean = text.replace(/\s+/g, " ").trim();

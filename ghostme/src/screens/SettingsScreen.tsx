@@ -33,7 +33,7 @@ export function SettingsScreen() {
 
   return (
     <GradientBackground>
-      <ScreenHeader title="Ustawienia" />
+      <ScreenHeader title="Profil i ustawienia" hideBack />
       <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 32 }}>
         {/* Wygląd */}
         <GhostCard icon="🎨" title="Wygląd">
