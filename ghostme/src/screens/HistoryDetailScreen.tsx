@@ -11,7 +11,7 @@ import { AnalysisReport } from "@/components/AnalysisReport";
 import { GhostCard } from "@/components/GhostCard";
 import { GradientBackground } from "@/components/GradientBackground";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
-import { ReplyCard } from "@/components/ReplyCard";
+import { RepliesList } from "@/components/RepliesList";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { getRecord } from "@/services/storage.service";
 import type { AnalysisRecord } from "@/types/analysis";
@@ -68,10 +68,9 @@ export function HistoryDetailScreen() {
 
         <AnalysisReport analysis={record.analysis} />
 
-        <Text className="text-ghost-text text-lg font-bold mb-4 mt-2">Propozycje odpowiedzi</Text>
-        <ReplyCard icon="😂" label="Zabawna" text={record.replies.funny} />
-        <ReplyCard icon="😎" label="Pewna siebie" text={record.replies.confident} />
-        <ReplyCard icon="❤️" label="Miła" text={record.replies.kind} />
+        <View className="mt-2">
+          <RepliesList replies={record.replies} />
+        </View>
       </ScrollView>
     </GradientBackground>
   );

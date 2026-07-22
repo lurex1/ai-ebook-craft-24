@@ -12,9 +12,11 @@ import { GhostCard } from "./GhostCard";
 
 interface AnalysisReportProps {
   analysis: AnalysisResult;
+  /** Ukrywa kartę z szansą na odpowiedź (gdy ekran pokazuje ją już wyżej) */
+  hideChance?: boolean;
 }
 
-export function AnalysisReport({ analysis }: AnalysisReportProps) {
+export function AnalysisReport({ analysis, hideChance = false }: AnalysisReportProps) {
   return (
     <View>
       <GhostCard icon="😊" title="Ton rozmowy">
@@ -25,9 +27,11 @@ export function AnalysisReport({ analysis }: AnalysisReportProps) {
         <Text className="text-ghost-text text-base leading-6">{analysis.interestLevel}</Text>
       </GhostCard>
 
-      <GhostCard icon="📈" title="Szansa na odpowiedź">
-        <ChanceBar percent={analysis.replyChance} />
-      </GhostCard>
+      {!hideChance ? (
+        <GhostCard icon="📈" title="Szansa na odpowiedź">
+          <ChanceBar percent={analysis.replyChance} />
+        </GhostCard>
+      ) : null}
 
       <GhostCard icon="🚩" title="Red flagi">
         <FlagList items={analysis.redFlags} variant="red" emptyText="Brak red flag — czysto! 🎉" />
