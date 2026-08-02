@@ -22,18 +22,22 @@ export default function Auth() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!authLoading && user) navigate("/");
-  }, [user, authLoading, navigate]);
+  const isRecovery =
+    searchParams.get("type") === "recovery" ||
+    (typeof window !== "undefined" && window.location.hash.includes("type=recovery"));
 
   useEffect(() => {
-    const type = searchParams.get("type");
-    if (type === "recovery") setMode("reset");
+    if (!authLoading && user && mode !== "reset" && !isRecovery) navigate("/");
+  }, [user, authLoading, navigate, mode, isRecovery]);
+
+  useEffect(() => {
+    if (isRecovery) setMode("reset");
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") setMode("reset");
     });
     return () => subscription.unsubscribe();
-  }, [searchParams]);
+  }, [isRecovery]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,11 +67,17 @@ export default function Auth() {
       } else if (mode === "reset") {
         if (password.length < 8) throw new Error(t("auth.passwordMinError"));
         if (password !== confirmPassword) throw new Error(t("auth.passwordMismatch"));
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error(t("auth.resetDesc"));
         const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
         toast({ title: t("common.success"), description: t("auth.passwordChanged") });
-        setMode("login");
+        window.history.replaceState({}, "", "/auth");
+        setPassword("");
+        setConfirmPassword("");
+        navigate("/");
       }
+
     } catch (err: any) {
       toast({ title: t("common.error"), description: err.message, variant: "destructive" });
     } finally {
