@@ -22,18 +22,22 @@ export default function Auth() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!authLoading && user) navigate("/");
-  }, [user, authLoading, navigate]);
+  const isRecovery =
+    searchParams.get("type") === "recovery" ||
+    (typeof window !== "undefined" && window.location.hash.includes("type=recovery"));
 
   useEffect(() => {
-    const type = searchParams.get("type");
-    if (type === "recovery") setMode("reset");
+    if (!authLoading && user && mode !== "reset" && !isRecovery) navigate("/");
+  }, [user, authLoading, navigate, mode, isRecovery]);
+
+  useEffect(() => {
+    if (isRecovery) setMode("reset");
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") setMode("reset");
     });
     return () => subscription.unsubscribe();
-  }, [searchParams]);
+  }, [isRecovery]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
