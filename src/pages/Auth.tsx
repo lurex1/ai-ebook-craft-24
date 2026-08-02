@@ -67,11 +67,17 @@ export default function Auth() {
       } else if (mode === "reset") {
         if (password.length < 8) throw new Error(t("auth.passwordMinError"));
         if (password !== confirmPassword) throw new Error(t("auth.passwordMismatch"));
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error(t("auth.resetDesc"));
         const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
         toast({ title: t("common.success"), description: t("auth.passwordChanged") });
-        setMode("login");
+        window.history.replaceState({}, "", "/auth");
+        setPassword("");
+        setConfirmPassword("");
+        navigate("/");
       }
+
     } catch (err: any) {
       toast({ title: t("common.error"), description: err.message, variant: "destructive" });
     } finally {
