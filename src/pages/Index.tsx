@@ -110,25 +110,44 @@ export default function Dashboard() {
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-10">
-        <div className="relative rounded-2xl overflow-hidden mb-10">
-          <img src={heroImage} alt="Scripto" className="w-full h-48 sm:h-64 object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent flex items-center">
-            <div className="px-8 sm:px-12">
-              <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-2">
-                {t("dash.createPro").split(" ").slice(0, 1).join(" ")} <span className="text-gradient-gold">{t("dash.createPro").split(" ").slice(1, 2).join(" ")}</span> {t("dash.createPro").split(" ").slice(2).join(" ")}
-              </h2>
-              <p className="text-muted-foreground text-sm sm:text-base max-w-md mb-4">
-                {t("dash.heroDesc")}
-              </p>
-              <Button
-                onClick={() => navigate("/new")}
-                className="bg-gradient-gold text-primary-foreground hover:opacity-90 gap-2"
-              >
+        <section className="relative mb-10 rounded-2xl border border-border/60 bg-card overflow-hidden">
+          <div
+            className="absolute inset-0 opacity-[0.35]"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+              maskImage: "radial-gradient(ellipse at 20% 0%, black, transparent 75%)",
+              WebkitMaskImage: "radial-gradient(ellipse at 20% 0%, black, transparent 75%)",
+            }}
+          />
+          <div className="relative px-6 sm:px-10 py-10 sm:py-12">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/60 px-3 py-1 mb-4">
+              <span className="h-1.5 w-1.5 rounded-full bg-secondary" />
+              <span className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                AI Ebook Studio
+              </span>
+            </div>
+            <h2 className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-foreground mb-3 max-w-2xl">
+              {t("dash.createPro")}
+            </h2>
+            <p className="text-muted-foreground text-sm sm:text-base max-w-xl mb-6">
+              {t("dash.heroDesc")}
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button onClick={() => navigate("/new")} className="gap-2">
                 <Plus className="h-4 w-4" /> {t("dash.createNew")}
               </Button>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground font-mono">
+                <span>PDF / EPUB</span>
+                <span className="opacity-40">•</span>
+                <span>A4 · A5 · custom</span>
+                <span className="opacity-40">•</span>
+                <span>AI layout engine</span>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* "Select & edit" feature section */}
         <div className="mb-10 bg-card border border-border/50 rounded-2xl p-6 sm:p-8">
