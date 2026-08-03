@@ -806,18 +806,26 @@ export function CenterCanvas({
               </div>
             )}
 
-            {showPageNumbers && (
-              <div
-                className="absolute bottom-0 left-0 right-0 text-center text-[10px] opacity-40"
-                style={{
-                  padding: `6px`,
-                  fontFamily: template.bodyFont,
-                  color: template.colors.text,
-                }}
-              >
-                {pageIndex + 1}
-              </div>
-            )}
+            {showPageNumbers && (() => {
+              const start = Number(footerConfig?.pageNumberStart ?? 1) || 1;
+              const num = pageIndex + start;
+              const fmt = footerConfig?.pageNumberFormat || "plain";
+              const label = fmt === "dashes" ? `— ${num} —` : fmt === "page" ? `Strona ${num}` : `${num}`;
+              const pos = footerConfig?.pageNumberPosition || "center";
+              return (
+                <div
+                  className="absolute bottom-0 left-0 right-0 text-[10px] opacity-40"
+                  style={{
+                    padding: `6px ${marginPx}px`,
+                    textAlign: pos === "left" ? "left" : pos === "right" ? "right" : "center",
+                    fontFamily: template.bodyFont,
+                    color: template.colors.text,
+                  }}
+                >
+                  {label}
+                </div>
+              );
+            })()}
           </div>
         ))}
 
