@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Upload, ImageIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { listMaterialImages, uploadMaterial } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 
 interface Props {
@@ -22,16 +22,7 @@ export function MediaLibraryPicker({ open, onOpenChange, onSelect }: Props) {
   const load = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.storage
-        .from("ebook-materials")
-        .list("", { limit: 200, sortBy: { column: "created_at", order: "desc" } });
-      if (error) throw error;
-      const imgs = (data || [])
-        .filter((f) => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(f.name))
-        .map((f) => ({
-          name: f.name,
-          url: supabase.storage.from("ebook-materials").getPublicUrl(f.name).data.publicUrl,
-        }));
+      const imgs = await listMaterialImages(200);
       setImages(imgs);
     } catch (err: any) {
       toast({ title: "Błąd", description: err.message, variant: "destructive" });
@@ -49,12 +40,8 @@ export function MediaLibraryPicker({ open, onOpenChange, onSelect }: Props) {
     if (!file) return;
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop();
-      const path = `${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("ebook-materials").upload(path, file);
-      if (error) throw error;
-      const { data } = supabase.storage.from("ebook-materials").getPublicUrl(path);
-      onSelect(data.publicUrl);
+      const url = await uploadMaterial(file);
+      onSelect(url);
       onOpenChange(false);
     } catch (err: any) {
       toast({ title: "Błąd", description: err.message, variant: "destructive" });

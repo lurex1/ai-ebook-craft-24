@@ -190,12 +190,8 @@ export function CenterCanvas({
     const file = e.target.files?.[0];
     if (!file || !uploadTargetBlockId) return;
     try {
-      const ext = file.name.split(".").pop();
-      const path = `${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("ebook-materials").upload(path, file);
-      if (error) throw error;
-      const { data } = supabase.storage.from("ebook-materials").getPublicUrl(path);
-      onUpdateBlock(uploadTargetBlockId, { url: data.publicUrl });
+      const url = await uploadMaterial(file);
+      onUpdateBlock(uploadTargetBlockId, { url });
     } catch (err: any) {
       toast({ title: "Błąd", description: err.message, variant: "destructive" });
     } finally {
