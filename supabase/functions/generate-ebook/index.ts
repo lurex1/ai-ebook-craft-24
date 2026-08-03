@@ -360,7 +360,7 @@ Nie dodawaj sekcji bibliografii na końcu — to zostanie zrobione automatycznie
         : "";
 
       const useEbookStyl = shouldUseEbookStyl(bookTitle, sectionTitle, sectionPath, contextBefore, contextAfter);
-      const stylePrefix = useEbookStyl ? `${EBOOK_STYL_PROMPT}\n\n` : "";
+      const stylePrefix = useEbookStyl ? `${FULL_STYLE_PROMPT}\n\n` : "";
 
       const data = await callAI([
         {
@@ -425,7 +425,7 @@ ${materials ? `\nMateriały źródłowe:\n${materials.slice(0, 8000)}` : "\nBrak
           : "To jest środkowa część — rozwijaj temat z przykładami.";
 
         const useEbookStyl = shouldUseEbookStyl(bookTitle, sec.title, prevTitle, nextTitle);
-        const stylePrefix = useEbookStyl ? `${EBOOK_STYL_PROMPT}\n\n` : "";
+        const stylePrefix = useEbookStyl ? `${FULL_STYLE_PROMPT}\n\n` : "";
 
         const data = await callAI([
           {
