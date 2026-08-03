@@ -359,36 +359,70 @@ export function RightPanel({ project, onUpdateProject, selectedBlock, onUpdateBl
           </Select>
         </section>
 
-        {/* Project info */}
+        {/* Numeracja stron */}
         <section>
-          <h4 className="text-xs font-medium text-primary uppercase tracking-wider mb-3">Projekt</h4>
-          <div className="space-y-2">
-            <Input
-              value={project.subtitle}
-              onChange={(e) => onUpdateProject({ subtitle: e.target.value })}
-              placeholder="Podtytuł"
-              className="bg-secondary border-border h-8 text-xs"
-            />
-            <Input
-              value={project.author_name}
-              onChange={(e) => onUpdateProject({ author_name: e.target.value })}
-              placeholder="Autor"
-              className="bg-secondary border-border h-8 text-xs"
-            />
-          </div>
-        </section>
-
-        {/* Footer */}
-        <section>
-          <h4 className="text-xs font-medium text-primary uppercase tracking-wider mb-3">Stopka</h4>
+          <h4 className="text-xs font-medium text-primary uppercase tracking-wider mb-3">Numeracja stron</h4>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-xs text-muted-foreground">Numery stron</Label>
+              <Label className="text-xs text-muted-foreground">Pokaż numery stron</Label>
               <Switch
                 checked={footerConfig.showPageNumbers ?? true}
                 onCheckedChange={(v) => onUpdateProject({ footer_config: { ...footerConfig, showPageNumbers: v } })}
               />
             </div>
+
+            {(footerConfig.showPageNumbers ?? true) && (
+              <>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Pozycja</Label>
+                  <Select
+                    value={footerConfig.pageNumberPosition || "center"}
+                    onValueChange={(v) => onUpdateProject({ footer_config: { ...footerConfig, pageNumberPosition: v } })}
+                  >
+                    <SelectTrigger className="bg-secondary border-border h-8 text-xs mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="left">Do lewej</SelectItem>
+                      <SelectItem value="center">Wyśrodkowana</SelectItem>
+                      <SelectItem value="right">Do prawej</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-xs text-muted-foreground">Format</Label>
+                  <Select
+                    value={footerConfig.pageNumberFormat || "plain"}
+                    onValueChange={(v) => onUpdateProject({ footer_config: { ...footerConfig, pageNumberFormat: v } })}
+                  >
+                    <SelectTrigger className="bg-secondary border-border h-8 text-xs mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="plain">1</SelectItem>
+                      <SelectItem value="dashes">— 1 —</SelectItem>
+                      <SelectItem value="page">Strona 1</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-xs text-muted-foreground">Numeracja od</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={footerConfig.pageNumberStart ?? 1}
+                    onChange={(e) =>
+                      onUpdateProject({
+                        footer_config: { ...footerConfig, pageNumberStart: Math.max(1, Number(e.target.value) || 1) },
+                      })
+                    }
+                    className="bg-secondary border-border h-8 text-xs mt-1"
+                  />
+                </div>
+              </>
+            )}
           </div>
         </section>
       </div>
