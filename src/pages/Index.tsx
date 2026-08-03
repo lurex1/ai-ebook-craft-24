@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Plus, LogOut, Trash2, Copy, Calendar, Edit3, Loader2, Crown, MousePointerClick, Wand2, SplitSquareHorizontal, Palette } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroImage from "@/assets/hero-ebook.jpg";
 import { useI18n, LanguageSwitcher } from "@/lib/i18n";
 
 export default function Dashboard() {
