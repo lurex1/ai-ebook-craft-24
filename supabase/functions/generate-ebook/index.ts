@@ -128,7 +128,7 @@ const PRO_ACTIONS = new Set([
   "transform-text",
 ]);
 
-async function requireProPlan(req: Request): Promise<{ ok: true } | { ok: false; response: Response }> {
+async function requireProPlan(req: Request): Promise<{ ok: true; userId: string } | { ok: false; response: Response }> {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
     return {
@@ -166,7 +166,7 @@ async function requireProPlan(req: Request): Promise<{ ok: true } | { ok: false;
       ),
     };
   }
-  return { ok: true };
+  return { ok: true, userId: userData.user.id };
 }
 
 
@@ -176,9 +176,11 @@ serve(async (req) => {
   try {
     const { action, ...params } = await req.json();
 
+    let currentUserId: string | null = null;
     if (PRO_ACTIONS.has(action)) {
       const gate = await requireProPlan(req);
       if (!gate.ok) return gate.response;
+      currentUserId = gate.userId;
     }
 
     // ====== ANALYZE — returns structure proposal ======
@@ -567,7 +569,7 @@ REQUIREMENTS:
 
       const base64Data = imageUrl.replace(/^data:image\/\w+;base64,/, "");
       const bytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
-      const fileName = `cover-${crypto.randomUUID()}.png`;
+      const fileName = `${currentUserId}/cover-${crypto.randomUUID()}.png`;
 
       const { error: uploadError } = await supabaseAdmin.storage
         .from("ebook-covers")
@@ -641,7 +643,7 @@ HARD REQUIREMENTS:
 
       const base64Data = imageUrl.replace(/^data:image\/\w+;base64,/, "");
       const bytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
-      const fileName = `illustration-${crypto.randomUUID()}.png`;
+      const fileName = `${currentUserId}/illustration-${crypto.randomUUID()}.png`;
 
       const { error: uploadError } = await supabaseAdmin.storage
         .from("ebook-covers")

@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { listMaterialImages, uploadMaterial } from "@/lib/storage";
 import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,15 +32,7 @@ export function RightPanel({ project, onUpdateProject, selectedBlock, onUpdateBl
   const loadLibrary = async () => {
     setLoadingLibrary(true);
     try {
-      const { data, error } = await supabase.storage.from("ebook-materials").list("", { limit: 100, sortBy: { column: "created_at", order: "desc" } });
-      if (error) throw error;
-      const images = (data || [])
-        .filter((f) => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(f.name))
-        .map((f) => ({
-          name: f.name,
-          url: supabase.storage.from("ebook-materials").getPublicUrl(f.name).data.publicUrl,
-        }));
-      setLibraryImages(images);
+      setLibraryImages(await listMaterialImages(100));
     } catch {
       // silent
     } finally {
@@ -63,12 +56,8 @@ export function RightPanel({ project, onUpdateProject, selectedBlock, onUpdateBl
     if (!file) return;
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop();
-      const path = `${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("ebook-materials").upload(path, file);
-      if (error) throw error;
-      const { data } = supabase.storage.from("ebook-materials").getPublicUrl(path);
-      onUpdateBlock({ url: data.publicUrl });
+      const url = await uploadMaterial(file);
+      onUpdateBlock({ url });
     } catch (err: any) {
       toast({ title: "Błąd", description: err.message, variant: "destructive" });
     } finally {
