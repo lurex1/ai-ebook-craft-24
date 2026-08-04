@@ -173,7 +173,9 @@ export function CenterCanvas({
   scrollToBlockId,
   onScrollComplete,
   onExtractToBlock,
+  pageOffset = 0,
 }: Props) {
+
   const { toast } = useToast();
   const size = PAGE_SIZES[pageSize] || PAGE_SIZES.A4;
   const pageWidthPx = size.width * MM_TO_PX * CANVAS_SCALE;
