@@ -7,6 +7,7 @@ import { BookOpen, Mail, Lock, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useI18n, LanguageSwitcher } from "@/lib/i18n";
+import { lovable } from "@/integrations/lovable/index";
 
 type AuthMode = "login" | "register" | "forgot" | "reset";
 
