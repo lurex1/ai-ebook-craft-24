@@ -51,10 +51,27 @@ function generateHTML(project: ProjectData, chapters: ChapterData[], template: T
       </div>`
     : "";
 
+  const showNums = footerConfig.showPageNumbers ?? true;
+  const numStart = Number(footerConfig.pageNumberStart ?? 1) || 1;
+  const numPos = footerConfig.pageNumberPosition || "center";
+  const numFmt = footerConfig.pageNumberFormat || "plain";
+  const numContent =
+    numFmt === "dashes"
+      ? `"— " counter(page) " —"`
+      : numFmt === "page"
+      ? `"Strona " counter(page)`
+      : `counter(page)`;
+  const numBox = numPos === "left" ? "@bottom-left" : numPos === "right" ? "@bottom-right" : "@bottom-center";
+  const pageNumberCss = showNums
+    ? `@page{margin:18mm;counter-increment:page;${numBox}{content:${numContent};font-size:9pt;color:${template.colors.accent}}}
+body{counter-reset:page ${numStart - 1}}`
+    : "";
+
   return `<!DOCTYPE html><html lang="${project.language}"><head><meta charset="utf-8"><title>${project.title}</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
+${pageNumberCss}
 body{font-family:${template.bodyFont};color:${template.colors.text};background:${template.colors.bg};line-height:${template.spacing.lineHeight}}
 .page{max-width:800px;margin:0 auto;padding:${template.spacing.margin}px}
 .cover{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;page-break-after:always}
@@ -66,6 +83,7 @@ body{font-family:${template.bodyFont};color:${template.colors.text};background:$
 .toc ul{list-style:none}
 @media print{body{font-size:11pt}.cover h1{font-size:2.5em}.watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:3em;color:rgba(0,0,0,0.04);pointer-events:none;white-space:nowrap;z-index:9999}}
 </style></head><body>
+
 ${project.cover_url ? `<div class="cover"><img src="${project.cover_url}" style="max-width:80%;max-height:80vh;border-radius:8px" /></div>` : `
 <div class="cover">
   <h1>${project.title}</h1>

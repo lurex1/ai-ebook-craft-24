@@ -8,7 +8,7 @@ import type { Block, ChapterData, ProjectData } from "@/lib/blocks";
 import { createBlock } from "@/lib/blocks";
 import { splitContentIntoBlocks, normalizeBlocks } from "@/lib/blockUtils";
 import { LeftPanel } from "@/components/editor/LeftPanel";
-import { CenterCanvas } from "@/components/editor/CenterCanvas";
+import { CenterCanvas, estimateChapterPageCount } from "@/components/editor/CenterCanvas";
 import { RightPanel } from "@/components/editor/RightPanel";
 import { FlipbookView } from "@/components/editor/FlipbookView";
 import {
@@ -78,6 +78,16 @@ export default function Editor() {
 
   const currentChapter = chapters.find((c) => c.id === selectedChapterId);
   const template = TEMPLATES[project?.template || "modern"] || TEMPLATES.modern;
+  const pageOffset = (() => {
+    if (!project || !currentChapter) return 0;
+    const idx = chapters.findIndex((c) => c.id === currentChapter.id);
+    if (idx <= 0) return 0;
+    const showNums = (project.footer_config as any)?.showPageNumbers ?? true;
+    return chapters
+      .slice(0, idx)
+      .reduce((sum, c) => sum + estimateChapterPageCount(c.blocks, template, project.page_size, showNums), 0);
+  })();
+
 
   // Auto-save chapter blocks
   const saveChapter = useCallback(
@@ -528,6 +538,8 @@ export default function Editor() {
           scrollToBlockId={scrollToBlockId}
           onScrollComplete={() => setScrollToBlockId(null)}
           onExtractToBlock={extractToBlock}
+          pageOffset={pageOffset}
+
         />
         <RightPanel
           project={project}

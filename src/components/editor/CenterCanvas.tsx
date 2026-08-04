@@ -47,7 +47,9 @@ interface Props {
   scrollToBlockId?: string | null;
   onScrollComplete?: () => void;
   onExtractToBlock?: (sourceBlockId: string, html: string) => void;
+  pageOffset?: number;
 }
+
 
 const BLOCK_TOOLS: { type: BlockType; icon: React.ElementType; label: string }[] = [
   { type: "heading", icon: Heading1, label: "Nagłówek" },
@@ -105,6 +107,42 @@ function estimateBlockHeight(block: Block, template: Template, contentWidth: num
   }
   return 40;
 }
+
+/** Rough page-count estimate for a chapter — used for continuous page numbering across chapters. */
+export function estimateChapterPageCount(
+  blocks: Block[],
+  template: Template,
+  pageSize: string,
+  showPageNumbers = true,
+): number {
+  const size = PAGE_SIZES[pageSize] || PAGE_SIZES.A4;
+  const pageWidthPx = size.width * MM_TO_PX * CANVAS_SCALE;
+  const pageHeightPx = size.height * MM_TO_PX * CANVAS_SCALE;
+  const marginPx = template.spacing.margin * CANVAS_SCALE;
+  const contentWidth = pageWidthPx - marginPx * 2;
+  const usableHeight = pageHeightPx - marginPx * 2 - (showPageNumbers ? 28 : 0) - 32;
+
+  let pages = 1;
+  let h = 0;
+  for (const block of blocks) {
+    if (block.posX != null || block.posY != null) continue;
+    if (block.type === "chapter-break") {
+      pages += 1;
+      h = 0;
+      continue;
+    }
+    const bh = estimateBlockHeight(block, template, contentWidth);
+    if (h + bh > usableHeight && h > 0) {
+      pages += 1;
+      h = bh;
+    } else {
+      h += bh;
+    }
+  }
+  return Math.max(1, pages);
+}
+
+
 
 function InsertMenu({ onInsert, visible }: { onInsert: (type: BlockType) => void; visible: boolean }) {
   const [open, setOpen] = useState(false);
@@ -171,7 +209,9 @@ export function CenterCanvas({
   scrollToBlockId,
   onScrollComplete,
   onExtractToBlock,
+  pageOffset = 0,
 }: Props) {
+
   const { toast } = useToast();
   const size = PAGE_SIZES[pageSize] || PAGE_SIZES.A4;
   const pageWidthPx = size.width * MM_TO_PX * CANVAS_SCALE;
@@ -805,7 +845,7 @@ export function CenterCanvas({
 
             {showPageNumbers && (() => {
               const start = Number(footerConfig?.pageNumberStart ?? 1) || 1;
-              const num = pageIndex + start;
+              const num = pageIndex + pageOffset + start;
               const fmt = footerConfig?.pageNumberFormat || "plain";
               const label = fmt === "dashes" ? `— ${num} —` : fmt === "page" ? `Strona ${num}` : `${num}`;
               const pos = footerConfig?.pageNumberPosition || "center";
