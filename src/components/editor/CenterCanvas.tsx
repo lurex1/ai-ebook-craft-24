@@ -47,7 +47,9 @@ interface Props {
   scrollToBlockId?: string | null;
   onScrollComplete?: () => void;
   onExtractToBlock?: (sourceBlockId: string, html: string) => void;
+  pageOffset?: number;
 }
+
 
 const BLOCK_TOOLS: { type: BlockType; icon: React.ElementType; label: string }[] = [
   { type: "heading", icon: Heading1, label: "Nagłówek" },
