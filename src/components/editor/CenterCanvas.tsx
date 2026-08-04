@@ -809,7 +809,7 @@ export function CenterCanvas({
 
             {showPageNumbers && (() => {
               const start = Number(footerConfig?.pageNumberStart ?? 1) || 1;
-              const num = pageIndex + start;
+              const num = pageIndex + pageOffset + start;
               const fmt = footerConfig?.pageNumberFormat || "plain";
               const label = fmt === "dashes" ? `— ${num} —` : fmt === "page" ? `Strona ${num}` : `${num}`;
               const pos = footerConfig?.pageNumberPosition || "center";
