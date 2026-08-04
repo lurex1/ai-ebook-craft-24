@@ -146,6 +146,33 @@ export default function Auth() {
             </div>
           )}
 
+          {(mode === "login" || mode === "register") && (
+            <div className="mb-6">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading}
+                onClick={handleGoogle}
+                className="w-full gap-2"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="#4285F4" d="M23.5 12.3c0-.9-.1-1.5-.2-2.2H12v4.1h6.6c-.1 1.1-.9 2.8-2.5 3.9l3.8 3c2.3-2.1 3.6-5.2 3.6-8.8z" />
+                  <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.8-3c-1 .7-2.4 1.2-4.2 1.2-3.2 0-5.9-2.1-6.9-5l-3.9 3C3.2 21.3 7.3 24 12 24z" />
+                  <path fill="#FBBC05" d="M5.1 14.3c-.3-.8-.4-1.5-.4-2.3s.2-1.6.4-2.3l-4-3C.4 8.3 0 10.1 0 12s.4 3.7 1.2 5.3l3.9-3z" />
+                  <path fill="#EA4335" d="M12 4.7c2.3 0 3.8 1 4.7 1.8l3.4-3.3C18 1.2 15.2 0 12 0 7.3 0 3.2 2.7 1.2 6.7l3.9 3c1-2.9 3.7-5 6.9-5z" />
+                </svg>
+                Google
+              </Button>
+              <div className="flex items-center gap-3 mt-4">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs text-muted-foreground">lub</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+            </div>
+          )}
+
+
+
           {(mode === "forgot" || mode === "reset") && (
             <div className="mb-6">
               <button
