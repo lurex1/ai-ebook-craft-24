@@ -78,6 +78,16 @@ export default function Editor() {
 
   const currentChapter = chapters.find((c) => c.id === selectedChapterId);
   const template = TEMPLATES[project?.template || "modern"] || TEMPLATES.modern;
+  const pageOffset = (() => {
+    if (!project || !currentChapter) return 0;
+    const idx = chapters.findIndex((c) => c.id === currentChapter.id);
+    if (idx <= 0) return 0;
+    const showNums = (project.footer_config as any)?.showPageNumbers ?? true;
+    return chapters
+      .slice(0, idx)
+      .reduce((sum, c) => sum + estimateChapterPageCount(c.blocks, template, project.page_size, showNums), 0);
+  })();
+
 
   // Auto-save chapter blocks
   const saveChapter = useCallback(
