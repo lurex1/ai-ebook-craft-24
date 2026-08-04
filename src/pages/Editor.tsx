@@ -538,6 +538,8 @@ export default function Editor() {
           scrollToBlockId={scrollToBlockId}
           onScrollComplete={() => setScrollToBlockId(null)}
           onExtractToBlock={extractToBlock}
+          pageOffset={pageOffset}
+
         />
         <RightPanel
           project={project}
