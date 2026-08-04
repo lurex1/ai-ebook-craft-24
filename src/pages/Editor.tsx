@@ -8,7 +8,7 @@ import type { Block, ChapterData, ProjectData } from "@/lib/blocks";
 import { createBlock } from "@/lib/blocks";
 import { splitContentIntoBlocks, normalizeBlocks } from "@/lib/blockUtils";
 import { LeftPanel } from "@/components/editor/LeftPanel";
-import { CenterCanvas } from "@/components/editor/CenterCanvas";
+import { CenterCanvas, estimateChapterPageCount } from "@/components/editor/CenterCanvas";
 import { RightPanel } from "@/components/editor/RightPanel";
 import { FlipbookView } from "@/components/editor/FlipbookView";
 import {
