@@ -12,6 +12,7 @@ import Editor from "./pages/Editor";
 import Legal from "./pages/Legal";
 import Pricing from "./pages/Pricing";
 import Publish from "./pages/Publish";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/editor/:id" element={<Editor />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/publish" element={<Publish />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/terms" element={<Legal />} />
             <Route path="/privacy" element={<Legal />} />
             <Route path="/cookies" element={<Legal />} />
