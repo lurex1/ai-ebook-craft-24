@@ -104,7 +104,7 @@ export default function Pricing() {
             )}
             <h3 className="font-display text-2xl font-bold text-foreground mb-1">Pro</h3>
             <div className="flex items-baseline gap-1 mb-6">
-              <span className="font-display text-4xl font-bold text-foreground">$7.99</span>
+              <span className="font-display text-4xl font-bold text-foreground">$9</span>
               <span className="text-muted-foreground text-sm">{t("common.month")}</span>
             </div>
             <ul className="space-y-3 mb-8">
