@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Plus, LogOut, Trash2, Copy, Calendar, Edit3, Loader2, Crown, MousePointerClick, Wand2, SplitSquareHorizontal, Palette } from "lucide-react";
+import { BookOpen, Plus, LogOut, Trash2, Copy, Calendar, Edit3, Loader2, Crown, MousePointerClick, Wand2, SplitSquareHorizontal, Palette, Settings as SettingsIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useI18n, LanguageSwitcher } from "@/lib/i18n";
 
@@ -97,6 +97,9 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
+            <Button variant="ghost" size="sm" onClick={() => navigate("/settings")} className="text-muted-foreground gap-2">
+              <SettingsIcon className="h-4 w-4" /> Ustawienia
+            </Button>
             <Button variant="ghost" size="sm" onClick={() => navigate("/pricing")} className="text-muted-foreground gap-2">
               <Crown className="h-4 w-4" /> {t("dash.pricing")}
             </Button>
