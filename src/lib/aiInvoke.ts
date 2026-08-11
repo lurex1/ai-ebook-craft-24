@@ -13,21 +13,22 @@ import { toast } from "@/hooks/use-toast";
  * existing `if (error) throw error` paths show a toast rather than crashing.
  */
 
-let cachedPlan: { plan: string; ts: number } | null = null;
+let cachedPlan: { plan: string; used: number; ts: number } | null = null;
 const PLAN_TTL_MS = 30_000;
 
-async function getPlan(): Promise<string> {
-  if (cachedPlan && Date.now() - cachedPlan.ts < PLAN_TTL_MS) return cachedPlan.plan;
+async function getPlan(): Promise<{ plan: string; used: number }> {
+  if (cachedPlan && Date.now() - cachedPlan.ts < PLAN_TTL_MS) return cachedPlan;
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return "anonymous";
+  if (!user) return { plan: "anonymous", used: 0 };
   const { data } = await supabase
     .from("user_credits")
-    .select("plan")
+    .select("plan, used_credits")
     .eq("user_id", user.id)
     .maybeSingle();
   const plan = (data?.plan as string) || "free";
-  cachedPlan = { plan, ts: Date.now() };
-  return plan;
+  const used = (data?.used_credits as number) ?? 0;
+  cachedPlan = { plan, used, ts: Date.now() };
+  return { plan, used };
 }
 
 export function invalidatePlanCache() {
@@ -36,9 +37,9 @@ export function invalidatePlanCache() {
 
 function showProUpsell(message?: string) {
   toast({
-    title: "🔒 Funkcja dostępna w planie Pro",
+    title: "🔒 Darmowe generowanie wykorzystane",
     description:
-      (message || "Generowanie AI jest dostępne tylko w planie Pro.") +
+      (message || "Masz jedno darmowe generowanie AI. Kolejne są dostępne w planie Pro.") +
       " Za chwilę przekierujemy Cię do planów…",
     variant: "destructive",
   });
@@ -50,8 +51,8 @@ function showProUpsell(message?: string) {
 }
 
 export async function invokeGenerateEbook<T = any>(body: Record<string, any>) {
-  // Pre-flight plan check — avoid the 403 entirely for Free users.
-  const plan = await getPlan();
+  // Pre-flight plan check — Free users get exactly ONE free AI generation.
+  const { plan, used } = await getPlan();
   if (plan === "anonymous") {
     toast({
       title: "Wymagane logowanie",
@@ -60,10 +61,18 @@ export async function invokeGenerateEbook<T = any>(body: Record<string, any>) {
     });
     return { data: null, error: new Error("AUTH_REQUIRED") } as any;
   }
-  if (plan !== "pro") {
+  if (plan !== "pro" && used >= 1) {
     showProUpsell();
     return { data: null, error: new Error("PRO_REQUIRED") } as any;
   }
+  if (plan !== "pro") {
+    invalidatePlanCache();
+    toast({
+      title: "✨ Darmowe generowanie",
+      description: "Używasz swojego jednego darmowego generowania AI.",
+    });
+  }
+
 
   const result = await supabase.functions.invoke("generate-ebook", { body });
 
