@@ -214,23 +214,38 @@ async function requireProPlan(req: Request): Promise<{ ok: true; userId: string 
   }
   const { data: credits } = await supabaseAdmin
     .from("user_credits")
-    .select("plan")
+    .select("plan, used_credits")
     .eq("user_id", userData.user.id)
     .maybeSingle();
+
   if (credits?.plan !== "pro") {
-    return {
-      ok: false,
-      response: json(
-        {
-          error: "PRO_REQUIRED",
-          message: "Generowanie AI jest dostępne tylko w planie Pro. Przejdź na Pro, aby odblokować nielimitowane generowanie treści, ilustracji i eksport PDF/EPUB.",
-        },
-        403,
-      ),
-    };
+    const used = credits?.used_credits ?? 0;
+    if (used >= 1) {
+      return {
+        ok: false,
+        response: json(
+          {
+            error: "PRO_REQUIRED",
+            message: "Wykorzystałeś swoje jedno darmowe generowanie AI. Przejdź na Pro, aby odblokować nielimitowane generowanie treści, ilustracji i eksport PDF/EPUB.",
+          },
+          403,
+        ),
+      };
+    }
+    // Consume the single free generation
+    await supabaseAdmin.from("user_credits").upsert(
+      {
+        user_id: userData.user.id,
+        plan: "free",
+        total_credits: credits ? undefined : 50,
+        used_credits: used + 1,
+      },
+      { onConflict: "user_id" },
+    );
   }
   return { ok: true, userId: userData.user.id };
 }
+
 
 
 serve(async (req) => {
