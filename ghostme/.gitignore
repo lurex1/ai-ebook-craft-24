@@ -1,0 +1,19 @@
+# Zależności
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Buildy natywne
+ios/
+android/
+
+# Sekrety — klucz API trzymamy tylko lokalnie
+.env
+
+# Systemowe
+.DS_Store
+*.log
