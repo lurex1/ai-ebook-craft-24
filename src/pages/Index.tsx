@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Plus, LogOut, Trash2, Copy, Calendar, Edit3, Loader2, Crown, MousePointerClick, Wand2, SplitSquareHorizontal, Palette, Settings as SettingsIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useI18n, LanguageSwitcher } from "@/lib/i18n";
+import { GenerationHistory } from "@/components/GenerationHistory";
 
 export default function Dashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -247,6 +248,7 @@ export default function Dashboard() {
             ))}
           </div>
         )}
+        {user && <GenerationHistory key={user.id} userId={user.id} />}
       </main>
 
       <footer className="border-t border-border/30 px-6 py-6 mt-20">

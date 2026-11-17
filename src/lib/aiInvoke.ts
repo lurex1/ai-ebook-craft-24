@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { startGenerationHistory, finishGenerationHistory } from "@/lib/generationHistory";
 
 /**
  * Wrapper around supabase.functions.invoke("generate-ebook", ...) that:
@@ -50,7 +51,7 @@ function showProUpsell(message?: string) {
   }, 1800);
 }
 
-export async function invokeGenerateEbook<T = any>(body: Record<string, any>) {
+async function performGenerateEbook<T = any>(body: Record<string, any>) {
   // Pre-flight plan check — Free users get exactly ONE free AI generation.
   const { plan, used } = await getPlan();
   if (plan === "anonymous") {
@@ -104,4 +105,17 @@ export async function invokeGenerateEbook<T = any>(body: Record<string, any>) {
   }
 
   return result as { data: T | null; error: any };
+}
+
+export async function invokeGenerateEbook<T = any>(body: Record<string, any>) {
+  const historyId = await startGenerationHistory(body);
+  try {
+    const result = await performGenerateEbook<T>(body);
+    const payload = result.data as { error?: unknown } | null;
+    await finishGenerationHistory(historyId, result.error || payload?.error);
+    return result;
+  } catch (error) {
+    await finishGenerationHistory(historyId, error);
+    return { data: null, error };
+  }
 }
