@@ -3,6 +3,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
   KeyRound,
@@ -15,7 +17,6 @@ import {
 
 type StatusResult = {
   configured?: boolean;
-  masked?: string | null;
   ok?: boolean;
   model?: string;
   message?: string;
@@ -28,6 +29,19 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<StatusResult | null>(null);
+  const [apiKey, setApiKey] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const request = async (body: Record<string, string>): Promise<StatusResult> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("anthropic-status", { body });
+      if (error) return { ok: false, message: "Ustawienia klucza są chwilowo niedostępne. Spróbuj ponownie później." };
+      return data as StatusResult;
+    } catch {
+      return { ok: false, message: "Nie udało się połączyć. Spróbuj ponownie później." };
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -35,10 +49,7 @@ export default function Settings() {
 
   const loadStatus = async () => {
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke("anthropic-status", {
-      body: { action: "status" },
-    });
-    setStatus(error ? { configured: false, message: error.message } : (data as StatusResult));
+    setStatus(await request({ action: "status" }));
     setLoading(false);
   };
 
@@ -50,16 +61,33 @@ export default function Settings() {
   const runTest = async () => {
     setTesting(true);
     setTestResult(null);
-    const { data, error } = await supabase.functions.invoke("anthropic-status", {
-      body: { action: "test" },
-    });
-    setTestResult(
-      error ? { ok: false, message: error.message } : (data as StatusResult)
-    );
+    setTestResult(await request({ action: "test" }));
     setTesting(false);
   };
 
-  if (authLoading) {
+  const saveKey = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSaving(true);
+    setNotice(null);
+    setTestResult(null);
+    const result = await request({ action: "save", key: apiKey.trim() });
+    setApiKey("");
+    setNotice(result.message ?? null);
+    if (result.configured !== undefined) setStatus(result);
+    setSaving(false);
+  };
+
+  const deleteKey = async () => {
+    if (!window.confirm("Usunąć osobisty klucz Anthropic?")) return;
+    setSaving(true);
+    const result = await request({ action: "delete" });
+    setNotice(result.message ?? null);
+    setTestResult(null);
+    if (result.configured !== undefined) setStatus(result);
+    setSaving(false);
+  };
+
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-gradient-dark flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -93,11 +121,10 @@ export default function Settings() {
             </div>
             <div>
               <h2 className="font-display text-base font-semibold text-foreground">
-                Klucz API Anthropic
+                Twój klucz API Anthropic
               </h2>
               <p className="text-sm text-muted-foreground">
-                Klucz jest przechowywany wyłącznie po stronie backendu jako zaszyfrowany sekret —
-                nigdy nie trafia do przeglądarki ani do kodu aplikacji.
+                 Osobisty klucz jest szyfrowany i przypisany wyłącznie do Twojego konta.
               </p>
             </div>
           </div>
@@ -109,33 +136,45 @@ export default function Settings() {
               </div>
             ) : status?.configured ? (
               <div className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                <CheckCircle2 className="h-4 w-4 text-primary" />
                 <span className="text-foreground">Klucz zapisany</span>
-                <span className="font-mono text-xs text-muted-foreground">{status.masked}</span>
               </div>
             ) : (
               <div className="flex items-center gap-2 text-sm">
                 <XCircle className="h-4 w-4 text-destructive" />
-                <span className="text-foreground">Brak zapisanego klucza</span>
+                <span className="text-foreground">{status?.message || "Brak osobistego klucza"}</span>
               </div>
             )}
           </div>
 
+          <form onSubmit={saveKey} className="space-y-3 mb-5">
+            <Label htmlFor="anthropic-key">ANTHROPIC_API_KEY</Label>
+            <Input id="anthropic-key" name="anthropic-key" type="password" autoComplete="off" spellCheck={false}
+              value={apiKey} onChange={(event) => setApiKey(event.target.value)}
+              placeholder={status?.configured ? "Wprowadź nowy klucz" : "Wprowadź klucz Anthropic"}
+              required minLength={20} maxLength={4096} pattern="sk-ant-[A-Za-z0-9_-]+" disabled={saving || testing} />
+            <Button type="submit" disabled={saving || testing || !apiKey.trim()} className="gap-2">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+              {status?.configured ? "Zastąp klucz" : "Zapisz klucz"}
+            </Button>
+          </form>
+          {notice && <p role="status" className="mb-4 text-sm text-foreground">{notice}</p>}
           <div className="flex flex-wrap gap-3">
-            <Button onClick={runTest} disabled={testing || loading} className="gap-2">
+            <Button onClick={runTest} disabled={testing || loading || saving || !status?.configured} className="gap-2">
               {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plug className="h-4 w-4" />}
               Testuj połączenie
             </Button>
-            <Button variant="outline" onClick={loadStatus} disabled={loading} className="gap-2">
+            <Button variant="outline" onClick={loadStatus} disabled={loading || saving || testing} className="gap-2">
               Odśwież status
             </Button>
+            {status?.configured && <Button variant="destructive" onClick={deleteKey} disabled={saving || testing || loading}>Usuń klucz</Button>}
           </div>
 
           {testResult && (
             <div
               className={`mt-4 rounded-lg border p-4 text-sm ${
                 testResult.ok
-                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600"
+                   ? "border-primary/40 bg-primary/10 text-primary"
                   : "border-destructive/40 bg-destructive/10 text-destructive"
               }`}
             >
@@ -161,8 +200,7 @@ export default function Settings() {
           <div className="mt-6 flex items-start gap-2 text-xs text-muted-foreground">
             <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5" />
             <p>
-              Aby dodać lub zmienić klucz, poproś o to w czacie — otworzy się bezpieczny formularz,
-              w którym wpiszesz wartość klucza. Klucz nigdy nie jest wyświetlany po zapisaniu.
+               Zapisany klucz nie jest wyświetlany. Test połączenia wykonuje krótkie zapytanie rozliczane na Twoim koncie Anthropic.
             </p>
           </div>
         </section>
